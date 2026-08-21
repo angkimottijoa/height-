@@ -1,55 +1,86 @@
-# 8Crafter's World Height Limit Modifier — 지형 삭제 버그 수정
+# 8Crafter's World Height Limit Modifier — 수정판
 
-이 저장소는 `v.1.0.0 8Crafter's World Height Limit Modifier` 비헤이비어 팩(`.mcpack`)의
-"적용하면 기존 지형이 다 사라지는(공허가 되는) 버그"를 수정한 버전입니다.
+마인크래프트 베드락 오버월드 높이 제한을 바꾸는 `.mcpack` 팩의 수정 빌드입니다.
 
-## 원인
+## 먼저: 이 기능의 근본적인 한계 (매우 중요)
 
-팩은 `subpacks/<min>-<max>/dimensions/overworld.json` 파일들로 오버월드 높이 범위
-(`minecraft:dimension_bounds`)를 서브팩마다 다르게 설정합니다. 여기까지는 정상 동작입니다.
+이 팩은 베드락의 `minecraft:dimension_bounds` 기능을 씁니다. 그런데 이 기능에는
+**우회 불가능한 제약**이 있습니다.
 
-문제는 **모든 서브팩(147개)** 의 `overworld.json`에 아래처럼
-지형 생성기 자체를 `void`(빈 공허)로 강제 지정해 놓았다는 점입니다.
+> `dimension_bounds`로 높이 제한을 바꾸려면 월드 생성기를 반드시 `void`로 함께
+> 설정해야 하며, 이것 없이 높이만 바꾸는 방법은 존재하지 않습니다.
 
-```json
-"minecraft:generation": {
-  "generator_type": "void"
-}
-```
+즉 **"높이 제한 해제 + 정상 지형 생성"은 동시에 불가능**합니다. 이건 팩의 버그가
+아니라 베드락 엔진 자체의 제약입니다.
 
-`generator_type: void`는 마인크래프트 베드락에서 "아무것도 생성하지 않는" 발전기입니다.
-높이 제한 팩을 켜서 `dimension_bounds`(min/max)가 바뀌면 게임은 새 높이 범위에 맞춰
-청크를 다시 생성해야 하는데, 이때 발전기가 `void`로 지정돼 있으니 원래 있던 산·동굴·바이옴
-지형 대신 **빈 공간**이 만들어집니다. 사용자가 첨부한 스크린샷(플레이어가 Y=-404 허공에 뜬 채
-주변에 아무 지형도 없고 조각난 블록만 남아있는 상태)이 정확히 이 증상입니다.
+다만 널리 오해되는 부분이 있어 정확히 정리하면:
+
+| | 실제 동작 |
+|---|---|
+| 기존에 **이미 탐험해서 저장된** 청크 | **삭제되지 않음.** 범위 밖 블록은 "안 보일 뿐"이고, 높이 범위를 다시 넓히거나 팩을 끄면 그대로 돌아옵니다. |
+| 팩이 켜진 상태에서 **새로 생성되는** 청크 | **공허(void)로 생성됨.** 이것만이 실제로 되돌릴 수 없는 손실입니다. |
+
+첫 스크린샷처럼 "지형이 다 사라진" 상황은, 팩을 켠 상태에서 아직 저장되지 않은
+청크가 새로 생성되면서 전부 void가 된 경우입니다.
+
+## 안전한 사용법
+
+1. **먼저 월드를 백업하세요.**
+2. 팩을 **끈 상태로** 원하는 지역을 미리 돌아다녀 청크를 생성·저장시킵니다.
+3. 그 다음 팩을 켜고 원하는 높이 범위 서브팩을 선택해 건축합니다.
+4. 팩이 켜져 있는 동안에는 **새로운 지역으로 탐험하지 마세요** (새 청크 = 공허).
+5. 원래대로 돌리려면 `OFF` 서브팩을 고르거나 팩을 비활성화하면 범위 밖 블록이
+   다시 나타납니다.
 
 ## 수정 내용
 
-`packs/CraftersWorldHeightLimitModifier/subpacks/*/dimensions/overworld.json` 147개 파일
-전부에서
+### 1. 높이 제한이 적용되지 않던 문제 (이번 빌드의 핵심)
 
-```diff
-- "generator_type": "void"
-+ "generator_type": "overworld"
-```
+이전 시도에서 지형 삭제를 막으려고 `generator_type`을 `"void"` → `"overworld"`로
+바꿨는데, **`"overworld"`는 유효한 값이 아닙니다.** 그 결과 dimension 정의 전체가
+무효 처리되어 지형은 정상으로 보이지만 **높이 제한이 아예 걸리지 않는** 상태가
+됐습니다(Y=320에서 블록 설치 불가). 위 한계 설명대로 `void`가 필수이므로
+**전 서브팩을 `"generator_type": "void"`로 되돌렸습니다.**
 
-로 변경했습니다. `dimension_bounds`(min/max)는 그대로 유지되므로 원하는 높이 제한 효과는
-동일하게 적용되고, 실제 지형 생성기(산, 동굴, 바이옴 등)는 정상적으로 작동합니다.
+### 2. 규격 위반으로 동작하지 않던 서브팩 수정
 
-`OFFS` 서브팩(팩 효과 끄기 옵션)은 애초에 `dimensions/overworld.json`이 없어 바닐라 설정을
-그대로 사용하므로 수정하지 않았습니다.
+베드락은 `min`/`max`가 **16의 배수**여야 하고, 범위는 **16 이상 1024 이하**여야 합니다.
 
-## 사용법
+- `412` / `-412`는 16의 배수가 아님 → `416` / `-416`으로 교정
+  (`-512--412`→`-512--416`, `-512-412`→`-512-416`, `-64-412`→`-64-416`, `0-412`→`0-416`)
+- 범위가 0이라 무효였던 `0-0`, `-64--64`, `-256--256` 서브팩 제거
 
-1. `dist/CraftersWorldHeightLimitModifier.v.1.0.0.fixed.mcpack` 파일을 기기에 내려받아
-   실행하면 마인크래프트에 비헤이비어 팩으로 자동 설치됩니다.
-2. 월드 설정 → 비헤이비어 팩에서 이 팩을 적용하고, 원하는 높이 범위의 서브팩을 선택합니다.
-3. **주의**: 이미 이 팩(버그 버전)을 적용해서 지형이 삭제된 기존 월드는, 삭제된 청크가
-   저장 파일에 "빈 공허"로 이미 기록되었기 때문에 이 수정판을 적용해도 되살아나지 않습니다.
-   백업이 있다면 백업에서 복원한 뒤 수정판을 적용해 주세요. 새 월드나 아직 이 버그를
-   겪지 않은 월드에는 정상적으로 적용됩니다.
+### 3. manifest.json 정리
+
+- 실제 폴더는 `OFFS`인데 manifest는 `OFFs`로 잘못 참조 → 수정
+- 존재하지 않는 폴더 `-80-366` 참조 제거
+- `-512-512` 중복 등록 + 잘못된 값 `"memory_tier": -9999999999999` 제거
+- 폴더는 있는데 목록에 빠져 있던 `-64--48`, `-64--32`, `-64--16` 추가
+- JSON 규격에 없는 `/* */` 주석 전부 제거 → 순수 JSON으로 재작성
+- 버전 `1.0.0` → `1.0.1` (기존 설치본을 덮어쓰도록 UUID는 유지)
+
+결과적으로 manifest의 서브팩 목록과 실제 폴더가 **정확히 1:1로 일치**합니다.
+
+### 4. 실험용 `[TEST]` 서브팩 3개 추가
+
+`minecraft:generation` 컴포넌트를 아예 넣지 않고 `dimension_bounds`만 지정한
+변형입니다. 문서상으로는 동작하지 않을 가능성이 높지만(그 경우 바닐라와 동일하게
+동작할 뿐 위험은 없습니다), 만약 적용된다면 지형을 유지한 채 높이만 늘릴 수 있어
+직접 확인해 볼 가치가 있어 넣어 두었습니다.
+
+- `[TEST] -64 to 512 (keep terrain)`
+- `[TEST] -512 to 320 (keep terrain)`
+- `[TEST] -512 to 512 (keep terrain)`
+
+이 서브팩을 선택했을 때 Y=320 위로 블록이 설치되면서 지형도 살아 있다면 성공입니다.
+높이 제한이 그대로면 예상대로 미지원인 것이니 일반 서브팩을 쓰시면 됩니다.
 
 ## 저장소 구조
 
-- `packs/CraftersWorldHeightLimitModifier/` — 수정된 팩 소스 (압축 해제된 형태)
-- `dist/CraftersWorldHeightLimitModifier.v.1.0.0.fixed.mcpack` — 설치 가능한 빌드 결과물
+- `packs/CraftersWorldHeightLimitModifier/` — 수정된 팩 소스(압축 해제 상태)
+- `dist/CraftersWorldHeightLimitModifier.v.1.0.1.fixed.mcpack` — 설치용 빌드 결과물
+
+## 참고 자료
+
+- [Data Driven Overworld Height and Void Generation | Microsoft Learn](https://learn.microsoft.com/en-us/minecraft/creator/documents/datadrivenoverworldheight?view=minecraft-bedrock-stable)
+- [World Height Limit Modifier | 8Crafter Wiki](https://wiki.8crafter.com/main/add-ons/world-height-limit-modifier)

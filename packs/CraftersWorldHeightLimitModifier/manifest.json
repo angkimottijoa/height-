@@ -1,36 +1,51 @@
 {
-  "format_version": 2,
-  "header": {
-    "description": "v.1.0.0 8Crafter's World Height Limit Modifier. ",
-    "name": "v.1.0.0 8Crafter's World Height Limit Modifier",
-    "uuid": "1998c1b3-511f-40ee-acad-bf33dc13a39b",
-    "version": [
-      1,
-      0,
-      0
+    "format_version": 2,
+    "header": {
+        "description": "8Crafter's World Height Limit Modifier - fixed build. Restores the working void-based height override, corrects invalid sub-packs and manifest entries.",
+        "name": "World Height Limit Modifier (fixed)",
+        "uuid": "1998c1b3-511f-40ee-acad-bf33dc13a39b",
+        "version": [
+            1,
+            0,
+            1
+        ],
+        "min_engine_version": [
+            1,
+            18,
+            30
+        ]
+    },
+    "modules": [
+        {
+            "description": "pack.description",
+            "type": "data",
+            "uuid": "46c8e4d4-6fab-4600-83f9-cb414f75a7fe",
+            "version": [
+                1,
+                0,
+                1
+            ]
+        }
     ],
-    "min_engine_version": [
-      1,
-      18,
-      30
-    ]
-  },
-  "modules": [
-    {
-      "description": "pack.description",
-      "type": "data",
-      "uuid": "46c8e4d4-6fab-4600-83f9-cb414f75a7fe",
-      "version": [
-        1,
-        0,
-        0
-      ]
-    }
-  ],
     "subpacks": [
         {
-            "folder_name": "OFFs",
+            "folder_name": "OFFS",
             "name": "§l§4OFF",
+            "memory_tier": 0
+        },
+        {
+            "folder_name": "TEST-64-512",
+            "name": "§e[TEST] -64 to 512 (keep terrain)",
+            "memory_tier": 0
+        },
+        {
+            "folder_name": "TEST-512-320",
+            "name": "§e[TEST] -512 to 320 (keep terrain)",
+            "memory_tier": 0
+        },
+        {
+            "folder_name": "TEST-512-512",
+            "name": "§e[TEST] -512 to 512 (keep terrain)",
             "memory_tier": 0
         },
         {
@@ -49,8 +64,8 @@
             "memory_tier": 0
         },
         {
-            "folder_name": "-512--412",
-            "name": "-512 to -412",
+            "folder_name": "-512--416",
+            "name": "-512 to -416",
             "memory_tier": 0
         },
         {
@@ -102,42 +117,12 @@
             "folder_name": "-512-64",
             "name": "-512 to 64",
             "memory_tier": 0
-        },/*
-        {
-            "folder_name": "-512-80",
-            "name": "-512 to 80",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-512-96",
-            "name": "-512 to 96",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-512-112",
-            "name": "-512 to 112",
-            "memory_tier": 0
-        },*/
+        },
         {
             "folder_name": "-512-128",
             "name": "-512 to 128",
             "memory_tier": 0
-        },/*
-        {
-            "folder_name": "-512-144",
-            "name": "-512 to 144",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-512-160",
-            "name": "-512 to 160",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-512-192",
-            "name": "-512 to 192",
-            "memory_tier": 0
-        },*/
+        },
         {
             "folder_name": "-512-256",
             "name": "-512 to 256",
@@ -154,8 +139,8 @@
             "memory_tier": 0
         },
         {
-            "folder_name": "-512-412",
-            "name": "-512 to 412",
+            "folder_name": "-512-416",
+            "name": "-512 to 416",
             "memory_tier": 0
         },
         {
@@ -207,37 +192,12 @@
             "folder_name": "-320-80",
             "name": "-320 to 80",
             "memory_tier": 0
-        },/*
-        {
-            "folder_name": "-320-96",
-            "name": "-320 to 96",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-320-112",
-            "name": "-320 to 112",
-            "memory_tier": 0
-        },*/
+        },
         {
             "folder_name": "-320-128",
             "name": "-320 to 128",
             "memory_tier": 0
-        },/*
-        {
-            "folder_name": "-320-144",
-            "name": "-320 to 144",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-320-160",
-            "name": "-320 to 160",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-320-192",
-            "name": "-320 to 192",
-            "memory_tier": 0
-        },*/
+        },
         {
             "folder_name": "-320-256",
             "name": "-320 to 256",
@@ -247,32 +207,12 @@
             "folder_name": "-320-320",
             "name": "-320 to 320",
             "memory_tier": 0
-        },/*
-        {
-            "folder_name": "-320-384",
-            "name": "-320 to 384",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-320-412",
-            "name": "-320 to 412",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-320-448",
-            "name": "-320 to 448",
-            "memory_tier": 0
-        },*/
+        },
         {
             "folder_name": "-320-512",
             "name": "-320 to 512",
             "memory_tier": 0
-        },/*
-        {
-            "folder_name": "-256--256",
-            "name": "-256 to -256",
-            "memory_tier": 0
-        },*///Same as OFFS settings. 
+        },
         {
             "folder_name": "-256--128",
             "name": "-256 to -128",
@@ -307,37 +247,12 @@
             "folder_name": "-256-80",
             "name": "-256 to 80",
             "memory_tier": 0
-        },/*
-        {
-            "folder_name": "-256-96",
-            "name": "-256 to 96",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-256-112",
-            "name": "-256 to 112",
-            "memory_tier": 0
-        },*/
+        },
         {
             "folder_name": "-256-128",
             "name": "-256 to 128",
             "memory_tier": 0
-        },/*
-        {
-            "folder_name": "-256-144",
-            "name": "-256 to 144",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-256-160",
-            "name": "-256 to 160",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-256-192",
-            "name": "-256 to 192",
-            "memory_tier": 0
-        },*/
+        },
         {
             "folder_name": "-256-256",
             "name": "-256 to 256",
@@ -347,22 +262,7 @@
             "folder_name": "-256-320",
             "name": "-256 to 320",
             "memory_tier": 0
-        },/*
-        {
-            "folder_name": "-256-384",
-            "name": "-256 to 384",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-256-412",
-            "name": "-256 to 412",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-256-448",
-            "name": "-256 to 448",
-            "memory_tier": 0
-        },*/
+        },
         {
             "folder_name": "-256-512",
             "name": "-256 to 512",
@@ -397,37 +297,12 @@
             "folder_name": "-128-80",
             "name": "-128 to 80",
             "memory_tier": 0
-        },/*
-        {
-            "folder_name": "-128-96",
-            "name": "-128 to 96",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-128-112",
-            "name": "-128 to 112",
-            "memory_tier": 0
-        },*/
+        },
         {
             "folder_name": "-128-128",
             "name": "-128 to 128",
             "memory_tier": 0
-        },/*
-        {
-            "folder_name": "-128-144",
-            "name": "-128 to 144",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-128-160",
-            "name": "-128 to 160",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-128-192",
-            "name": "-128 to 192",
-            "memory_tier": 0
-        },*/
+        },
         {
             "folder_name": "-128-256",
             "name": "-128 to 256",
@@ -437,22 +312,7 @@
             "folder_name": "-128-320",
             "name": "-128 to 320",
             "memory_tier": 0
-        },/*
-        {
-            "folder_name": "-128-384",
-            "name": "-128 to 384",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-128-412",
-            "name": "-128 to 412",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-128-448",
-            "name": "-128 to 448",
-            "memory_tier": 0
-        },*/
+        },
         {
             "folder_name": "-128-512",
             "name": "-128 to 512",
@@ -472,52 +332,17 @@
             "folder_name": "-96-32",
             "name": "-96 to 32",
             "memory_tier": 0
-        },/*
-        {
-            "folder_name": "-96-48",
-            "name": "-96 to 48",
-            "memory_tier": 0
-        },*/
+        },
         {
             "folder_name": "-96-64",
             "name": "-96 to 64",
             "memory_tier": 0
-        },/*
-        {
-            "folder_name": "-96-80",
-            "name": "-96 to 80",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-96-96",
-            "name": "-96 to 96",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-96-112",
-            "name": "-96 to 112",
-            "memory_tier": 0
-        },*/
+        },
         {
             "folder_name": "-96-128",
             "name": "-96 to 128",
             "memory_tier": 0
-        },/*
-        {
-            "folder_name": "-96-144",
-            "name": "-96 to 144",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-96-160",
-            "name": "-96 to 160",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-96-192",
-            "name": "-96 to 192",
-            "memory_tier": 0
-        },*/
+        },
         {
             "folder_name": "-96-256",
             "name": "-96 to 256",
@@ -527,22 +352,7 @@
             "folder_name": "-96-320",
             "name": "-96 to 320",
             "memory_tier": 0
-        },/*
-        {
-            "folder_name": "-96-384",
-            "name": "-96 to 384",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-96-412",
-            "name": "-96 to 412",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-96-448",
-            "name": "-96 to 448",
-            "memory_tier": 0
-        },*/
+        },
         {
             "folder_name": "-96-512",
             "name": "-96 to 512",
@@ -562,52 +372,17 @@
             "folder_name": "-80-32",
             "name": "-80 to 32",
             "memory_tier": 0
-        },/*
-        {
-            "folder_name": "-80-48",
-            "name": "-80 to 48",
-            "memory_tier": 0
-        },*/
+        },
         {
             "folder_name": "-80-64",
             "name": "-80 to 64",
             "memory_tier": 0
-        },/*
-        {
-            "folder_name": "-80-80",
-            "name": "-80 to 80",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-80-96",
-            "name": "-80 to 96",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-80-112",
-            "name": "-80 to 112",
-            "memory_tier": 0
-        },*/
+        },
         {
             "folder_name": "-80-128",
             "name": "-80 to 128",
             "memory_tier": 0
-        },/*
-        {
-            "folder_name": "-80-144",
-            "name": "-80 to 144",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-80-160",
-            "name": "-80 to 160",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-80-192",
-            "name": "-80 to 192",
-            "memory_tier": 0
-        },*/
+        },
         {
             "folder_name": "-80-256",
             "name": "-80 to 256",
@@ -627,20 +402,25 @@
             "folder_name": "-80-384",
             "name": "-80 to 384",
             "memory_tier": 0
-        },/*
-        {
-            "folder_name": "-80-412",
-            "name": "-80 to 412",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-80-448",
-            "name": "-80 to 448",
-            "memory_tier": 0
-        },*/
+        },
         {
             "folder_name": "-80-512",
             "name": "-80 to 512",
+            "memory_tier": 0
+        },
+        {
+            "folder_name": "-64--48",
+            "name": "-64 to -48",
+            "memory_tier": 0
+        },
+        {
+            "folder_name": "-64--32",
+            "name": "-64 to -32",
+            "memory_tier": 0
+        },
+        {
+            "folder_name": "-64--16",
+            "name": "-64 to -16",
             "memory_tier": 0
         },
         {
@@ -657,52 +437,17 @@
             "folder_name": "-64-32",
             "name": "-64 to 32",
             "memory_tier": 0
-        },/*
-        {
-            "folder_name": "-64-48",
-            "name": "-64 to 48",
-            "memory_tier": 0
-        },*/
+        },
         {
             "folder_name": "-64-64",
             "name": "-64 to 64",
             "memory_tier": 0
-        },/*
-        {
-            "folder_name": "-64-80",
-            "name": "-64 to 80",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-64-96",
-            "name": "-64 to 96",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-64-112",
-            "name": "-64 to 112",
-            "memory_tier": 0
-        },*/
+        },
         {
             "folder_name": "-64-128",
             "name": "-64 to 128",
             "memory_tier": 0
-        },/*
-        {
-            "folder_name": "-64-144",
-            "name": "-64 to 144",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-64-160",
-            "name": "-64 to 160",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-64-192",
-            "name": "-64 to 192",
-            "memory_tier": 0
-        },*/
+        },
         {
             "folder_name": "-64-256",
             "name": "-64 to 256",
@@ -724,8 +469,8 @@
             "memory_tier": 0
         },
         {
-            "folder_name": "-64-412",
-            "name": "-64 to 412",
+            "folder_name": "-64-416",
+            "name": "-64 to 416",
             "memory_tier": 0
         },
         {
@@ -762,42 +507,12 @@
             "folder_name": "-48-64",
             "name": "-48 to 64",
             "memory_tier": 0
-        },/*
-        {
-            "folder_name": "-48-80",
-            "name": "-48 to 80",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-48-96",
-            "name": "-48 to 96",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-48-112",
-            "name": "-48 to 112",
-            "memory_tier": 0
-        },*/
+        },
         {
             "folder_name": "-48-128",
             "name": "-48 to 128",
             "memory_tier": 0
-        },/*
-        {
-            "folder_name": "-48-144",
-            "name": "-48 to 144",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-48-160",
-            "name": "-48 to 160",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-48-192",
-            "name": "-48 to 192",
-            "memory_tier": 0
-        },*/
+        },
         {
             "folder_name": "-48-256",
             "name": "-48 to 256",
@@ -807,22 +522,7 @@
             "folder_name": "-48-320",
             "name": "-48 to 320",
             "memory_tier": 0
-        },/*
-        {
-            "folder_name": "-48-384",
-            "name": "-48 to 384",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-48-412",
-            "name": "-48 to 412",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-48-448",
-            "name": "-48 to 448",
-            "memory_tier": 0
-        },*/
+        },
         {
             "folder_name": "-48-512",
             "name": "-48 to 512",
@@ -857,37 +557,12 @@
             "folder_name": "-32-80",
             "name": "-32 to 80",
             "memory_tier": 0
-        },/*
-        {
-            "folder_name": "-32-96",
-            "name": "-32 to 96",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-32-112",
-            "name": "-32 to 112",
-            "memory_tier": 0
-        },*/
+        },
         {
             "folder_name": "-32-128",
             "name": "-32 to 128",
             "memory_tier": 0
-        },/*
-        {
-            "folder_name": "-32-144",
-            "name": "-32 to 144",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-32-160",
-            "name": "-32 to 160",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-32-192",
-            "name": "-32 to 192",
-            "memory_tier": 0
-        },*/
+        },
         {
             "folder_name": "-32-256",
             "name": "-32 to 256",
@@ -897,22 +572,7 @@
             "folder_name": "-32-320",
             "name": "-32 to 320",
             "memory_tier": 0
-        },/*
-        {
-            "folder_name": "-32-384",
-            "name": "-32 to 384",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-32-412",
-            "name": "-32 to 412",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-32-448",
-            "name": "-32 to 448",
-            "memory_tier": 0
-        },*/
+        },
         {
             "folder_name": "-32-512",
             "name": "-32 to 512",
@@ -947,37 +607,12 @@
             "folder_name": "-16-80",
             "name": "-16 to 80",
             "memory_tier": 0
-        },/*
-        {
-            "folder_name": "-16-96",
-            "name": "-16 to 96",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-16-112",
-            "name": "-16 to 112",
-            "memory_tier": 0
-        },*/
+        },
         {
             "folder_name": "-16-128",
             "name": "-16 to 128",
             "memory_tier": 0
-        },/*
-        {
-            "folder_name": "-16-144",
-            "name": "-16 to 144",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-16-160",
-            "name": "-16 to 160",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-16-192",
-            "name": "-16 to 192",
-            "memory_tier": 0
-        },*/
+        },
         {
             "folder_name": "-16-256",
             "name": "-16 to 256",
@@ -987,22 +622,7 @@
             "folder_name": "-16-320",
             "name": "-16 to 320",
             "memory_tier": 0
-        },/*
-        {
-            "folder_name": "-16-384",
-            "name": "-16 to 384",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-16-412",
-            "name": "-16 to 412",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "-16-448",
-            "name": "-16 to 448",
-            "memory_tier": 0
-        },*/
+        },
         {
             "folder_name": "-16-512",
             "name": "-16 to 512",
@@ -1099,8 +719,8 @@
             "memory_tier": 0
         },
         {
-            "folder_name": "0-412",
-            "name": "0 to 412",
+            "folder_name": "0-416",
+            "name": "0 to 416",
             "memory_tier": 0
         },
         {
@@ -1127,37 +747,12 @@
             "folder_name": "64-80",
             "name": "64 to 80",
             "memory_tier": 0
-        },/*
-        {
-            "folder_name": "64-96",
-            "name": "64 to 96",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "64-112",
-            "name": "64 to 112",
-            "memory_tier": 0
-        },*/
+        },
         {
             "folder_name": "64-128",
             "name": "64 to 128",
             "memory_tier": 0
-        },/*
-        {
-            "folder_name": "64-144",
-            "name": "64 to 144",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "64-160",
-            "name": "64 to 160",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "64-192",
-            "name": "64 to 192",
-            "memory_tier": 0
-        },*/
+        },
         {
             "folder_name": "64-256",
             "name": "64 to 256",
@@ -1167,36 +762,11 @@
             "folder_name": "64-320",
             "name": "64 to 320",
             "memory_tier": 0
-        },/*
-        {
-            "folder_name": "64-384",
-            "name": "64 to 384",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "64-412",
-            "name": "64 to 412",
-            "memory_tier": 0
-        },*//*
-        {
-            "folder_name": "64-448",
-            "name": "64 to 448",
-            "memory_tier": 0
-        },*/
+        },
         {
             "folder_name": "64-512",
             "name": "64 to 512",
             "memory_tier": 0
-        },
-        {
-            "folder_name": "-80-366",
-            "name": "-80 to 336",
-            "memory_tier": 0
-        },
-        {
-            "folder_name": "-512-512",
-            "name": "-512 to 512",
-            "memory_tier": -9999999999999
         }
     ]
 }
