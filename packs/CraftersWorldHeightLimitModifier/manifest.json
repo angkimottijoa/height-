@@ -7,7 +7,7 @@
         "version": [
             1,
             0,
-            1
+            2
         ],
         "min_engine_version": [
             1,
@@ -23,7 +23,7 @@
             "version": [
                 1,
                 0,
-                1
+                2
             ]
         }
     ],
@@ -35,17 +35,17 @@
         },
         {
             "folder_name": "TEST-64-512",
-            "name": "§e[TEST] -64 to 512 (keep terrain)",
+            "name": "§a[실험] -64~512 (지형유지 시도)",
             "memory_tier": 0
         },
         {
             "folder_name": "TEST-512-320",
-            "name": "§e[TEST] -512 to 320 (keep terrain)",
+            "name": "§a[실험] -512~320 (지형유지 시도)",
             "memory_tier": 0
         },
         {
             "folder_name": "TEST-512-512",
-            "name": "§e[TEST] -512 to 512 (keep terrain)",
+            "name": "§a[실험] -512~512 (지형유지 시도)",
             "memory_tier": 0
         },
         {

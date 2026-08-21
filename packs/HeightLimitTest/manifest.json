@@ -1,0 +1,52 @@
+{
+    "format_version": 2,
+    "header": {
+        "description": "Diagnostic pack. Use on a NEW test world only.",
+        "name": "Height Limit A/B Test",
+        "uuid": "daee74d0-2f68-4598-9df5-6977b2755b09",
+        "version": [
+            1,
+            0,
+            0
+        ],
+        "min_engine_version": [
+            1,
+            18,
+            30
+        ]
+    },
+    "modules": [
+        {
+            "description": "pack.description",
+            "type": "data",
+            "uuid": "f9fff676-f620-4f32-a5eb-ba175cdb5add",
+            "version": [
+                1,
+                0,
+                0
+            ]
+        }
+    ],
+    "subpacks": [
+        {
+            "folder_name": "OFF",
+            "name": "§l§4OFF (바닐라)",
+            "memory_tier": 0
+        },
+        {
+            "folder_name": "A-nogen--64-512",
+            "name": "§a§lA§r §a-64~512  generation 없음 (검증 대상)",
+            "memory_tier": 0
+        },
+        {
+            "folder_name": "B-void--64-512",
+            "name": "§e§lB§r §e-64~512  void (기존 동작 확인용)",
+            "memory_tier": 0
+        },
+        {
+            "folder_name": "C-nogen--512-512",
+            "name": "§b§lC§r §b-512~512 generation 없음",
+            "memory_tier": 0
+        }
+    ]
+}
