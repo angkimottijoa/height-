@@ -1,0 +1,30 @@
+{
+    "format_version": 2,
+    "header": {
+        "name": "§b마법진 파티클§r (Magic Circle Particles)",
+        "description": "바닥에 그려지는 회전 마법진 커스텀 파티클 세트.\n/particle magic:circle_outer ~ ~ ~",
+        "uuid": "4d69097e-895c-492b-a9c6-35dc527a5c0c",
+        "version": [
+            1,
+            0,
+            0
+        ],
+        "min_engine_version": [
+            1,
+            20,
+            0
+        ]
+    },
+    "modules": [
+        {
+            "description": "Magic circle particle effects and textures",
+            "type": "resources",
+            "uuid": "dbd24a74-9e0d-4e69-8043-481fcd2e5004",
+            "version": [
+                1,
+                0,
+                0
+            ]
+        }
+    ]
+}

@@ -1,0 +1,40 @@
+{
+    "format_version": 2,
+    "header": {
+        "name": "§b마법진 소환 함수§r (Magic Circle Functions)",
+        "description": "/function magic/cast 로 마법진을 소환합니다. 리소스팩이 함께 필요합니다.",
+        "uuid": "b467300b-de0d-422b-a4d8-7d6382201e43",
+        "version": [
+            1,
+            0,
+            0
+        ],
+        "min_engine_version": [
+            1,
+            20,
+            0
+        ]
+    },
+    "modules": [
+        {
+            "description": "Magic circle summon functions",
+            "type": "data",
+            "uuid": "776c86f9-f8b6-4057-9289-52b06a1c5786",
+            "version": [
+                1,
+                0,
+                0
+            ]
+        }
+    ],
+    "dependencies": [
+        {
+            "uuid": "4d69097e-895c-492b-a9c6-35dc527a5c0c",
+            "version": [
+                1,
+                0,
+                0
+            ]
+        }
+    ]
+}

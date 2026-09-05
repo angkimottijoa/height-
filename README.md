@@ -3,6 +3,9 @@
 `8Crafter's World Height Limit Modifier` 팩의 수정 빌드와, **"높이 확장 + 지형 유지"가
 실제로 가능한지 판별하는 진단 팩**입니다.
 
+> 별개의 애드온: **[마법진 커스텀 파티클](docs/MAGIC_CIRCLE.md)** — 바닥에 그려지고
+> 회전하는 마법진 파티클 세트 (`dist/MagicCircle.mcaddon`)
+
 ## 지금 할 일 (요약)
 
 | 파일 | 용도 |
@@ -139,7 +142,9 @@ manifest의 서브팩 목록과 실제 폴더가 **정확히 1:1로 일치**하�
 
 - `packs/CraftersWorldHeightLimitModifier/` — 실사용 팩 소스
 - `packs/HeightLimitTest/` — A/B 진단 팩 소스
-- `dist/` — 설치용 `.mcpack` 빌드 결과물
+- `packs/MagicCircleRP/`, `packs/MagicCircleBP/` — 마법진 파티클 애드온 소스 ([문서](docs/MAGIC_CIRCLE.md))
+- `tools/` — 마법진 텍스처 생성기 / 빌드·검증 스크립트
+- `dist/` — 설치용 `.mcpack` · `.mcaddon` 빌드 결과물
 
 ## 참고 자료
 
