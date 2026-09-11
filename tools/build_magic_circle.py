@@ -29,8 +29,22 @@ PACKS = os.path.join(ROOT, "packs")
 DIST = os.path.join(ROOT, "dist")
 RP = os.path.join(PACKS, "MagicCircleRP")
 BP = os.path.join(PACKS, "MagicCircleBP")
+CMD = os.path.join(PACKS, "MagicCircleCmd")
 
 MATERIALS = {"particles_alpha", "particles_blend", "particles_add", "particles_opaque"}
+
+# Vanilla particles the command pack is allowed to use. Everything here is on
+# the Bedrock wiki's "works without issues" list, so none of them spam the
+# content log: https://wiki.bedrock.dev/particles/vanilla-particles
+VANILLA_PARTICLES = {
+    "minecraft:endrod",
+    "minecraft:blue_flame_particle",
+    "minecraft:snowflake_particle",
+    "minecraft:knockback_roar_particle",
+    "minecraft:critical_hit_emitter",
+}
+
+VANILLA_SOUNDS = {"beacon.activate", "random.levelup", "random.explode"}
 
 errors: list[str] = []
 
@@ -97,29 +111,78 @@ def check_particles() -> set[str]:
     return set(ids)
 
 
-def check_functions(defined: set[str]) -> None:
-    fdir = os.path.join(BP, "functions")
+def function_names(fdir: str) -> set[str]:
     names = set()
     for base, _, files in os.walk(fdir):
         for f in files:
             if f.endswith(".mcfunction"):
                 rel = os.path.relpath(os.path.join(base, f), fdir)
                 names.add(rel[:-len(".mcfunction")].replace(os.sep, "/"))
+    return names
+
+
+def check_functions(pack: str, particles: set[str],
+                    sounds: set[str] | None = None) -> None:
+    """Every particle, sound and function a .mcfunction names must exist."""
+    fdir = os.path.join(pack, "functions")
+    names = function_names(fdir)
+    label = os.path.basename(pack)
+
+    # a command can appear bare or behind `execute ... run`
+    pat_particle = re.compile(r"(?:^|\brun )particle\s+(\S+)")
+    pat_function = re.compile(r"(?:^|\brun )function\s+(\S+)")
+    pat_sound = re.compile(r"(?:^|\brun )playsound\s+(\S+)")
 
     for base, _, files in os.walk(fdir):
         for f in sorted(files):
-            path = os.path.join(base, f)
-            with open(path, encoding="utf-8") as fh:
+            if not f.endswith(".mcfunction"):
+                continue
+            with open(os.path.join(base, f), encoding="utf-8") as fh:
                 for n, line in enumerate(fh, 1):
                     line = line.strip()
                     if not line or line.startswith("#"):
                         continue
-                    m = re.match(r"particle\s+(\S+)", line)
-                    if m and m.group(1) not in defined:
-                        fail(f"{f}:{n}: undefined particle '{m.group(1)}'")
-                    m = re.match(r"function\s+(\S+)", line)
-                    if m and m.group(1) not in names:
-                        fail(f"{f}:{n}: unknown function '{m.group(1)}'")
+                    for m in pat_particle.finditer(line):
+                        if m.group(1) not in particles:
+                            fail(f"{label}/{f}:{n}: unknown particle "
+                                 f"'{m.group(1)}'")
+                    for m in pat_function.finditer(line):
+                        if m.group(1) not in names:
+                            fail(f"{label}/{f}:{n}: unknown function "
+                                 f"'{m.group(1)}'")
+                    if sounds is not None:
+                        for m in pat_sound.finditer(line):
+                            if m.group(1) not in sounds:
+                                fail(f"{label}/{f}:{n}: unvetted sound "
+                                     f"'{m.group(1)}'")
+
+    tick = os.path.join(fdir, "tick.json")
+    if os.path.isfile(tick):
+        with open(tick, encoding="utf-8") as fh:
+            for value in json.load(fh).get("values", []):
+                if value not in names:
+                    fail(f"{label}/functions/tick.json: '{value}' does not exist")
+
+
+def check_scoreboards() -> None:
+    """Objectives the command pack reads must be created by mc/init."""
+    fdir = os.path.join(CMD, "functions")
+    with open(os.path.join(fdir, "mc", "init.mcfunction"), encoding="utf-8") as fh:
+        created = set(re.findall(r"scoreboard objectives add (\S+)", fh.read()))
+
+    used: set[str] = set()
+    for base, _, files in os.walk(fdir):
+        for f in files:
+            if not f.endswith(".mcfunction"):
+                continue
+            with open(os.path.join(base, f), encoding="utf-8") as fh:
+                text = fh.read()
+            used |= set(re.findall(r"scoreboard players \w+ \S+ (\S+)", text))
+            used |= set(re.findall(r"if score @\w+ (\S+) matches", text))
+
+    for obj in sorted(used - created):
+        fail(f"MagicCircleCmd: objective '{obj}' is used but mc/init never "
+             f"creates it")
 
 
 def check_manifests() -> None:
@@ -167,11 +230,18 @@ def build() -> None:
         zip_dir(zf, RP, "")
     print(f"  dist/MagicCircleParticles.mcpack {os.path.getsize(pack):,} bytes")
 
+    cmd = os.path.join(DIST, "MagicCircleCommands.mcpack")
+    with zipfile.ZipFile(cmd, "w", zipfile.ZIP_DEFLATED) as zf:
+        zip_dir(zf, CMD, "")
+    print(f"  dist/MagicCircleCommands.mcpack  {os.path.getsize(cmd):,} bytes")
+
 
 def main() -> int:
     print("validating:")
     defined = check_particles()
-    check_functions(defined)
+    check_functions(BP, defined)
+    check_functions(CMD, VANILLA_PARTICLES, VANILLA_SOUNDS)
+    check_scoreboards()
     check_manifests()
 
     if errors:
@@ -179,7 +249,9 @@ def main() -> int:
             print(f"  ERROR  {e}")
         return 1
 
-    print(f"  {len(defined)} particle effects OK")
+    cmd_funcs = len(function_names(os.path.join(CMD, "functions")))
+    print(f"  {len(defined)} custom particle effects OK")
+    print(f"  {cmd_funcs} command functions OK (vanilla particles only)")
     print("building:")
     build()
     return 0

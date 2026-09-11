@@ -1,0 +1,77 @@
+# 자동 생성 파일 — 직접 수정하지 마세요.
+# tools/gen_magic_circle_commands.py 를 고치고 다시 실행하세요.
+# 시선 방향으로 뻗는 빔 (즉시 1회)
+# 반드시 시전자를 @s 로 두고 실행하세요:
+#   /execute as @p at @s run function mc/spell/beam
+# ^(로컬 좌표) 미지원 환경이면 대신 mc/spell/throw 방식을 쓰세요.
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^0.8 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^1.4 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^1.4 run particle minecraft:endrod ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^2.0 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^2.6 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^2.6 run particle minecraft:endrod ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^3.2 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^3.8 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^3.8 run particle minecraft:endrod ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^3.8 run particle minecraft:knockback_roar_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^4.4 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^5.0 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^5.0 run particle minecraft:endrod ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^5.6 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^6.2 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^6.2 run particle minecraft:endrod ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^6.8 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^7.4 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^7.4 run particle minecraft:endrod ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^7.4 run particle minecraft:knockback_roar_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^8.0 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^8.6 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^8.6 run particle minecraft:endrod ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^9.2 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^9.8 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^9.8 run particle minecraft:endrod ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^10.4 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^11.0 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^11.0 run particle minecraft:endrod ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^11.0 run particle minecraft:knockback_roar_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^11.6 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^12.2 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^12.2 run particle minecraft:endrod ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^12.8 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^13.4 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^13.4 run particle minecraft:endrod ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^14.0 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^14.6 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^14.6 run particle minecraft:endrod ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^14.6 run particle minecraft:knockback_roar_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^15.2 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^15.8 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^15.8 run particle minecraft:endrod ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^16.4 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^17.0 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^17.0 run particle minecraft:endrod ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^17.6 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^18.2 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^18.2 run particle minecraft:endrod ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^18.2 run particle minecraft:knockback_roar_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^18.8 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^19.4 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^19.4 run particle minecraft:endrod ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^20.0 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^20.6 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^20.6 run particle minecraft:endrod ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^21.2 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^21.8 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^21.8 run particle minecraft:endrod ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^21.8 run particle minecraft:knockback_roar_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^22.4 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^23.0 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^23.0 run particle minecraft:endrod ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^23.6 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^24.2 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^24.2 run particle minecraft:endrod ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^24.8 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^25.4 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^25.4 run particle minecraft:endrod ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^25.4 run particle minecraft:knockback_roar_particle ~0.00 ~0.00 ~0.00
+execute positioned ~ ~1.5 ~ rotated as @s positioned ^ ^ ^26.0 run particle minecraft:snowflake_particle ~0.00 ~0.00 ~0.00
