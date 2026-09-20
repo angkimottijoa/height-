@@ -1,0 +1,30 @@
+{
+    "format_version": 2,
+    "header": {
+        "description": "Raises the Overworld build limit to Y=512 while keeping normal terrain generation. No void generator.",
+        "name": "Wild Height Unlock (-64 ~ 512)",
+        "uuid": "3bb8bea4-bed7-4aa5-88a2-8d137d936a43",
+        "version": [
+            1,
+            0,
+            0
+        ],
+        "min_engine_version": [
+            1,
+            18,
+            30
+        ]
+    },
+    "modules": [
+        {
+            "description": "Overworld dimension bounds only",
+            "type": "data",
+            "uuid": "aaae907c-d21e-4d83-835b-debf7c76a84f",
+            "version": [
+                1,
+                0,
+                0
+            ]
+        }
+    ]
+}

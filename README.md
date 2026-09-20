@@ -7,8 +7,53 @@
 
 | 파일 | 용도 |
 |---|---|
-| `dist/HeightLimitTest.mcpack` | **먼저 이걸 테스트.** 새 월드에서 2분이면 결론이 납니다 |
-| `dist/CraftersWorldHeightLimitModifier.v.1.0.2.fixed.mcpack` | 실사용 팩 (높이 제한 정상 동작) |
+| `dist/WildHeightUnlock.mcpack` | **야생 월드용.** 지형 유지 + 위로 512까지. 서브팩 선택 없음 |
+| `dist/HeightLimitTest.mcpack` | 위 팩이 안 먹을 때 원인을 가리는 A/B 진단 팩 |
+| `dist/CraftersWorldHeightLimitModifier.v.1.0.2.fixed.mcpack` | 범위를 세밀하게 고르고 싶을 때 (void 생성기 사용) |
+
+---
+
+## 0. 야생 월드에서 높이 제한만 풀기 (`WildHeightUnlock`)
+
+공허 차원 없이, 이미 플레이 중인 월드에 그대로 얹는 용도입니다.
+
+```json
+{
+  "format_version": "1.18.0",
+  "minecraft:dimension": {
+    "description": { "identifier": "minecraft:overworld" },
+    "components": {
+      "minecraft:dimension_bounds": { "min": -64, "max": 512 }
+    }
+  }
+}
+```
+
+**`minecraft:generation`이 없는 것이 전부입니다.** 공허가 생기는 원인은 높이 변경이 아니라
+`generator_type: "void"`이므로, 그 컴포넌트를 통째로 빼면 차원은 기본 생성기를 씁니다.
+`min`을 바닐라와 같은 `-64`로 두었기 때문에 기존 청크가 잘려 나갈 일도 없고, 위쪽으로만
+192칸(320 → 512) 늘어납니다.
+
+### 적용
+
+1. 월드 **백업**
+2. `dist/WildHeightUnlock.mcpack` 실행 → 설치
+3. 월드 설정 → 비헤이비어 팩에서 활성화 → 월드 재진입
+4. Y=320 위에 블록이 설치되는지 확인
+
+최대치를 바꾸고 싶으면 `max` 숫자 하나만 고치면 됩니다. 단 **16의 배수**, 상한 `512`,
+`max - min`은 16~1024 범위여야 합니다. (`316` 같은 값은 무효입니다 → `320`)
+
+### 되돌리기
+
+팩을 비활성화하면 바닐라 범위로 돌아옵니다. 단 그 사이 Y=320 위에 지어 둔 블록은
+범위 밖이 되어 사라진 것처럼 보이므로, 되돌리기 전에 정리하세요.
+
+### 안 될 경우
+
+Y=320에서 여전히 설치가 막히면 `dimension_bounds`가 무시된 것이고, 그건 **베드락이 오버월드
+생성기와 확장 범위를 동시에 지원하지 않는다**는 뜻입니다. 그때는 아래 2번 진단 팩으로
+`B`(void, 대조군)와 비교해 확정한 뒤, 3번의 사전 생성 방식으로 가야 합니다.
 
 ---
 
