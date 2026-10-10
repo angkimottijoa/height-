@@ -1,3 +1,5 @@
 __pycache__/
 *.pyc
 tools/debug_stick/jstest/*.json
+tools/arceon_dlc/jstest/defs.json
+tools/arceon_dlc/jstest/scripts/
