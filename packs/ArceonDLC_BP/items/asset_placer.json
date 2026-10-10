@@ -1,0 +1,20 @@
+{
+  "format_version": "1.21.80",
+  "minecraft:item": {
+    "description": {
+      "identifier": "arc:asset_placer",
+      "menu_category": {
+        "category": "equipment"
+      }
+    },
+    "components": {
+      "minecraft:icon": "echo_shard",
+      "minecraft:display_name": {
+        "value": "§e에셋 배치기"
+      },
+      "minecraft:max_stack_size": 1,
+      "minecraft:hand_equipped": true,
+      "minecraft:glint": true
+    }
+  }
+}

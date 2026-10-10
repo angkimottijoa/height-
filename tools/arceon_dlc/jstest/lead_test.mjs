@@ -1,0 +1,25 @@
+// Rotate + fill tools, undo.
+import { load, world, put, at, runTool, mc } from './harness.mjs';
+const { undo } = await import('./scripts/core/edit.js');
+const rotate = await load('tools/rotate.js');
+const fill = await load('tools/fill.js');
+let { dim, player } = world();
+for (let x = 0; x < 5; x++) put(dim, x, 0, 0, 'stone');
+put(dim, 4, 1, 0, 'oak_stairs', { weirdo_direction: 0 });
+await runTool(rotate, { yaw: 90, mode: 'inplace', center: 'selection' }, { player, region: [{ x: 0, y: 0, z: 0 }, { x: 4, y: 1, z: 0 }] });
+const cells = [...dim.map].filter(([, p]) => p.id !== 'minecraft:air').map(([k, p]) => k + '=' + p.id.slice(10) + (p.states.weirdo_direction ?? ''));
+console.log('rotate90', cells.sort().join(' '));
+console.assert(cells.length === 6, 'six blocks after rotate');
+console.assert(cells.some(c => c.endsWith('oak_stairs2')), 'east stair turns south');
+await undo(player);
+console.log('undo', at(dim, 4, 1, 0).id, at(dim, 4, 1, 0).states.weirdo_direction, at(dim, 2, 0, 2).id);
+({ dim, player } = world({ location: { x: 20.5, y: 0, z: 20.5 } }));
+for (let x = 0; x < 5; x++) put(dim, x, 0, 0, 'stone');
+await runTool(rotate, { yaw: 37, mode: 'copy' }, { player, region: [{ x: 0, y: 0, z: 0 }, { x: 4, y: 1, z: 0 }] });
+console.log('copy37', dim.count((k) => +k.split(',')[0] > 10), dim.count((k) => +k.split(',')[0] < 10), player.msgs.slice(-1)[0]);
+({ dim, player } = world());
+for (let x = 0; x < 6; x++) for (let z = 0; z < 6; z++) put(dim, x, 0, z, 'grass_block');
+await runTool(fill, { block: '50%stone,andesite', mask: 'grass_block', mode: 'all' }, { player, region: [{ x: 0, y: 0, z: 0 }, { x: 5, y: 3, z: 5 }] });
+console.log('fill replace', dim.count(k => true), dim.count((k, p) => p.id.endsWith('stone') || p.id.endsWith('andesite')), player.msgs.slice(-1)[0]);
+await runTool(fill, { block: 'snow_layer[2]', mask: '', mode: 'overlay' }, { player, region: [{ x: 0, y: 0, z: 0 }, { x: 5, y: 3, z: 5 }] });
+console.log('overlay', dim.count((k, p) => p.id.endsWith('snow_layer') && k.split(',')[1] === '1'), player.msgs.slice(-1)[0]);
