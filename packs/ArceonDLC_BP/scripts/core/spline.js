@@ -87,6 +87,7 @@ export class BezierPath {
                 }
         }
         this.segments = seg;
+        this.flat = ['x', 'y', 'z'].filter(k => points.every(p => p[k] === points[0][k]));
         this.length = 0;
         for (const s of seg) {
             s.measure();
@@ -97,12 +98,19 @@ export class BezierPath {
         return this.segments.length;
     }
     at(t) {
+        let p;
         if (t >= this.segments.length)
-            return this.segments[this.segments.length - 1].at(1);
-        if (t < 0)
-            t = 0;
-        const i = Math.floor(t);
-        return this.segments[i].at(t - i);
+            p = this.segments[this.segments.length - 1].at(1);
+        else {
+            if (t < 0)
+                t = 0;
+            const i = Math.floor(t);
+            p = this.segments[i].at(t - i);
+        }
+        // the cubic sum drifts (5 -> 4.9999...); keep flat axes exact
+        for (const k of this.flat)
+            p[k] = this.points[0][k];
+        return p;
     }
     /** Point at fraction f (0..1) of the whole path, by segment. */
     frac(f) {
