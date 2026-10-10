@@ -56,6 +56,50 @@
                     -2
                   ],
                   "material_instance": "m0"
+                },
+                "north": {
+                  "uv": [
+                    7,
+                    0
+                  ],
+                  "uv_size": [
+                    2,
+                    16
+                  ],
+                  "material_instance": "m0"
+                },
+                "south": {
+                  "uv": [
+                    7,
+                    0
+                  ],
+                  "uv_size": [
+                    2,
+                    16
+                  ],
+                  "material_instance": "m0"
+                },
+                "east": {
+                  "uv": [
+                    7,
+                    0
+                  ],
+                  "uv_size": [
+                    2,
+                    16
+                  ],
+                  "material_instance": "m0"
+                },
+                "west": {
+                  "uv": [
+                    7,
+                    0
+                  ],
+                  "uv_size": [
+                    2,
+                    16
+                  ],
+                  "material_instance": "m0"
                 }
               }
             }
@@ -89,6 +133,61 @@
                   "uv_size": [
                     -2,
                     16
+                  ],
+                  "material_instance": "m1"
+                },
+                "south": {
+                  "uv": [
+                    7,
+                    0
+                  ],
+                  "uv_size": [
+                    2,
+                    16
+                  ],
+                  "material_instance": "m1"
+                },
+                "east": {
+                  "uv": [
+                    7,
+                    0
+                  ],
+                  "uv_size": [
+                    2,
+                    16
+                  ],
+                  "material_instance": "m1"
+                },
+                "west": {
+                  "uv": [
+                    7,
+                    0
+                  ],
+                  "uv_size": [
+                    2,
+                    16
+                  ],
+                  "material_instance": "m1"
+                },
+                "up": {
+                  "uv": [
+                    9,
+                    9
+                  ],
+                  "uv_size": [
+                    -2,
+                    -2
+                  ],
+                  "material_instance": "m1"
+                },
+                "down": {
+                  "uv": [
+                    9,
+                    9
+                  ],
+                  "uv_size": [
+                    -2,
+                    -2
                   ],
                   "material_instance": "m1"
                 }
@@ -126,6 +225,61 @@
                     16
                   ],
                   "material_instance": "m1"
+                },
+                "north": {
+                  "uv": [
+                    7,
+                    0
+                  ],
+                  "uv_size": [
+                    2,
+                    16
+                  ],
+                  "material_instance": "m1"
+                },
+                "south": {
+                  "uv": [
+                    7,
+                    0
+                  ],
+                  "uv_size": [
+                    2,
+                    16
+                  ],
+                  "material_instance": "m1"
+                },
+                "west": {
+                  "uv": [
+                    7,
+                    0
+                  ],
+                  "uv_size": [
+                    2,
+                    16
+                  ],
+                  "material_instance": "m1"
+                },
+                "up": {
+                  "uv": [
+                    9,
+                    9
+                  ],
+                  "uv_size": [
+                    -2,
+                    -2
+                  ],
+                  "material_instance": "m1"
+                },
+                "down": {
+                  "uv": [
+                    9,
+                    9
+                  ],
+                  "uv_size": [
+                    -2,
+                    -2
+                  ],
+                  "material_instance": "m1"
                 }
               }
             }
@@ -159,6 +313,61 @@
                   "uv_size": [
                     2,
                     16
+                  ],
+                  "material_instance": "m1"
+                },
+                "north": {
+                  "uv": [
+                    7,
+                    0
+                  ],
+                  "uv_size": [
+                    2,
+                    16
+                  ],
+                  "material_instance": "m1"
+                },
+                "south": {
+                  "uv": [
+                    7,
+                    0
+                  ],
+                  "uv_size": [
+                    2,
+                    16
+                  ],
+                  "material_instance": "m1"
+                },
+                "west": {
+                  "uv": [
+                    7,
+                    0
+                  ],
+                  "uv_size": [
+                    2,
+                    16
+                  ],
+                  "material_instance": "m1"
+                },
+                "up": {
+                  "uv": [
+                    9,
+                    9
+                  ],
+                  "uv_size": [
+                    -2,
+                    -2
+                  ],
+                  "material_instance": "m1"
+                },
+                "down": {
+                  "uv": [
+                    9,
+                    9
+                  ],
+                  "uv_size": [
+                    -2,
+                    -2
                   ],
                   "material_instance": "m1"
                 }
@@ -199,6 +408,61 @@
                   "uv_size": [
                     -2,
                     16
+                  ],
+                  "material_instance": "m1"
+                },
+                "south": {
+                  "uv": [
+                    7,
+                    0
+                  ],
+                  "uv_size": [
+                    2,
+                    16
+                  ],
+                  "material_instance": "m1"
+                },
+                "east": {
+                  "uv": [
+                    7,
+                    0
+                  ],
+                  "uv_size": [
+                    2,
+                    16
+                  ],
+                  "material_instance": "m1"
+                },
+                "west": {
+                  "uv": [
+                    7,
+                    0
+                  ],
+                  "uv_size": [
+                    2,
+                    16
+                  ],
+                  "material_instance": "m1"
+                },
+                "up": {
+                  "uv": [
+                    9,
+                    9
+                  ],
+                  "uv_size": [
+                    -2,
+                    -2
+                  ],
+                  "material_instance": "m1"
+                },
+                "down": {
+                  "uv": [
+                    9,
+                    9
+                  ],
+                  "uv_size": [
+                    -2,
+                    -2
                   ],
                   "material_instance": "m1"
                 }
@@ -285,6 +549,17 @@
                     16
                   ],
                   "material_instance": "m1"
+                },
+                "north": {
+                  "uv": [
+                    7,
+                    0
+                  ],
+                  "uv_size": [
+                    2,
+                    16
+                  ],
+                  "material_instance": "m0"
                 }
               }
             }
@@ -369,6 +644,17 @@
                     16
                   ],
                   "material_instance": "m1"
+                },
+                "south": {
+                  "uv": [
+                    7,
+                    0
+                  ],
+                  "uv_size": [
+                    2,
+                    16
+                  ],
+                  "material_instance": "m0"
                 }
               }
             }
@@ -453,6 +739,17 @@
                     16
                   ],
                   "material_instance": "m1"
+                },
+                "north": {
+                  "uv": [
+                    7,
+                    0
+                  ],
+                  "uv_size": [
+                    2,
+                    16
+                  ],
+                  "material_instance": "m0"
                 }
               }
             }
@@ -532,6 +829,17 @@
                     16
                   ],
                   "material_instance": "m1"
+                },
+                "south": {
+                  "uv": [
+                    7,
+                    0
+                  ],
+                  "uv_size": [
+                    2,
+                    16
+                  ],
+                  "material_instance": "m0"
                 }
               }
             }

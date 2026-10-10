@@ -14,6 +14,15 @@ from . import build
 from .preview import render_java, render_bedrock
 
 
+class _Models:
+    """java.model() as the builder sees it for this block."""
+    def __init__(self, b, spec):
+        self.b, self.spec = b, spec
+
+    def model(self, ref):
+        return self.b.model_for(self.spec, ref)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--ref', required=True)
@@ -43,7 +52,7 @@ def main():
         for i in idx:
             a = s.combos_list[i]
             parts = s.parts_of[i]
-            ja = np.asarray(render_java(b.java, b.ti, parts).render())
+            ja = np.asarray(render_java(_Models(b, s), b.ti, parts).render())
             geo_name = s.id
             comps = s.block_json['minecraft:block']['components']
             # permutation geometry: pick the file the permutation selects

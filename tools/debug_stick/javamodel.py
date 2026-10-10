@@ -127,3 +127,35 @@ class JavaAssets:
             if 'when' not in entry or self._when(entry['when'], props):
                 out.append(self._part(entry['apply']))
         return out
+
+
+OPPOSITE = {'north': 'south', 'south': 'north', 'east': 'west', 'west': 'east',
+            'up': 'down', 'down': 'up'}
+
+
+def closed(model):
+    """Copy of `model` with every element's missing faces filled in.
+
+    Java's wall/fence/pane side models leave out the face that points at
+    the centre, because the post or the opposite arm always covers it in
+    vanilla. With the debug stick an arm can stand alone with no post, and
+    that missing face shows as a hole, so give it one: same texture as the
+    opposite face, positional UVs.
+    """
+    out = json.loads(json.dumps(model))
+    for e in out['elements']:
+        faces = e.setdefault('faces', {})
+        if not faces:
+            continue
+        size = [e['to'][i] - e['from'][i] for i in range(3)]
+        for d in ('north', 'south', 'east', 'west', 'up', 'down'):
+            if d in faces:
+                continue
+            # a face with no area (plane elements) is not a hole
+            axis = {'north': 2, 'south': 2, 'east': 0, 'west': 0, 'up': 1, 'down': 1}[d]
+            if size[axis] <= 0:
+                continue
+            src = faces.get(OPPOSITE[d]) or next(iter(faces.values()))
+            nf = {k: v for k, v in src.items() if k in ('texture', 'texture_var', 'tintindex')}
+            faces[d] = nf
+    return out

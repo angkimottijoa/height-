@@ -179,6 +179,17 @@
                     3
                   ],
                   "material_instance": "m0"
+                },
+                "east": {
+                  "uv": [
+                    7,
+                    1
+                  ],
+                  "uv_size": [
+                    2,
+                    3
+                  ],
+                  "material_instance": "m0"
                 }
               }
             },
@@ -245,6 +256,17 @@
                   ],
                   "uv_size": [
                     9,
+                    3
+                  ],
+                  "material_instance": "m0"
+                },
+                "east": {
+                  "uv": [
+                    7,
+                    7
+                  ],
+                  "uv_size": [
+                    2,
                     3
                   ],
                   "material_instance": "m0"
@@ -327,6 +349,17 @@
                     3
                   ],
                   "material_instance": "m0"
+                },
+                "west": {
+                  "uv": [
+                    7,
+                    1
+                  ],
+                  "uv_size": [
+                    2,
+                    3
+                  ],
+                  "material_instance": "m0"
                 }
               }
             },
@@ -393,6 +426,17 @@
                   ],
                   "uv_size": [
                     9,
+                    3
+                  ],
+                  "material_instance": "m0"
+                },
+                "west": {
+                  "uv": [
+                    7,
+                    7
+                  ],
+                  "uv_size": [
+                    2,
                     3
                   ],
                   "material_instance": "m0"
@@ -475,6 +519,17 @@
                     3
                   ],
                   "material_instance": "m0"
+                },
+                "north": {
+                  "uv": [
+                    7,
+                    1
+                  ],
+                  "uv_size": [
+                    2,
+                    3
+                  ],
+                  "material_instance": "m0"
                 }
               }
             },
@@ -541,6 +596,17 @@
                   ],
                   "uv_size": [
                     9,
+                    3
+                  ],
+                  "material_instance": "m0"
+                },
+                "north": {
+                  "uv": [
+                    7,
+                    7
+                  ],
+                  "uv_size": [
+                    2,
                     3
                   ],
                   "material_instance": "m0"
@@ -623,6 +689,17 @@
                     3
                   ],
                   "material_instance": "m0"
+                },
+                "south": {
+                  "uv": [
+                    7,
+                    1
+                  ],
+                  "uv_size": [
+                    2,
+                    3
+                  ],
+                  "material_instance": "m0"
                 }
               }
             },
@@ -689,6 +766,17 @@
                   ],
                   "uv_size": [
                     9,
+                    3
+                  ],
+                  "material_instance": "m0"
+                },
+                "south": {
+                  "uv": [
+                    7,
+                    7
+                  ],
+                  "uv_size": [
+                    2,
                     3
                   ],
                   "material_instance": "m0"

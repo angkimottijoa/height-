@@ -83,6 +83,7 @@ class Builder:
                         k, v = line.split('=', 1)
                         d[k.strip()] = v.strip()
             self.lang[code] = d
+        self._closed = {}
         self.atlas = OrderedDict()     # our atlas key -> texture entry
         self.flipbooks = OrderedDict()  # our atlas key -> flipbook entry
         self.problems = []
@@ -95,6 +96,18 @@ class Builder:
         })
 
     # ------------------------------------------------------------ helpers
+    CLOSED_FAMILIES = ('fence', 'wall', 'pane', 'bars')
+
+    def model_for(self, spec, ref):
+        from .javamodel import closed
+        m = self.java.model(ref)
+        if spec.family in self.CLOSED_FAMILIES:
+            key = ('closed', ref)
+            if key not in self._closed:
+                self._closed[key] = closed(m)
+            return self._closed[key]
+        return m
+
     def texture_for(self, spec, java_tex):
         name = java_tex.replace('minecraft:', '').replace('block/', '')
         rel = spec.texture_overrides.get(name) or self.ti.resolve(java_tex)
@@ -161,7 +174,7 @@ class Builder:
         mat_info = {}
         kinds = set()
         for p in unique:
-            model = self.java.model(p.model)
+            model = self.model_for(spec, p.model)
             for e in model['elements']:
                 for face in e.get('faces', {}).values():
                     t = face['texture']
@@ -217,7 +230,7 @@ class Builder:
         visibility = {}
         part_bones = {}
         for i, p in enumerate(unique):
-            model = self.java.model(p.model)
+            model = self.model_for(spec, p.model)
             bs = part_to_bones(f'p{i}', p, model, material_of)
             bones.extend(bs)
             part_bones[p] = [b['name'] for b in bs]
@@ -243,7 +256,7 @@ class Builder:
         def boxes_for(parts):
             out = []
             for p in parts:
-                out.extend(part_boxes(p, self.java.model(p.model)))
+                out.extend(part_boxes(p, self.model_for(spec, p.model)))
             return out
 
         coll_of, sel_of = [], []
@@ -321,7 +334,7 @@ class Builder:
                 gb = []
                 for i in k:
                     p = unique[i]
-                    gb.extend(part_to_bones(f'p{i}', p, self.java.model(p.model), material_of))
+                    gb.extend(part_to_bones(f'p{i}', p, self.model_for(spec, p.model), material_of))
                 geo_files[f'{spec.id}.c{idx}'] = {
                     'format_version': GEO_FORMAT,
                     'minecraft:geometry': [{'description': {
