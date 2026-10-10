@@ -115,11 +115,15 @@ world.beforeEvents.itemUse.subscribe(ev => {
     }
     if (id === PLACER) {
         ev.cancel = true;
-        const block = lookedAt(player);
+        let hit;
+        try {
+            hit = player.getBlockFromViewDirection({ maxDistance: 300, includeLiquidBlocks: false, includePassableBlocks: true });
+        }
+        catch (e) { }
         system.run(() => {
-            if (!allowed(player) || !block || !once(player))
+            if (!allowed(player) || !hit?.block || !once(player))
                 return;
-            placeAsset(player, block.location);
+            placeAsset(player, hit.block.location, hit.face);
         });
         return;
     }
@@ -150,6 +154,7 @@ world.beforeEvents.playerInteractWithBlock.subscribe(ev => {
         return;
     const player = ev.player;
     const pos = { ...ev.block.location };
+    const face = ev.blockFace;
     const sneaking = player.isSneaking;
     system.run(() => {
         if (!allowed(player))
@@ -161,7 +166,7 @@ world.beforeEvents.playerInteractWithBlock.subscribe(ev => {
         if (id === WAND)
             wandRight(player, pos);
         else
-            placeAsset(player, pos);
+            placeAsset(player, pos, face);
     });
 });
 
@@ -192,7 +197,7 @@ world.afterEvents.entityHitBlock.subscribe(ev => {
     wandLeft(player, ev.hitBlock.location);
 });
 
-async function placeAsset(player, pos) {
+async function placeAsset(player, pos, face) {
     const assets = TOOLS.find(t => t.id === 'assets');
     const mod = assets?.module;
     if (!mod?.placeAsset)
@@ -201,7 +206,7 @@ async function placeAsset(player, pos) {
         return;
     const ctx = makeContext(player, {});
     try {
-        await runAsync(mod.placeAsset(ctx, fl(pos)));
+        await runAsync(mod.placeAsset(ctx, { ...fl(pos), face }));
     }
     catch (e) {
         return say(player, `§c에셋: ${e?.message ?? e}`);

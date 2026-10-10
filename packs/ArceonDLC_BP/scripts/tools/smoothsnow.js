@@ -31,7 +31,8 @@ export default {
         const mask = ctx.mask(String(v.mask ?? '').trim() || '!air');
         const test = (x, y, z) => !mask || mask.test({ x, y, z }, edit);
         const pat = ctx.pattern('block');
-        const pid = pat.first?.type.id;
+        const single = /^[\w:]+(\[.*\])?$/.test(String(pat.source ?? '').trim());
+        const pid = single ? pat.first?.type.id : undefined;
         const isSnow = pid === SNOW_LAYER || pid === SNOW_BLOCK;
         const snowBlock = perm(SNOW_BLOCK);
         const layer = (n) => (n >= 1 ? snowLayer(Math.min(8, n)) : null);

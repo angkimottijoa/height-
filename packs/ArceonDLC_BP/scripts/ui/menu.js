@@ -287,7 +287,7 @@ async function assetsMenu(player) {
     const mod = TOOLS.find(t => t.id === 'assets')?.module;
     if (!mod)
         return;
-    const names = mod.listAssets();
+    const names = mod.listAssets().map(a => (typeof a === 'string' ? a : a.name));
     const v = await menu(player, '에셋', `저장된 에셋 ${names.length}개${names.length ? ': §7' + names.slice(0, 30).join(', ') : ''}`, [
         { text: '선택 영역을 에셋으로 저장', value: 'save' },
         { text: '배치할 에셋 고르기', value: 'select' },

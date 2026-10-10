@@ -83,7 +83,8 @@ export default {
             warpX.frequency = warpZ.frequency = 0.1 / zoom;
         }
         // block kinds Arceon special-cases (single block patterns only)
-        const id = pat.first?.type.id;
+        const single = /^[\w:]+(\[.*\])?$/.test(String(pat.source ?? '').trim());
+        const id = single ? pat.first?.type.id : undefined;
         const slabs = pat.slabs;
         const snow = !slabs && (id === 'minecraft:snow_layer' || id === 'minecraft:snow');
         const water = !slabs && !snow && pat.liquid === 'water';
