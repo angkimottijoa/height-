@@ -7,6 +7,8 @@
  * The buffers are indexed like Arceon's clipboards, so the erode/fill
  * sphere sits one block towards -x -y -z of the blend ball, as in Arceon.
  */
+import { isSolidId, permToString } from '../core/blocks.js';
+
 const TYPES = {
     fill: [5, 2],
     smooth: [3, 3],
@@ -15,7 +17,6 @@ const TYPES = {
     clear: [1, 6],
 };
 const FACES = [[1, 0, 0], [-1, 0, 0], [0, 0, 1], [0, 0, -1], [0, 1, 0], [0, -1, 0]];
-import { isSolidId, permToString } from '../core/blocks.js';
 
 // Java compares interned block states; Bedrock permutations are separate objects
 const keys = new WeakMap();
