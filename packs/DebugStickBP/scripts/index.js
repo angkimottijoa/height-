@@ -8,5 +8,7 @@
  */
 import { enableDebugStick } from './debug-stick.js';
 import { enableComponents } from './components.js';
+import { enableRotate } from './rotate.js';
 enableComponents();
+enableRotate();
 enableDebugStick();
