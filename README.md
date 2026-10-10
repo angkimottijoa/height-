@@ -6,6 +6,9 @@
 > 별개의 애드온: **[디버그 스틱 + 독립형 블록](docs/DEBUG_STICK.md)** — `dist/DebugStick.mcaddon`.
 > 바닐라 블록을 받침·이웃과 상관없이 모양을 고정하는 블록 333종 + 멀리서도 안 사라지는 철문.
 >
+> 별개의 애드온: **[아르세온 DLC](docs/ARCEON_DLC.md)** — `dist/ArceonDLC.mcaddon`.
+> 8Crafter's Server Utilities용 확장. 아르세온 건축 도구(도로·아치·지붕·로프트·지형 생성·텍스트·에셋·브러시 등) + 1° 단위 자유 회전.
+>
 > 별개의 애드온: **[마법진](docs/MAGIC_CIRCLE.md)** — 바닥 마법진 + 상승 나선 + 시선 방향 빔.
 > 명령어·바닐라 파티클 방식(`dist/MagicCircleCommands.mcpack`, 리소스팩 불필요)과
 > 커스텀 파티클 방식(`dist/MagicCircle.mcaddon`) 두 가지.

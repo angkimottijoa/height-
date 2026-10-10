@@ -24,6 +24,23 @@ const FONT_LABELS = {
 // --------------------------------------------------------------------------
 // font modules
 // --------------------------------------------------------------------------
+// literal specifiers, one per font, so the module loader can resolve each
+const FONT_FILES = {
+    comicsans: () => import('../fonts/comicsans.js'),
+    georgia: () => import('../fonts/georgia.js'),
+    impact: () => import('../fonts/impact.js'),
+    king: () => import('../fonts/king.js'),
+    lobster: () => import('../fonts/lobster.js'),
+    medieval: () => import('../fonts/medieval.js'),
+    minecraft: () => import('../fonts/minecraft.js'),
+    papyrus: () => import('../fonts/papyrus.js'),
+    trebuchet: () => import('../fonts/trebuchet.js'),
+    unicode: () => import('../fonts/unicode.js'),
+    unicode_han: () => import('../fonts/unicode_han.js'),
+    unicode_hangul: () => import('../fonts/unicode_hangul.js'),
+    verdana: () => import('../fonts/verdana.js'),
+};
+
 const loaded = new Map(); // module name -> Map(codepoint -> {em, raw})
 
 async function loadModule(name) {
@@ -32,7 +49,7 @@ async function loadModule(name) {
         return m;
     let mod;
     try {
-        mod = (await import('../fonts/' + name + '.js')).default;
+        mod = (await FONT_FILES[name]()).default;
     }
     catch (e) {
         throw new Error(`글꼴 파일을 불러오지 못했습니다: ${name} (${e?.message ?? e})`);
