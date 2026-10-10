@@ -1,11 +1,12 @@
 /*
  * Particle preview while a tool item is held:
  *   선택 지팡이   selection box (end rod), curve points (green) and the curve (flame)
- *   프레임 피커   frames (blue flame); the frame being drawn in green
+ *   프레임 피커   frames (blue flame, the one being drawn in green) and the
+ *                rails joining them (flame), as the fill will connect them
  *   클립보드 도구 the box the clipboard would fill at the block you look at
  *   지형·에셋 도구 the selection box
  */
-import { BezierPath } from '../core/spline.js';
+import { BezierPath, LinePath, resample } from '../core/spline.js';
 import { anchorFor, getClip, placedBounds } from '../core/clipboard.js';
 import { region, session } from '../core/session.js';
 import { CLIPBOARD, FRAME_PICKER, WAND } from '../core/access.js';
@@ -57,19 +58,49 @@ function box(player, r, id) {
     }
 }
 
+/**
+ * Frames like Arceon's loft preview: the frame points, each frame's curve
+ * and the rails that join the n-th point of every frame (the same
+ * resampling the fill uses), so you see how the frames will connect.
+ */
+function frames(player, s) {
+    const list = s.frames.filter(f => f.length);
+    const flat = s.settings.frameFill === 'flat';
+    const drawing = s.frames[s.frames.length - 1]?.length > 0;
+    list.forEach((f, i) => {
+        const id = drawing && i === list.length - 1 ? 'minecraft:villager_happy' : 'minecraft:blue_flame_particle';
+        for (const p of f)
+            spawn(player, id, c(p));
+    });
+    const pts = list.map(f => f.map(c));
+    // each frame's own outline
+    let budget = MAX;
+    const draw = (path, id, share) => {
+        const n = Math.max(4, Math.min(share, Math.floor(path.length * 1.5)));
+        for (let i = 0; i <= n && budget-- > 0; i++)
+            spawn(player, id, path.frac(i / n));
+    };
+    for (const f of pts)
+        if (f.length >= 2)
+            draw(flat ? new LinePath(f) : new BezierPath(f), 'minecraft:blue_flame_particle', 30);
+    if (pts.length < 2)
+        return;
+    // rails between frames
+    const width = Math.max(2, ...pts.map(f => f.length));
+    const rs = pts.map(f => resample(f, width, !flat));
+    const share = Math.max(6, Math.floor(budget / width));
+    for (let j = 0; j < width; j++) {
+        const rail = rs.map(f => f[j]);
+        draw(flat ? new LinePath(rail) : new BezierPath(rail), 'minecraft:basic_flame_particle', share);
+    }
+}
+
 export function preview(player, item) {
     const s = session(player);
     if (s.dim && s.dim !== player.dimension.id)
         return;
     if (item === FRAME_PICKER) {
-        const frames = s.frames.filter(f => f.length);
-        frames.forEach((f, i) => {
-            const open = i === frames.length - 1 && s.frames[s.frames.length - 1].length;
-            const id = open ? 'minecraft:villager_happy' : 'minecraft:blue_flame_particle';
-            for (const p of f)
-                spawn(player, id, c(p));
-            curve(player, f, 'minecraft:blue_flame_particle');
-        });
+        frames(player, s);
         return;
     }
     if (item === CLIPBOARD) {
