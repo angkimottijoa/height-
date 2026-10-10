@@ -23,8 +23,21 @@ export function curvePoints(ctx, { yOff = 0, straight = false } = {}) {
 
 /** The curve, and Arceon's integer length a.a(points, world). */
 export function curve(pts) {
-    const path = new BezierPath(pts);
-    return { path, length: Math.floor(path.length) };
+    const bez = new BezierPath(pts);
+    // Arceon's segments return the exact value on an axis all points share
+    // (a flat path at y = 5 gives y = 5, not 4.9999999 from the cubic sum).
+    const flat = ['x', 'y', 'z'].filter(k => pts.every(p => p[k] === pts[0][k]));
+    const path = !flat.length ? bez : {
+        length: bez.length,
+        count: bez.count,
+        frac(f) {
+            const p = bez.frac(f);
+            for (const k of flat)
+                p[k] = pts[0][k];
+            return p;
+        },
+    };
+    return { path, length: Math.floor(bez.length) };
 }
 
 /** Arceon's random OpenSimplex noise ("new o(random.nextInt(1000000))"). */

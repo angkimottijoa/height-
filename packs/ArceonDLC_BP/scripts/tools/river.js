@@ -54,13 +54,15 @@ export default {
         let waterTop = edit.maxY;
         let run = 0, thin = 0;
         const nx = randomNoise(), nz = randomNoise();
-        const notAir = (x, y, z) => !isAirId(edit.get({ x, y, z })?.type.id ?? 'minecraft:air');
+        // Arceon (FAWE) reads the world as it was, not its own pending changes:
+        // reading the buffer would find the new water as "terrain" and dig deeper every sample
+        const notAir = (x, y, z) => !isAirId(edit.world({ x, y, z })?.type.id ?? 'minecraft:air');
         const scanLo = Math.max(edit.minY, edit.minY + 1 + Math.max(start, end));
-        // highest y anything was set at, so the surface scan can start low
-        let setTop = -Infinity;
         const set = (p, b) => {
-            if (edit.set(p, b) && p.y > setTop)
-                setTop = Math.floor(p.y);
+            if (b)
+                edit.set(p, b);
+            else
+                pattern.place(edit, p);
         };
         let ops = 0;
         for (let i = 0; i < n - 2; i++) {
@@ -80,8 +82,9 @@ export default {
             let surface = scanLo;
             let from = edit.maxY;
             try {
+                // shortcut for the scan from the build limit (same result, world reads only)
                 const t = ctx.dim.getTopmostBlock({ x: bx, z: bz });
-                from = Math.max(t ? t.location.y : scanLo, setTop);
+                from = t ? t.location.y : scanLo;
             }
             catch (e) { }
             for (let y = Math.min(edit.maxY, from); y >= scanLo; y--)
@@ -131,14 +134,14 @@ export default {
                             // Java layers 7 - thin (1..8 valid); Bedrock height = layers - 1
                             set(c, snowLayer(Math.max(1, 7 - thin)));
                         else
-                            pattern.place(edit, c);
+                            set(c, null);
                     }
                     else if (liq)
                         set(c, liquid(liq, 0));
                     else if (snow)
                         set(c, snowBlock);
                     else
-                        pattern.place(edit, c);
+                        set(c, null);
                     if (++ops % 3000 === 0)
                         yield;
                 }
