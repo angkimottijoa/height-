@@ -20,7 +20,7 @@ export default {
         { key: 'block', type: 'block', label: '블록', default: 'stone' },
         { key: 'sizeMin', type: 'slider', label: '크기 최소', default: 8, min: 1, max: 40 },
         { key: 'sizeMax', type: 'slider', label: '크기 최대', default: 8, min: 1, max: 40 },
-        { key: 'quality', type: 'slider', label: '매끈함 (0 = 각진 로우폴리)', default: 3, min: 0, max: 5 },
+        { key: 'quality', type: 'slider', label: '매끈함 (0 = 각지게)', default: 3, min: 0, max: 5 },
         { key: 'heightMin', type: 'slider', label: '높이 최소 (0 = 크기와 같음)', default: 0, min: 0, max: 40 },
         { key: 'heightMax', type: 'slider', label: '높이 최대', default: 0, min: 0, max: 40 },
         { key: 'widthMin', type: 'slider', label: '너비 최소 (0 = 크기와 같음)', default: 0, min: 0, max: 40 },

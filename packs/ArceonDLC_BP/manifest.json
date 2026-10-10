@@ -2,8 +2,8 @@
   "format_version": 3,
   "header": {
     "name": "Arceon DLC [BP]",
-    "description": "§78Crafter's Server Utilities용 아르세온 확장§r\n\n아르세온(Arceon) 건축 도구를 베드락으로 옮긴 애드온입니다.\n도로·아치·지붕·가시·점선·강·로프트·회전체·아이코스피어·크기 조절·문지르기·자유 회전·지형 생성·부드러운 눈·텍스트·종류/색 바꾸기·에셋·브러시 7종·마스크/패턴.\n\n§a/arc:wand§r 지팡이 받기 · §a/arc:menu§r 메뉴\n§e지팡이§r 우클릭 = 점 추가, 좌클릭 = 처음부터, 웅크리고 우클릭 = 메뉴\n8Crafter 선택 도구의 pos1/pos2를 그대로 따라옵니다.\n관리자(OP) 또는 arceon 태그 필요.",
-    "version": "1.0.0",
+    "description": "§78Crafter's Server Utilities용 아르세온 확장§r\n\n아르세온(Arceon) 건축 도구를 베드락으로 옮긴 애드온입니다.\n도로·아치·지붕·가시·점선·강·곡면 채우기·면 채우기·회전 복제·다면체 구·자유 회전·크기 조절·끌어 늘리기·지형 생성·눈 덮기·글자 쓰기·재질/색 바꾸기·에셋·클립보드·브러시 7종.\n\n§a/arc:tools§r 도구 6개 받기 · §a/arc:menu§r 전체 메뉴\n§e터치§r = 기본 동작, §e부수기§r = 두 번째 동작, §e웅크리고 터치§r = 그 도구의 메뉴\n8Crafter 선택 도구의 1번·2번 지점을 그대로 따라옵니다.\n관리자(OP) 또는 arceon 태그 필요.",
+    "version": "1.1.0",
     "min_engine_version": "1.26.40",
     "uuid": "1d83a110-52a9-4ca9-9864-14d074d0de0c"
   },

@@ -16,9 +16,9 @@ function fresh() {
     return {
         pos1: null, pos2: null, posM: false, dim: null,
         points: [], frames: [],
-        wandMode: 'points',
+        wandMode: 'cuboid',
         brushes: {},
-        settings: { font: 'minecraft', tgSeed: null, gmask: '', particles: true, fontCycle: false },
+        settings: { font: 'minecraft', tgSeed: null, gmask: '', particles: true, fontCycle: false, frameFill: 'curved', picks: [] },
         forms: {},
     };
 }
@@ -161,6 +161,33 @@ export function addFramePoint(player, pos) {
     save(player);
     return s.frames[s.frames.length - 1].length;
 }
+/**
+ * Frame picker: close the frame being drawn, so the next point starts a
+ * new one. Returns the number of finished frames.
+ */
+export function saveFrame(player) {
+    const s = session(player);
+    const last = s.frames[s.frames.length - 1];
+    if (last && last.length)
+        s.frames.push([]);
+    save(player);
+    return s.frames.filter(f => f.length).length;
+}
+/** Frame picker: take back the last point (reopening a just-saved frame). */
+export function undoFramePoint(player) {
+    const s = session(player);
+    while (s.frames.length && !s.frames[s.frames.length - 1].length)
+        s.frames.pop();
+    const last = s.frames[s.frames.length - 1];
+    if (!last)
+        return false;
+    last.pop();
+    if (!last.length)
+        s.frames.pop();
+    save(player);
+    return true;
+}
+export const frameCount = (player) => session(player).frames.filter(f => f.length).length;
 export function clearFrames(player) {
     session(player).frames = [];
     save(player);

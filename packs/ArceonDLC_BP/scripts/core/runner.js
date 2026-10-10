@@ -14,6 +14,8 @@
  *     *run(ctx, values) { ... yield now and then ...; return '추가 메시지' },
  *   }
  *
+ * values.toClip = true: the result goes to the clipboard, the world is untouched.
+ *
  * ctx:
  *   player, dim, session, edit (EditSession), say(msg)
  *   points      wand points [{x,y,z}] (block coords) - 'points' tools
@@ -26,14 +28,15 @@
  */
 import { parseMask, parsePattern } from './blocks.js';
 import { EditSession, isBusy, runAsync, say } from './edit.js';
+import { CaptureEdit, clipFromMap, setClip } from './clipboard.js';
 import { region, session, volume } from './session.js';
 import { blockValue } from '../ui/form.js';
 
 export const MAX_REGION = 4000000;
 
-export function makeContext(player, values = {}, { mask = null } = {}) {
+export function makeContext(player, values = {}, { mask = null, capture = false } = {}) {
     const s = session(player);
-    const edit = new EditSession(player, player.dimension, mask);
+    const edit = capture ? new CaptureEdit(player, player.dimension, mask) : new EditSession(player, player.dimension, mask);
     const ctx = {
         player,
         dim: player.dimension,
@@ -64,20 +67,21 @@ function check(player, tool, ctx) {
                 ctx.points = [s.pos1, s.pos2].map(p => ({ ...p }));
             }
             if (ctx.points.length < min)
-                return `점이 ${min}개 이상 필요합니다 (지금 ${s.points.length}개). 아르세온 지팡이로 블록을 우클릭해 점을 찍으세요.`;
+                return `곡선 점이 ${min}개 이상 필요합니다 (지금 ${s.points.length}개). 선택 지팡이를 곡선 점 모드로 두고 블록을 터치하세요.`;
             break;
         }
         case 'cuboid':
             if (!ctx.region)
-                return '선택 영역(pos1, pos2)이 없습니다. 8Crafter 선택 도구나 아르세온 메뉴 > 선택 영역에서 지정하세요.';
+                return '선택 영역이 없습니다. 선택 지팡이(터치 = 1번, 부수기 = 2번)나 8Crafter 선택 도구로 지정하세요.';
             if (s.dim && s.dim !== player.dimension.id)
                 return '선택 영역이 다른 차원에 있습니다.';
             if (volume(ctx.region) > (tool.maxVolume ?? MAX_REGION))
                 return `선택 영역이 너무 큽니다 (${volume(ctx.region)}블록, 최대 ${tool.maxVolume ?? MAX_REGION}).`;
             break;
         case 'frames':
+            ctx.frames = ctx.frames.filter(f => f.length);
             if (ctx.frames.length < 1)
-                return '로프트 프레임이 없습니다. 지팡이 모드를 "로프트"로 바꾸고 좌클릭(새 프레임)/우클릭(점 추가)하세요.';
+                return '프레임이 없습니다. 프레임 피커로 블록을 터치해 점을 찍고, 웅크리고 부수기로 프레임을 저장하세요.';
             break;
     }
     return null;
@@ -98,7 +102,8 @@ export async function runTool(player, tool, values) {
         say(player, `§c전역 마스크 오류: ${e.message}`);
         return;
     }
-    const ctx = makeContext(player, values, { mask });
+    const toClip = !!values.toClip;
+    const ctx = makeContext(player, values, { mask, capture: toClip });
     const err = check(player, tool, ctx);
     if (err) {
         say(player, '§c' + err);
@@ -114,6 +119,14 @@ export async function runTool(player, tool, values) {
         say(player, `§c${tool.name}: ${e?.message ?? e}`);
         if (!(e instanceof Error) || !/[가-힣]/.test(e.message))
             console.warn(`[arceon] ${tool.id}: ${e?.stack ?? e}`);
+        return;
+    }
+    if (toClip) {
+        const clip = clipFromMap(ctx.edit.changes, tool.name);
+        if (!clip)
+            return say(player, `§c${tool.name}: 결과가 비어 있어 클립보드에 넣지 않았습니다.`);
+        setClip(player, clip);
+        say(player, `§a${tool.name} 결과를 클립보드에 저장했습니다 (${clip.cells.length}블록). §7클립보드 도구를 들면 놓일 자리가 보이고, 터치하면 붙여넣습니다.`);
         return;
     }
     await finish(player, tool.name, ctx.edit, extra);

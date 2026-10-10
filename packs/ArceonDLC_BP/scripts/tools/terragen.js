@@ -12,10 +12,10 @@ import { FastNoise, terragenNoise } from '../lib/terrain_noise.js';
 const TYPES = [
     { value: 'simplex', label: '심플렉스 (Simplex)' },
     { value: 'fractal', label: '프랙탈 (Fractal)' },
-    { value: 'billowy', label: '뭉게구름 (Billowy)' },
+    { value: 'billowy', label: '뭉게 (Billowy)' },
     { value: 'ridged', label: '능선 (Ridged)' },
     { value: 'turbulence', label: '난류 (Turbulence)' },
-    { value: 'electric', label: '번개 (Electric)' },
+    { value: 'electric', label: '전기 (Electric)' },
     { value: 'euclidean', label: '셀 - 유클리드 (Euclidean)' },
     { value: 'manhattan', label: '셀 - 맨해튼 (Manhattan)' },
     { value: 'natural', label: '셀 - 자연 (Natural)' },
@@ -33,8 +33,8 @@ export default {
         { key: 'type', type: 'dropdown', label: '노이즈 종류', default: 'simplex', options: TYPES },
         { key: 'block', type: 'block', label: '블록', default: 'stone' },
         { key: 'height', type: 'number', label: '높이', default: 20, min: 1, max: 384 },
-        { key: 'zoom', type: 'number', label: '확대 (클수록 넓게 퍼짐)', default: 1, min: 0.01, max: 100 },
-        { key: 'wave', type: 'number', label: '물결', default: 0, min: -1000, max: 1000, tooltip: '지형을 구불구불 비트는 정도 (0 = 없음)' },
+        { key: 'zoom', type: 'number', label: '확대 (클수록 완만하고 넓게)', default: 1, min: 0.01, max: 100 },
+        { key: 'wave', type: 'number', label: '비틀림', default: 0, min: -1000, max: 1000, tooltip: '지형을 구불구불 비트는 정도 (0 = 없음)' },
         {
             key: 'shape', type: 'dropdown', label: '모양', default: 'cuboid', options: [
                 { value: 'cuboid', label: '사각형 (선택 영역 그대로)' },
@@ -45,8 +45,8 @@ export default {
         { key: 's', type: 'toggle', label: '이전 시드 유지 (-s)', default: false },
         { key: 'v', type: 'toggle', label: '가장자리 부드럽게 (-v)', default: false },
         { key: 'e', type: 'toggle', label: '기존 지형 위에 쌓기/깎기 (-e)', default: false },
-        { key: 'r', type: 'toggle', label: '셀 높이 무작위 (-r, 셀 노이즈)', default: false },
-        { key: 'n', type: 'toggle', label: '노이즈 추가 (-n, 프랙탈 계열)', default: false },
+        { key: 'r', type: 'toggle', label: '셀마다 높이 무작위 (-r, 셀 종류만)', default: false },
+        { key: 'n', type: 'toggle', label: '잔무늬 더하기 (-n, 프랙탈 계열만)', default: false },
     ],
     *run(ctx, v) {
         const { min, max } = ctx.region;

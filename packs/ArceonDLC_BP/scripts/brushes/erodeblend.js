@@ -32,8 +32,8 @@ const same = (a, b) => a === b || (!!a && !!b && stateKey(a) === stateKey(b));
 
 export default {
     id: 'erodeblend',
-    name: '침식·블렌드 브러시',
-    desc: '지형을 깎거나 메운 뒤 블렌드 볼로 다듬습니다.',
+    name: '지형 다듬기 브러시',
+    desc: '지형을 깎거나 메운 뒤 주변 블록과 자연스럽게 섞습니다.',
     icon: 'textures/blocks/coarse_dirt',
     fields: [
         { key: 'size', type: 'slider', label: '크기 (반지름)', default: 5, min: 1, max: 20 },

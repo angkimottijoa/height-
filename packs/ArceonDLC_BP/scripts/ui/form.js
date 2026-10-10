@@ -18,7 +18,14 @@ import { ActionFormData, FormCancelationReason, ModalFormData } from '@minecraft
 import { session, save } from '../core/session.js';
 import { permToString, short } from '../core/blocks.js';
 
-export const SOURCES = ['직접 입력', '손에 든 블록', '바라보는 블록', '핫바 블록 섞기'];
+export const SOURCES = ['블록 피커로 고른 블록', '직접 입력', '손에 든 블록', '바라보는 블록', '핫바 블록 섞기'];
+
+/** Pattern text of the block picker's chosen blocks (all of them when none is ticked). */
+export function pickerPattern(player) {
+    const picks = session(player).settings.picks ?? [];
+    const on = picks.filter(p => p.on);
+    return (on.length ? on : picks).map(p => p.t).join(',');
+}
 
 /** Show a form, waiting while the player has chat or another screen open. */
 export async function show(player, form) {
@@ -47,11 +54,17 @@ export function blockFromSource(player, source, text) {
         return p.data;
     }
     switch (source) {
-        case 0:
+        case 0: {
+            const t = pickerPattern(player);
+            if (!t)
+                throw new Error('블록 피커로 고른 블록이 없습니다. 블록 피커를 들고 블록을 터치하세요');
+            return t;
+        }
+        case 1:
             if (!String(text ?? '').trim())
                 throw new Error('블록 ID / 패턴을 입력하세요');
             return String(text).trim();
-        case 1: {
+        case 2: {
             const item = player.getComponent('minecraft:inventory')?.container?.getItem(player.selectedSlotIndex);
             if (!item)
                 throw new Error('손에 블록을 들고 있지 않습니다');
@@ -59,13 +72,13 @@ export function blockFromSource(player, source, text) {
                 throw new Error(`${short(item.typeId)}은(는) 블록이 아닙니다`);
             return short(item.typeId);
         }
-        case 2: {
+        case 3: {
             const hit = player.getBlockFromViewDirection({ maxDistance: 300, includeLiquidBlocks: true, includePassableBlocks: true });
             if (!hit?.block)
                 throw new Error('바라보는 블록이 없습니다');
             return permToString(hit.block.permutation);
         }
-        case 3: {
+        case 4: {
             const inv = player.getComponent('minecraft:inventory')?.container;
             const ids = [];
             for (let i = 0; i < 9; i++) {
@@ -78,7 +91,7 @@ export function blockFromSource(player, source, text) {
             return ids.join(',');
         }
     }
-    throw new Error('블록 소스를 고르세요');
+    throw new Error('블록을 가져올 곳을 고르세요');
 }
 
 /**
@@ -112,9 +125,10 @@ export async function ask(player, formId, title, fields, { submit = '실행', in
                 addSlot(null, 'label');
                 break;
             case 'block': {
-                const src = last[f.key + '#src'] ?? 0;
+                const picks = s.settings.picks ?? [];
+                const src = last[f.key + '#src'] ?? (picks.length ? 0 : 1);
                 const items = [...SOURCES, ...palettes.map(p => '팔레트: ' + p.name)];
-                form.dropdown(`${f.label ?? '블록'} - 블록 소스`, items, { defaultValueIndex: Math.min(src, items.length - 1) });
+                form.dropdown(`${f.label ?? '블록'} - 가져올 곳`, items, { defaultValueIndex: Math.min(src, items.length - 1) });
                 addSlot(f.key + '#src', 'dropdown', f);
                 form.textField('블록 ID / 패턴', f.placeholder ?? 'stone 또는 50%stone,andesite', { defaultValue: String(last[f.key + '#text'] ?? f.default ?? ''), tooltip: f.tooltip ?? '직접 입력일 때 사용. 쉼표로 섞기, oak_slab 처럼 반블록이면 반블록으로 다듬음' });
                 addSlot(f.key + '#text', 'text', f);
@@ -182,7 +196,7 @@ export async function ask(player, formId, title, fields, { submit = '실행', in
             case 'divider':
                 break;
             case 'block': {
-                const src = Number(raw[f.key + '#src'] ?? 0);
+                const src = Number(raw[f.key + '#src'] ?? 1);
                 const text = String(raw[f.key + '#text'] ?? '');
                 remember[f.key + '#src'] = src;
                 remember[f.key + '#text'] = text;
@@ -238,7 +252,7 @@ export async function ask(player, formId, title, fields, { submit = '실행', in
 
 /** Pattern string for a 'block' field from ask() output. */
 export function blockValue(player, values, key) {
-    return blockFromSource(player, values[key + '#src'] ?? 0, values[key + '#text']);
+    return blockFromSource(player, values[key + '#src'] ?? 1, values[key + '#text']);
 }
 
 /**

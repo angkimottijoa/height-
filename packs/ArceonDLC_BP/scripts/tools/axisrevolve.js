@@ -46,8 +46,8 @@ export function snapDirection(d, snap) {
 
 export default {
     id: 'axisrevolve',
-    name: '축 회전체',
-    desc: '바라보는 방향을 축으로, 선택 영역을 내 주위 원을 따라 돌려 복사합니다.',
+    name: '축 회전 복제',
+    desc: '내 위치에서 바라보는 방향을 축으로 삼아, 선택 영역을 그 축 둘레로 돌려 가며 복사합니다.',
     icon: 'textures/blocks/lodestone_top',
     needs: 'cuboid',
     maxVolume: 200000,
@@ -56,11 +56,11 @@ export default {
         { key: 'radius', type: 'number', label: '반지름', default: 10, min: 0, max: 1000 },
         { key: 'start', type: 'angle', label: '시작 각도', default: 0, min: -360, max: 360 },
         { key: 'end', type: 'angle', label: '끝 각도', default: 360, min: -360, max: 720 },
-        { key: 'height', type: 'number', label: '축 방향 전체 높이 차이', default: 0 },
-        { key: 'snap', type: 'angle', label: '축 스냅 각도', default: 45, min: 1, max: 90, tooltip: '-s 를 켰을 때 축 방향을 이 각도 단위로 맞춤' },
+        { key: 'height', type: 'number', label: '처음~끝 축 방향 거리', default: 0 },
+        { key: 'snap', type: 'angle', label: '축 방향 맞춤 단위', default: 45, min: 1, max: 90, tooltip: '-s 를 켰을 때 축 방향을 이 각도 단위로 맞춤' },
         { key: 'polygon', type: 'toggle', label: '정다각형으로 잇기 (-p)', default: false },
         { key: 'reverse', type: 'toggle', label: '반대 방향으로 회전 (-r)', default: false },
-        { key: 'snapOn', type: 'toggle', label: '축 방향 스냅 (-s)', default: false },
+        { key: 'snapOn', type: 'toggle', label: '축 방향을 각도 단위로 맞추기 (-s)', default: false },
     ],
     *run(ctx, v) {
         const amount = Math.max(1, Math.floor(Number(v.amount) || 1));

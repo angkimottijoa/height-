@@ -12,17 +12,17 @@ const FENCES = new Set(['fence', 'fence_gate', 'wall']);
 
 export default {
     id: 'typereplace',
-    name: '종류 바꾸기',
+    name: '재질 바꾸기',
     desc: '선택 영역의 블록 재질을 통째로 바꿉니다 (참나무 → 조약돌: 판자·계단·반블록·울타리...). 방향 등 상태는 유지.',
     icon: 'textures/blocks/planks_oak',
     needs: 'cuboid',
     fields: [
-        { key: 'from', type: 'text', label: '바꿀 재질 (예: oak, cobble, stone_bricks, 5:1)', placeholder: 'oak', default: 'oak' },
+        { key: 'from', type: 'text', label: '원래 재질 (예: oak, cobble, stone_bricks, 5:1)', placeholder: 'oak', default: 'oak' },
         { key: 'to', type: 'text', label: '새 재질', placeholder: 'cobblestone', default: 'cobblestone' },
         { key: 'f', type: 'toggle', label: '담장·울타리·울타리 문은 그대로 (-f)', default: false },
         { key: 'b', type: 'toggle', label: '일반(꽉 찬) 블록은 그대로 (-b)', default: false },
         { key: 's', type: 'toggle', label: '반블록은 그대로 (-s)', default: false },
-        { key: 'd', type: 'toggle', label: '겹반블록만 그대로 (-d, 위키)', default: false },
+        { key: 'd', type: 'toggle', label: '겹친 반블록만 그대로 (-d)', default: false },
     ],
     *run(ctx, v) {
         const from = findType(v.from);
@@ -32,7 +32,7 @@ export default {
         if (!to)
             throw new Error(`모르는 재질: ${v.to || '(비어 있음)'}`);
         if (from === to)
-            throw new Error('바꿀 재질과 새 재질이 같습니다');
+            throw new Error('원래 재질과 새 재질이 같습니다');
         const src = TYPES[from], dst = TYPES[to];
         const { min, max } = ctx.region;
         const edit = ctx.edit;

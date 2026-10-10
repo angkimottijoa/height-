@@ -1,110 +1,157 @@
 /*
- * Menus (sneak + right click with the wand, or /arc:menu).
+ * Menus. Sneak + tap with a tool item opens that tool's menu; /arc:menu
+ * opens everything.
  */
 import { ItemStack } from '@minecraft/server';
-import { PLACER, WAND } from '../core/access.js';
+import { BLOCK_PICKER, CLIPBOARD, FRAME_PICKER, ITEMS, PLACER, TERRAIN, WAND } from '../core/access.js';
 import { isBusy, redo, say, undo } from '../core/edit.js';
 import { parseMask } from '../core/blocks.js';
+import { clearClip, getClip } from '../core/clipboard.js';
 import { runTool } from '../core/runner.js';
-import { bindBrush, clearFrames, clearPoints, region, removeFramePoint, removePoint, save, session, setCorner, unbindBrush, volume } from '../core/session.js';
+import { bindBrush, clearFrames, clearPoints, frameCount, region, removeFramePoint, removePoint, save, saveFrame, session, setCorner, unbindBrush, volume } from '../core/session.js';
 import { BRUSHES, GROUPS, TOOLS } from '../tools/index.js';
 import { ask, menu } from './form.js';
 
-const MODES = { points: '점 (곡선 도구)', cuboid: '영역 (pos1 / pos2)', loft: '로프트 프레임' };
+const MODES = { cuboid: '영역 (터치 = 1번 지점, 부수기 = 2번 지점)', points: '곡선 점 (터치 = 점 추가, 부수기 = 마지막 점 취소)' };
+const ITEM_NAMES = {
+    [WAND]: '선택 지팡이', [FRAME_PICKER]: '프레임 피커', [BLOCK_PICKER]: '블록 피커',
+    [CLIPBOARD]: '클립보드 도구', [PLACER]: '에셋 도구', [TERRAIN]: '지형 도구',
+};
 const fmt = (p) => p ? `${p.x} ${p.y} ${p.z}` : '§7없음§r';
+const back = { text: '§8← 뒤로', value: '<' };
 
 function status(player) {
     const s = session(player);
     const r = region(player);
     const lines = [
-        `§e지팡이 모드§r: ${MODES[s.wandMode] ?? s.wandMode}`,
-        `§dpos1§r ${fmt(s.pos1)}   §dpos2§r ${fmt(s.pos2)}${r ? ` §7(${volume(r)}블록)` : ''}`,
-        `§a점§r ${s.points.length}개   §b로프트 프레임§r ${s.frames.length}개`,
+        `§e지팡이§r: ${s.wandMode === 'points' ? '곡선 점' : '영역'}`,
+        `§d1번§r ${fmt(s.pos1)}   §d2번§r ${fmt(s.pos2)}${r ? ` §7(${volume(r)}블록)` : ''}`,
+        `§a곡선 점§r ${s.points.length}개   §b프레임§r ${frameCount(player)}개   §f클립보드§r ${getClip(player) ? getClip(player).cells.length + '칸' : '비어 있음'}`,
     ];
     if (s.settings.gmask)
         lines.push(`§6전역 마스크§r ${s.settings.gmask}`);
     return lines.join('\n');
 }
 
-function give(player, id, msg) {
-    try {
-        player.getComponent('minecraft:inventory')?.container?.addItem(new ItemStack(id, 1));
-        say(player, msg);
+/** Give tool items (all six by default). */
+export function giveTools(player, ids = ITEMS) {
+    const inv = player.getComponent('minecraft:inventory')?.container;
+    for (const id of ids) {
+        try {
+            inv?.addItem(new ItemStack(id, 1));
+        }
+        catch (e) {
+            say(player, `§c${ITEM_NAMES[id]}을(를) 줄 수 없습니다: ${e?.message ?? e}`);
+        }
     }
-    catch (e) {
-        say(player, `§c아이템을 줄 수 없습니다: ${e?.message ?? e}`);
-    }
-}
-export function giveWand(player) {
-    give(player, WAND, '§a아르세온 지팡이를 받았습니다. §7우클릭: 점 추가 · 좌클릭: 처음부터 · 웅크리고 우클릭: 메뉴');
+    say(player, `§a받음: ${ids.map(i => ITEM_NAMES[i]).join(', ')}\n§7터치 = 기본 동작, 부수기 = 두 번째 동작, 웅크리고 터치 = 그 도구의 메뉴`);
 }
 
+// --------------------------------------------------------------------------
+// main menus
+// --------------------------------------------------------------------------
+/** Everything (/arc:menu). */
 export async function openMenu(player) {
     const v = await menu(player, '아르세온 DLC', status(player), [
-        { text: '선택 영역 · 점', icon: 'textures/items/blaze_rod', value: 'select' },
+        { text: '선택 영역 · 곡선 점', icon: 'textures/items/blaze_rod', value: 'select' },
         ...GROUPS.map(g => ({ text: `${g.name}\n§8${g.desc}`, icon: g.icon, value: 'group:' + g.id })),
-        { text: '텍스트', icon: 'textures/items/book_writable', value: 'tool:text' },
-        { text: '에셋 (저장·배치)', icon: 'textures/blocks/structure_block', value: 'assets' },
+        { text: '글자 쓰기', icon: 'textures/items/book_writable', value: 'tool:text' },
+        { text: '클립보드 (복사·붙여넣기)', icon: 'textures/items/paper', value: 'clip' },
+        { text: '블록 피커 (고른 블록)', icon: 'textures/items/spyglass', value: 'picker' },
+        { text: '에셋 (구조물 저장·배치)', icon: 'textures/blocks/structure_block', value: 'assets' },
         { text: '브러시', icon: 'textures/items/brush', value: 'brush' },
         { text: '되돌리기', icon: 'textures/items/clock_item', value: 'undo' },
         { text: '다시 하기', icon: 'textures/items/clock_item', value: 'redo' },
         { text: '설정', icon: 'textures/items/redstone_dust', value: 'settings' },
-        { text: '지팡이 받기', icon: 'textures/items/blaze_rod', value: 'wand' },
+        { text: '도구 아이템 받기', icon: 'textures/items/blaze_rod', value: 'give' },
     ]);
+    return route(player, v, openMenu);
+}
+
+/** Sneak + tap with the selection wand. */
+export async function wandMenu(player) {
+    const s = session(player);
+    const v = await menu(player, '선택 지팡이', status(player), [
+        { text: `모드 바꾸기 → ${s.wandMode === 'points' ? '영역' : '곡선 점'}\n§8지금: ${s.wandMode === 'points' ? '곡선 점' : '영역'}`, value: 'mode' },
+        ...GROUPS.filter(g => g.id !== 'terrain' && g.id !== 'frame').map(g => ({ text: `${g.name}\n§8${g.desc}`, icon: g.icon, value: 'group:' + g.id })),
+        { text: '글자 쓰기', icon: 'textures/items/book_writable', value: 'tool:text' },
+        { text: '선택 영역 · 곡선 점 관리', icon: 'textures/items/blaze_rod', value: 'select' },
+        { text: '브러시', icon: 'textures/items/brush', value: 'brush' },
+        { text: '되돌리기', icon: 'textures/items/clock_item', value: 'undo' },
+        { text: '다시 하기', icon: 'textures/items/clock_item', value: 'redo' },
+        { text: '설정', icon: 'textures/items/redstone_dust', value: 'settings' },
+        { text: '도구 아이템 받기', icon: 'textures/items/blaze_rod', value: 'give' },
+    ]);
+    if (v === 'mode') {
+        s.wandMode = s.wandMode === 'points' ? 'cuboid' : 'points';
+        save(player);
+        say(player, `§e선택 지팡이: ${MODES[s.wandMode]}`);
+        return;
+    }
+    return route(player, v, wandMenu);
+}
+
+async function route(player, v, from) {
     if (!v)
         return;
     if (v === 'select')
-        return selectionMenu(player);
+        return selectionMenu(player, from);
     if (v.startsWith('group:'))
-        return groupMenu(player, v.slice(6));
+        return groupMenu(player, v.slice(6), from);
     if (v.startsWith('tool:'))
         return toolForm(player, TOOLS.find(t => t.id === v.slice(5)));
-    if (v === 'assets')
-        return assetsMenu(player);
-    if (v === 'brush')
-        return brushMenu(player);
-    if (v === 'undo')
-        return undo(player);
-    if (v === 'redo')
-        return redo(player);
-    if (v === 'settings')
-        return settingsMenu(player);
-    if (v === 'wand')
-        return giveWand(player);
+    switch (v) {
+        case 'clip': return clipboardMenu(player);
+        case 'picker': return blockPickerMenu(player);
+        case 'assets': return assetsMenu(player);
+        case 'brush': return brushMenu(player, from);
+        case 'undo': return undo(player);
+        case 'redo': return redo(player);
+        case 'settings': return settingsMenu(player);
+        case 'give': return giveMenu(player);
+    }
 }
 
-async function groupMenu(player, group) {
+async function giveMenu(player) {
+    const v = await menu(player, '도구 아이템 받기', '§7터치 = 기본 동작, 부수기 = 두 번째 동작, 웅크리고 터치 = 메뉴', [
+        { text: '전부 받기', value: 'all' },
+        ...ITEMS.map(id => ({ text: ITEM_NAMES[id], value: id })),
+    ]);
+    if (!v)
+        return;
+    giveTools(player, v === 'all' ? ITEMS : [v]);
+}
+
+async function groupMenu(player, group, from = openMenu) {
     const g = GROUPS.find(x => x.id === group);
     const list = TOOLS.filter(t => t.group === group);
     const v = await menu(player, g.name, g.desc, [
         ...list.map(t => ({ text: t.name, icon: t.icon, value: t.id })),
-        { text: '§8뒤로', value: '<' },
+        back,
     ]);
     if (!v)
         return;
     if (v === '<')
-        return openMenu(player);
+        return from(player);
     return toolForm(player, list.find(t => t.id === v));
 }
 
 function needsText(player, tool) {
     const s = session(player);
     if (tool.needs === 'points')
-        return s.points.length >= (tool.minPoints ?? 2) ? `§a지팡이 점 ${s.points.length}개를 따라 만듭니다.` : (region(player) ? '§e점이 없어 pos1 → pos2 를 잇는 선을 씁니다.' : `§c점이 ${tool.minPoints ?? 2}개 이상 필요합니다 (지팡이 우클릭).`);
+        return s.points.length >= (tool.minPoints ?? 2) ? `§a곡선 점 ${s.points.length}개를 따라 만듭니다.` : (region(player) ? '§e곡선 점이 없어 1번 → 2번 지점을 잇는 선을 씁니다.' : `§c곡선 점이 ${tool.minPoints ?? 2}개 이상 필요합니다 (선택 지팡이를 곡선 점 모드로).`);
     if (tool.needs === 'cuboid') {
         const r = region(player);
-        return r ? `§a선택 영역 ${fmt(r.min)} ~ ${fmt(r.max)} (${volume(r)}블록)` : '§c선택 영역(pos1/pos2)이 필요합니다.';
+        return r ? `§a선택 영역 ${fmt(r.min)} ~ ${fmt(r.max)} (${volume(r)}블록)` : '§c선택 영역(1번·2번 지점)이 필요합니다.';
     }
     if (tool.needs === 'frames')
-        return `§b로프트 프레임 ${s.frames.length}개`;
+        return `§b프레임 ${frameCount(player)}개`;
     return '';
 }
 
 export async function toolForm(player, tool) {
     if (!tool)
         return;
-    if (tool.id === 'loft')
-        return loftMenu(player, tool);
     if (tool.id === 'assets')
         return assetsMenu(player);
     if (isBusy(player))
@@ -119,46 +166,35 @@ export async function toolForm(player, tool) {
 // --------------------------------------------------------------------------
 // selection
 // --------------------------------------------------------------------------
-async function selectionMenu(player) {
+async function selectionMenu(player, from = openMenu) {
     const s = session(player);
-    const v = await menu(player, '선택 영역 · 점', status(player) + '\n\n§78Crafter 선택 도구(나무 도끼 모양)로 찍은 pos1/pos2도 자동으로 따라옵니다.', [
-        { text: `지팡이 모드 바꾸기\n§8지금: ${MODES[s.wandMode]}`, value: 'mode' },
-        { text: 'pos1 = 내 위치', value: 'p1' },
-        { text: 'pos2 = 내 위치', value: 'p2' },
+    const v = await menu(player, '선택 영역 · 곡선 점', status(player) + '\n\n§78Crafter 선택 도구로 찍은 1번·2번 지점도 자동으로 따라옵니다.', [
+        { text: '1번 지점 = 내 위치', value: 'p1' },
+        { text: '2번 지점 = 내 위치', value: 'p2' },
         { text: '좌표 직접 입력', value: 'coords' },
-        { text: '내 위치에 점 추가', value: 'addpt' },
-        { text: '마지막 점 지우기', value: 'pop' },
-        { text: '가장 가까운 점 지우기', value: 'popc' },
-        { text: '점 모두 지우기', value: 'clear' },
-        { text: '영역(pos1/pos2) 해제', value: 'unsel' },
-        { text: '§8뒤로', value: '<' },
+        { text: '내 위치에 곡선 점 추가', value: 'addpt' },
+        { text: '마지막 곡선 점 지우기', value: 'pop' },
+        { text: '가장 가까운 곡선 점 지우기', value: 'popc' },
+        { text: '곡선 점 모두 지우기', value: 'clear' },
+        { text: '선택 영역 해제', value: 'unsel' },
+        back,
     ]);
     const here = { x: Math.floor(player.location.x), y: Math.floor(player.location.y), z: Math.floor(player.location.z) };
+    const again = () => selectionMenu(player, from);
     switch (v) {
         case undefined:
             return;
         case '<':
-            return openMenu(player);
-        case 'mode': {
-            const r = await ask(player, 'wandmode', '지팡이 모드', [
-                { key: 'mode', type: 'dropdown', label: '지팡이 모드', default: s.wandMode, options: Object.entries(MODES).map(([value, label]) => ({ value, label })) },
-                { type: 'label', label: '§7점: 좌클릭 = 처음부터, 우클릭 = 점 추가\n영역: 좌클릭 = pos1, 우클릭 = pos2\n로프트: 좌클릭 = 새 프레임, 우클릭 = 프레임에 점 추가' },
-            ], { submit: '바꾸기' });
-            if (r) {
-                s.wandMode = r.mode;
-                save(player);
-            }
-            return selectionMenu(player);
-        }
+            return from(player);
         case 'p1':
         case 'p2':
             setCorner(player, v === 'p1' ? 'pos1' : 'pos2', here);
-            say(player, `§d${v === 'p1' ? 'pos1' : 'pos2'}§r = ${fmt(here)}`);
-            return selectionMenu(player);
+            say(player, `§d${v === 'p1' ? '1번' : '2번'} 지점§r = ${fmt(here)}`);
+            return again();
         case 'coords': {
             const r = await ask(player, 'coords', '좌표 직접 입력', [
-                { key: 'a', type: 'text', label: 'pos1 (x y z)', default: s.pos1 ? fmt(s.pos1) : fmt(here) },
-                { key: 'b', type: 'text', label: 'pos2 (x y z)', default: s.pos2 ? fmt(s.pos2) : fmt(here) },
+                { key: 'a', type: 'text', label: '1번 지점 (x y z)', default: s.pos1 ? fmt(s.pos1) : fmt(here) },
+                { key: 'b', type: 'text', label: '2번 지점 (x y z)', default: s.pos2 ? fmt(s.pos2) : fmt(here) },
             ], { submit: '저장' });
             if (r) {
                 const parse = (t) => {
@@ -172,63 +208,154 @@ async function selectionMenu(player) {
                     setCorner(player, 'pos1', a);
                     setCorner(player, 'pos2', b);
                 }
+                s.forms.coords = {};
             }
-            return selectionMenu(player);
+            return again();
         }
         case 'addpt':
             s.points.push(here);
             save(player);
-            return selectionMenu(player);
+            return again();
         case 'pop':
             removePoint(player, false);
-            return selectionMenu(player);
+            return again();
         case 'popc':
             removePoint(player, true);
-            return selectionMenu(player);
+            return again();
         case 'clear':
             clearPoints(player);
-            return selectionMenu(player);
+            return again();
         case 'unsel':
             s.pos1 = s.pos2 = null;
             save(player);
-            return selectionMenu(player);
+            return again();
     }
 }
 
-async function loftMenu(player, tool) {
+// --------------------------------------------------------------------------
+// frame picker
+// --------------------------------------------------------------------------
+const FILLS = { curved: '곡면 채우기', flat: '면 채우기' };
+
+export async function frameMenu(player) {
     const s = session(player);
-    const v = await menu(player, '로프트', `${tool.desc}\n§b프레임 ${s.frames.length}개§r (${s.frames.map(f => f.length).join(', ') || '-'})\n§7지팡이 모드를 "로프트 프레임"으로 두고 좌클릭 = 새 프레임, 우클릭 = 점 추가`, [
-        { text: '로프트 채우기 (set)', value: 'set' },
-        { text: '지팡이를 로프트 모드로', value: 'mode' },
-        { text: '마지막 점 지우기', value: 'pop' },
-        { text: '가장 가까운 점 지우기 (-c)', value: 'popc' },
-        { text: '프레임 모두 지우기 (clear)', value: 'clear' },
-        { text: '§8뒤로', value: '<' },
-    ]);
+    const fill = s.settings.frameFill === 'flat' ? 'flat' : 'curved';
+    const sizes = s.frames.filter(f => f.length).map(f => f.length);
+    const v = await menu(player, '프레임 피커',
+        `§b프레임 ${sizes.length}개§r (점: ${sizes.join(', ') || '-'})\n채우는 방식: §e${FILLS[fill]}§r\n\n§7터치 = 점 추가 · 부수기 = 마지막 점 취소 · 웅크리고 부수기 = 프레임 저장`, [
+            { text: `${FILLS[fill]} 실행`, icon: 'textures/items/amethyst_shard', value: 'run' },
+            { text: `채우는 방식 바꾸기 → ${FILLS[fill === 'flat' ? 'curved' : 'flat']}`, value: 'mode' },
+            { text: '지금 프레임 저장 (다음 점부터 새 프레임)', value: 'save' },
+            { text: '마지막 점 지우기', value: 'pop' },
+            { text: '가장 가까운 점 지우기', value: 'popc' },
+            { text: '프레임 모두 지우기', value: 'clear' },
+        ]);
     switch (v) {
-        case 'set': {
-            const values = await ask(player, 'tool:loft', tool.name, tool.fields ?? [], { intro: needsText(player, tool) });
-            if (values)
-                await runTool(player, tool, values);
-            return;
-        }
+        case 'run':
+            return toolForm(player, TOOLS.find(t => t.id === (fill === 'flat' ? 'surface' : 'loft')));
         case 'mode':
-            s.wandMode = 'loft';
+            s.settings.frameFill = fill === 'flat' ? 'curved' : 'flat';
             save(player);
-            say(player, '§b지팡이: 로프트 모드');
-            return;
+            say(player, `§b채우는 방식: ${FILLS[s.settings.frameFill]}`);
+            return frameMenu(player);
+        case 'save':
+            saveFrame(player);
+            return frameMenu(player);
         case 'pop':
             removeFramePoint(player, false);
-            return loftMenu(player, tool);
+            return frameMenu(player);
         case 'popc':
             removeFramePoint(player, true);
-            return loftMenu(player, tool);
+            return frameMenu(player);
         case 'clear':
             clearFrames(player);
-            return loftMenu(player, tool);
-        case '<':
-            return groupMenu(player, 'shape');
+            return frameMenu(player);
     }
+}
+
+// --------------------------------------------------------------------------
+// block picker
+// --------------------------------------------------------------------------
+export async function blockPickerMenu(player) {
+    const s = session(player);
+    const picks = s.settings.picks ?? (s.settings.picks = []);
+    if (!picks.length) {
+        say(player, '§7블록 피커로 블록을 터치하면 그 블록(방향 등 상태 포함)이 저장됩니다. 저장한 블록은 모든 도구의 "블록 피커로 고른 블록"으로 바로 불러옵니다.');
+        return;
+    }
+    const on = picks.filter(p => p.on).length;
+    const r = await ask(player, 'picker', '블록 피커', [
+        { type: 'label', label: `저장한 블록 ${picks.length}개. 켠 블록만 섞어서 씁니다 (하나도 안 켜면 전부).\n§7켠 블록 ${on}개` },
+        ...picks.map((p, i) => ({ key: 'on' + i, type: 'toggle', label: p.t, default: p.on })),
+        { type: 'divider' },
+        { key: 'palette', type: 'text', label: '켠 블록을 팔레트로 저장 (이름, 비우면 안 함)', default: '' },
+        { key: 'removeOff', type: 'toggle', label: '꺼진 블록은 목록에서 지우기', default: false },
+        { key: 'clear', type: 'toggle', label: '목록 모두 비우기', default: false },
+    ], { submit: '저장' });
+    if (!r)
+        return;
+    picks.forEach((p, i) => p.on = !!r['on' + i]);
+    if (r.palette.trim()) {
+        const chosen = picks.filter(p => p.on);
+        const list = s.settings.palettes ?? (s.settings.palettes = []);
+        list.push({ name: r.palette.trim().slice(0, 24), data: (chosen.length ? chosen : picks).map(p => p.t).join(',') });
+        if (list.length > 12)
+            list.shift();
+        say(player, `§a팔레트 "${r.palette.trim()}" 저장`);
+    }
+    if (r.removeOff)
+        s.settings.picks = picks.filter(p => p.on);
+    if (r.clear)
+        s.settings.picks = [];
+    s.forms.picker = {};
+    save(player);
+}
+
+// --------------------------------------------------------------------------
+// clipboard
+// --------------------------------------------------------------------------
+export async function clipboardMenu(player) {
+    const clip = getClip(player);
+    if (!clip) {
+        say(player, '§7클립보드가 비어 있습니다. 클립보드 도구로 부수기 = 선택 영역 복사. 자유 회전·크기 조절에서 "결과만 클립보드에 저장"을 켜도 여기로 들어옵니다.');
+        return;
+    }
+    const size = `${clip.max.x - clip.min.x + 1}×${clip.max.y - clip.min.y + 1}×${clip.max.z - clip.min.z + 1}`;
+    const r = await ask(player, 'clipboard', '클립보드', [
+        { type: 'label', label: `내용: ${clip.label}, ${size}\n§7클립보드 도구를 들면 놓일 자리가 테두리로 보이고, 터치하면 붙여넣습니다.` },
+        { key: 'turns', type: 'dropdown', label: '회전 (위에서 볼 때 시계 방향)', default: clip.turns, options: [0, 1, 2, 3].map(t => ({ value: t, label: t * 90 + '°' })) },
+        { key: 'flipX', type: 'toggle', label: '좌우 뒤집기 (동↔서)', default: clip.flipX },
+        { key: 'flipZ', type: 'toggle', label: '앞뒤 뒤집기 (남↔북)', default: clip.flipZ },
+        { key: 'skipAir', type: 'toggle', label: '공기는 붙여넣지 않기', default: clip.skipAir },
+        { key: 'clear', type: 'toggle', label: '클립보드 비우기', default: false },
+    ], { submit: '적용' });
+    if (!r)
+        return;
+    if (r.clear) {
+        clearClip(player);
+        return say(player, '§e클립보드를 비웠습니다.');
+    }
+    clip.turns = r.turns;
+    clip.flipX = r.flipX;
+    clip.flipZ = r.flipZ;
+    clip.skipAir = r.skipAir;
+    session(player).forms.clipboard = {};
+}
+
+// --------------------------------------------------------------------------
+// terrain
+// --------------------------------------------------------------------------
+export async function terrainMenu(player) {
+    const list = TOOLS.filter(t => t.group === 'terrain');
+    const v = await menu(player, '지형 도구', needsText(player, { needs: 'cuboid' }), [
+        ...list.map(t => ({ text: t.name, icon: t.icon, value: t.id })),
+        { text: '되돌리기', icon: 'textures/items/clock_item', value: 'undo' },
+    ]);
+    if (!v)
+        return;
+    if (v === 'undo')
+        return undo(player);
+    return toolForm(player, list.find(t => t.id === v));
 }
 
 // --------------------------------------------------------------------------
@@ -243,75 +370,89 @@ function heldItem(player) {
     }
 }
 
-async function brushMenu(player) {
+async function brushMenu(player, from = openMenu) {
     const s = session(player);
     const held = heldItem(player);
     const bound = Object.entries(s.brushes).map(([item, b]) => `§7${item.replace('minecraft:', '')}§r → ${BRUSHES.find(x => x.id === b.id)?.name ?? b.id}`);
-    const body = `브러시는 §e지금 손에 든 아이템§r에 붙습니다. 그 아이템으로 우클릭하면 바라보는 곳에 적용됩니다.\n손에 든 것: ${held ? held.typeId.replace('minecraft:', '') : '§c없음'}\n${bound.length ? '\n' + bound.join('\n') : ''}`;
+    const body = `브러시는 §e지금 손에 든 아이템§r에 붙습니다. 그 아이템으로 터치하면 바라보는 곳(300칸)에 적용됩니다.\n§7메뉴를 열기 전에 브러시로 쓸 아이템(예: 막대기)을 들고 오세요.\n손에 든 것: ${held ? held.typeId.replace('minecraft:', '') : '§c없음'}${bound.length ? '\n\n' + bound.join('\n') : ''}`;
     const v = await menu(player, '브러시', body, [
         ...BRUSHES.map(b => ({ text: b.name, icon: b.icon, value: 'b:' + b.id })),
-        { text: '손에 든 아이템의 브러시 해제', value: 'unbind' },
-        { text: '모든 브러시 해제', value: 'unbindall' },
-        { text: '§8뒤로', value: '<' },
+        { text: '손에 든 아이템의 브러시 떼기', value: 'unbind' },
+        { text: '모든 브러시 떼기', value: 'unbindall' },
+        back,
     ]);
     if (!v)
         return;
     if (v === '<')
-        return openMenu(player);
+        return from(player);
     if (v === 'unbind') {
         if (held)
             unbindBrush(player, held.typeId);
-        return say(player, '§a브러시 해제');
+        return say(player, '§a브러시를 뗐습니다.');
     }
     if (v === 'unbindall') {
         s.brushes = {};
         save(player);
-        return say(player, '§a모든 브러시 해제');
+        return say(player, '§a모든 브러시를 뗐습니다.');
     }
     const brush = BRUSHES.find(b => b.id === v.slice(2));
     if (!held)
         return say(player, '§c브러시를 붙일 아이템을 손에 드세요 (블록이 아닌 아이템 권장).');
-    if (held.typeId === WAND || held.typeId === PLACER || held.typeId === 'andexdb:selection_tool')
-        return say(player, '§c이 아이템에는 브러시를 붙일 수 없습니다.');
+    if (ITEMS.includes(held.typeId) || held.typeId === 'andexdb:selection_tool')
+        return say(player, '§c아르세온 도구 아이템에는 브러시를 붙일 수 없습니다. 막대기 같은 다른 아이템을 드세요.');
     const values = await ask(player, 'brush:' + brush.id, brush.name, brush.fields ?? [], { intro: brush.desc, submit: '이 아이템에 붙이기' });
     if (!values)
         return;
     bindBrush(player, held.typeId, brush.id, values);
-    say(player, `§a${brush.name}§r 을(를) ${held.typeId.replace('minecraft:', '')}에 붙였습니다. 우클릭으로 사용하세요.`);
+    say(player, `§a${brush.name}§r를 ${held.typeId.replace('minecraft:', '')}에 붙였습니다. 터치하면 사용됩니다.`);
 }
 
 // --------------------------------------------------------------------------
 // assets
 // --------------------------------------------------------------------------
-async function assetsMenu(player) {
-    const mod = TOOLS.find(t => t.id === 'assets')?.module;
+const assetMod = () => TOOLS.find(t => t.id === 'assets')?.module;
+const assetNames = () => assetMod().listAssets().map(a => (typeof a === 'string' ? a : a.name));
+
+/** Break with the asset tool: save the selection as an asset. */
+export async function assetSaveForm(player) {
+    const mod = assetMod();
     if (!mod)
         return;
-    const names = mod.listAssets().map(a => (typeof a === 'string' ? a : a.name));
-    const v = await menu(player, '에셋', `저장된 에셋 ${names.length}개${names.length ? ': §7' + names.slice(0, 30).join(', ') : ''}`, [
-        { text: '선택 영역을 에셋으로 저장', value: 'save' },
-        { text: '배치할 에셋 고르기', value: 'select' },
-        { text: '에셋 배치기 받기', value: 'placer' },
-        { text: '에셋 삭제', value: 'remove' },
-        { text: '§8뒤로', value: '<' },
-    ]);
+    if (!region(player))
+        return say(player, '§c에셋으로 저장할 선택 영역(1번·2번 지점)을 먼저 지정하세요.');
+    const r = await ask(player, 'asset:save', '에셋 저장', mod.SAVE_FIELDS, { submit: '저장' });
+    if (!r)
+        return;
+    try {
+        say(player, await mod.saveAsset(player, String(r.name ?? '').trim(), r) ?? '§a저장했습니다.');
+    }
+    catch (e) {
+        say(player, `§c${e?.message ?? e}`);
+    }
+}
+
+export async function assetsMenu(player) {
+    const mod = assetMod();
+    if (!mod)
+        return;
+    const names = assetNames();
+    const cfg = session(player).settings.assetPlacer;
+    const v = await menu(player, '에셋 도구',
+        `저장된 에셋 ${names.length}개${names.length ? ': §7' + names.slice(0, 30).join(', ') : ''}§r\n놓을 에셋: ${cfg?.names?.length ? '§e' + cfg.names.join(', ') : '§7없음'}\n\n§7터치 = 놓기 · 부수기 = 선택 영역을 에셋으로 저장`, [
+            { text: '놓을 에셋 고르기', value: 'select' },
+            { text: '선택 영역을 에셋으로 저장', value: 'save' },
+            { text: '에셋 지우기', value: 'remove' },
+        ]);
     switch (v) {
-        case 'save': {
-            const r = await ask(player, 'asset:save', '에셋 저장', mod.SAVE_FIELDS, { submit: '저장' });
-            if (r) {
-                try {
-                    say(player, await mod.saveAsset(player, String(r.name ?? '').trim(), r) ?? '§a저장했습니다.');
-                }
-                catch (e) {
-                    say(player, `§c${e?.message ?? e}`);
-                }
-            }
-            return;
-        }
+        case 'save':
+            return assetSaveForm(player);
         case 'select': {
             if (!names.length)
                 return say(player, '§c저장된 에셋이 없습니다.');
-            const r = await ask(player, 'asset:select', '배치할 에셋', mod.PLACER_FIELDS, { submit: '고르기' });
+            const r = await ask(player, 'asset:select', '놓을 에셋 고르기', [
+                { type: 'label', label: '§7저장된 에셋: ' + names.join(', ') },
+                ...mod.PLACER_FIELDS,
+            ], { submit: '고르기' });
             if (r) {
                 try {
                     const picked = String(r.names ?? '').split(/[\s,]+/).filter(Boolean);
@@ -323,17 +464,15 @@ async function assetsMenu(player) {
             }
             return;
         }
-        case 'placer':
-            return give(player, PLACER, '§a에셋 배치기를 받았습니다. §7블록을 우클릭하면 고른 에셋이 놓입니다.');
         case 'remove': {
             if (!names.length)
                 return say(player, '§c저장된 에셋이 없습니다.');
-            const r = await ask(player, 'asset:remove', '에셋 삭제', [
-                { key: 'name', type: 'dropdown', label: '삭제할 에셋', default: names[0], options: names.map(n => ({ value: n, label: n })) },
-            ], { submit: '삭제' });
+            const r = await ask(player, 'asset:remove', '에셋 지우기', [
+                { key: 'name', type: 'dropdown', label: '지울 에셋', default: names[0], options: names.map(n => ({ value: n, label: n })) },
+            ], { submit: '지우기' });
             if (r) {
                 try {
-                    say(player, await mod.removeAsset(r.name) ?? `§a${r.name} 삭제`);
+                    say(player, await mod.removeAsset(r.name) ?? `§a${r.name} 지움`);
                 }
                 catch (e) {
                     say(player, `§c${e?.message ?? e}`);
@@ -341,8 +480,6 @@ async function assetsMenu(player) {
             }
             return;
         }
-        case '<':
-            return openMenu(player);
     }
 }
 
@@ -352,8 +489,8 @@ async function assetsMenu(player) {
 async function settingsMenu(player) {
     const s = session(player);
     const r = await ask(player, 'settings', '설정', [
-        { key: 'gmask', type: 'mask', label: '전역 마스크 (문지르기·채우기·브러시에 적용, 비우면 끔)', placeholder: '예: !air  /  #arcangle[0][40][1]', default: s.settings.gmask },
-        { key: 'particles', type: 'toggle', label: '지팡이를 들면 점·곡선·영역 입자로 보기', default: s.settings.particles },
+        { key: 'gmask', type: 'mask', label: '전역 마스크 (끌어 늘리기·채우기·브러시에 적용, 비우면 끔)', placeholder: '예: !air  /  #arcangle[0][40][1]', default: s.settings.gmask },
+        { key: 'particles', type: 'toggle', label: '도구를 들면 점·곡선·영역·붙여넣을 자리를 입자로 보기', default: s.settings.particles },
         { key: 'clearPalettes', type: 'toggle', label: `저장한 팔레트 모두 지우기 (${(s.settings.palettes ?? []).length}개)`, default: false },
     ], { submit: '저장' });
     if (!r)

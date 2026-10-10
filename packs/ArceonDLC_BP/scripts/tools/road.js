@@ -24,9 +24,9 @@ export default {
         { key: 'block', type: 'block', label: '블록', default: 'stone' },
         { key: 'width', type: 'number', label: '폭', default: 7, min: 1, max: 200 },
         { key: 'height', type: 'number', label: '높이', default: 3, min: 0, max: 100 },
-        { key: 'noise', type: 'toggle', label: '노이즈 추가 (-n)', default: false },
+        { key: 'noise', type: 'toggle', label: '모양을 울퉁불퉁하게 (-n)', default: false },
         { key: 'down', type: 'toggle', label: '아래로 땅까지 쌓기 (-d)', default: false },
-        { key: 'straight', type: 'toggle', label: '더 곧은 경로 (-p)', default: false },
+        { key: 'straight', type: 'toggle', label: '곡선을 덜 휘게 (-p)', default: false },
     ],
     *run(ctx, v) {
         const pattern = ctx.pattern('block');

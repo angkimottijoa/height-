@@ -26,9 +26,9 @@ export default {
         { key: 'pillar', type: 'number', label: '기둥 크기', default: 5, min: 0, max: 200 },
         { key: 'amount', type: 'slider', label: '아치 개수', default: 1, min: 1, max: 50 },
         { key: 'archHeight', type: 'slider', label: '아치 높이 (높이의 %)', default: 75, min: 0, max: 100 },
-        { key: 'level', type: 'toggle', label: '아치 높이 맞추기 (-l)', default: false },
+        { key: 'level', type: 'toggle', label: '아치 높이를 모두 같게 (-l)', default: false },
         { key: 'down', type: 'toggle', label: '기둥을 땅까지 내리기 (-d)', default: false },
-        { key: 'straight', type: 'toggle', label: '더 곧은 경로 (-p)', default: false },
+        { key: 'straight', type: 'toggle', label: '곡선을 덜 휘게 (-p)', default: false },
     ],
     *run(ctx, v) {
         const pattern = ctx.pattern('block');

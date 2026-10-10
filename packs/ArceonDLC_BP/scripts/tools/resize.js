@@ -16,6 +16,7 @@ export default {
     fields: [
         { key: 'scale', type: 'number', label: '배율', default: 2, min: 0.001, max: 50, tooltip: '예: 2 = 두 배, 0.5 = 절반' },
         { key: 'air', type: 'toggle', label: '공기도 크기 조절 (-a)', default: false },
+        { key: 'toClip', type: 'toggle', label: '월드는 그대로 두고 결과만 클립보드에 저장', default: false, tooltip: '클립보드 도구를 들면 놓일 자리가 보이고, 터치하면 붙여넣습니다' },
     ],
     *run(ctx, v) {
         let scale = Number(v.scale);

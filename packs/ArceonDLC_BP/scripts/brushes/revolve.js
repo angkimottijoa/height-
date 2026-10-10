@@ -6,8 +6,8 @@ import { revolve } from '../lib/terrain_revolve.js';
 
 export default {
     id: 'revolve',
-    name: '회전체 브러시',
-    desc: '선택 영역(pos1·pos2)을 바라보는 블록을 축으로 여러 번 돌려 복사합니다.',
+    name: '회전 복제 브러시',
+    desc: '선택 영역(1번·2번 지점)을 바라보는 블록을 축으로 삼아 여러 번 돌려 가며 복사합니다.',
     icon: 'textures/blocks/purpur_pillar',
     fields: [
         { key: 'amount', type: 'slider', label: '개수', default: 8, min: 1, max: 360 },
@@ -21,7 +21,7 @@ export default {
     *apply(ctx, v, hit) {
         const r = ctx.region;
         if (!r)
-            throw new Error('회전체 브러시는 선택 영역(pos1, pos2)이 필요합니다');
+            throw new Error('회전 복제 브러시는 선택 영역(1번·2번 지점)이 필요합니다');
         if (ctx.session.dim && ctx.session.dim !== ctx.player.dimension.id)
             throw new Error('선택 영역이 다른 차원에 있습니다');
         const vol = (r.max.x - r.min.x + 1) * (r.max.y - r.min.y + 1) * (r.max.z - r.min.z + 1);

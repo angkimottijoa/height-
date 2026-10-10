@@ -20,9 +20,9 @@ export default {
     fields: [
         { key: 'block', type: 'block', label: '블록', default: 'stone' },
         { key: 'size1', type: 'number', label: '시작 굵기', default: 1, min: 0, max: 100 },
-        { key: 'size2', type: 'number', label: '끝 굵기 (크기 3을 쓰면 중간)', default: 10, min: 0, max: 100 },
-        { key: 'size3', type: 'number', label: '크기 3 (0 = 안 씀)', default: 0, min: 0, max: 100 },
-        { key: 'noise', type: 'toggle', label: '노이즈 추가 (-n)', default: false },
+        { key: 'size2', type: 'number', label: '중간 또는 끝 굵기', default: 10, min: 0, max: 100 },
+        { key: 'size3', type: 'number', label: '끝 굵기 (0 = 안 씀, 쓰면 위 칸은 중간 굵기)', default: 0, min: 0, max: 100 },
+        { key: 'noise', type: 'toggle', label: '모양을 울퉁불퉁하게 (-n)', default: false },
         { key: 'straight', type: 'toggle', label: '곡선 대신 직선 (-p)', default: false },
     ],
     *run(ctx, v) {

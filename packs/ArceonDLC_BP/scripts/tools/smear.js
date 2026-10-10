@@ -30,8 +30,8 @@ export function cardinal(rotation) {
 
 export default {
     id: 'smear',
-    name: '문지르기(스미어)',
-    desc: '선택 영역의 블록을 한 방향으로 끌어 늘입니다. 전역 마스크로 끌 블록을 고릅니다.',
+    name: '끌어 늘리기',
+    desc: '선택 영역의 블록을 한 방향으로 끌어 늘립니다 (스미어). 설정의 전역 마스크로 끌 블록만 고를 수 있습니다.',
     icon: 'textures/blocks/honey_top',
     needs: 'cuboid',
     useMask: true,

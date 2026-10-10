@@ -11,8 +11,8 @@ import { revolveSamples } from '../lib/shape_revolve.js';
 
 export default {
     id: 'revolve',
-    name: '회전체',
-    desc: '선택 영역을 내 위치를 중심으로 빙 둘러 복사해 회전체를 만듭니다.',
+    name: '회전 복제',
+    desc: '선택 영역을 내가 선 곳을 중심으로 빙 돌려 가며 여러 번 복사합니다 (원형 탑, 기둥 둘레 장식 등).',
     icon: 'textures/blocks/target_top',
     needs: 'cuboid',
     maxVolume: 200000,
@@ -20,7 +20,7 @@ export default {
         { key: 'amount', type: 'number', label: '복사 개수', default: 8, min: 1, max: 3600 },
         { key: 'start', type: 'angle', label: '시작 각도', default: 0, min: -360, max: 360 },
         { key: 'end', type: 'angle', label: '끝 각도', default: 360, min: -360, max: 720 },
-        { key: 'height', type: 'number', label: '전체 높이 차이', default: 0, tooltip: '시작에서 끝까지 올라가는 높이 (음수면 내려감)' },
+        { key: 'height', type: 'number', label: '처음~끝 높이 차이', default: 0, tooltip: '시작에서 끝까지 올라가는 높이 (음수면 내려감)' },
         { key: 'polygon', type: 'toggle', label: '정다각형으로 잇기 (-p)', default: false },
         { key: 'reverse', type: 'toggle', label: '반대 방향으로 회전 (-r)', default: false },
         { key: 'toStart', type: 'toggle', label: '모두 시작점으로 잇기 (-s)', default: false },

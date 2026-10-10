@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": "blaze_rod",
       "minecraft:display_name": {
-        "value": "§b아르세온 지팡이"
+        "value": "§b선택 지팡이"
       },
       "minecraft:max_stack_size": 1,
       "minecraft:hand_equipped": true,

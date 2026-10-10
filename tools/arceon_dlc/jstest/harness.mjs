@@ -50,10 +50,10 @@ export async function runBrush(brush, values, hit, { player } = {}) {
 function expand(tool, values) {
   const v = {};
   for (const f of tool.fields ?? []) if (f.key !== undefined && f.default !== undefined) v[f.key] = f.default;
-  for (const f of tool.fields ?? []) if (f.type === 'block') { v[f.key + '#src'] = 0; v[f.key + '#text'] = f.default ?? 'stone'; }
+  for (const f of tool.fields ?? []) if (f.type === 'block') { v[f.key + '#src'] = 1; v[f.key + '#text'] = f.default ?? 'stone'; }
   for (const [k, val] of Object.entries(values)) {
     const f = (tool.fields ?? []).find(x => x.key === k);
-    if (f?.type === 'block') { v[k + '#src'] = 0; v[k + '#text'] = val; } else v[k] = val;
+    if (f?.type === 'block') { v[k + '#src'] = 1; v[k + '#text'] = val; } else v[k] = val;
   }
   return v;
 }

@@ -5,8 +5,8 @@
  */
 export default {
     id: 'fill',
-    name: '패턴 채우기 / 교체',
-    desc: '선택 영역을 패턴으로 채우거나, 마스크에 맞는 블록만 바꿉니다. 아르세온 마스크·패턴(#turb, #arcangle 등) 사용 가능.',
+    name: '채우기 · 바꾸기',
+    desc: '선택 영역을 블록이나 패턴으로 채우거나, 마스크에 맞는 블록만 바꿉니다. 아르세온 마스크·패턴(#turb, #arcangle 등)도 됩니다.',
     icon: 'textures/items/bucket_empty',
     needs: 'cuboid',
     useMask: true,

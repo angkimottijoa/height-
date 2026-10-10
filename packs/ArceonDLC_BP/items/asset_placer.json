@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": "echo_shard",
       "minecraft:display_name": {
-        "value": "§e에셋 배치기"
+        "value": "§e에셋 도구"
       },
       "minecraft:max_stack_size": 1,
       "minecraft:hand_equipped": true,

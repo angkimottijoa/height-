@@ -21,12 +21,12 @@ export default {
     useMask: true,
     fields: [
         { key: 'block', type: 'block', label: '블록', default: 'yellow_wool' },
-        { key: 'dash', type: 'number', label: '선 길이', default: 3, min: 0, max: 200 },
-        { key: 'gap', type: 'number', label: '빈칸 길이', default: 3, min: 0, max: 200 },
+        { key: 'dash', type: 'number', label: '칠할 길이', default: 3, min: 0, max: 200 },
+        { key: 'gap', type: 'number', label: '띄울 길이', default: 3, min: 0, max: 200 },
         { key: 'width', type: 'number', label: '폭', default: 0, min: 0, max: 200 },
-        { key: 'dots', type: 'toggle', label: '빈칸 사이에 점 추가 (-d)', default: false },
-        { key: 'split', type: 'toggle', label: '두 줄로 나누기 (-s)', default: false },
-        { key: 'straight', type: 'toggle', label: '더 곧은 경로 (-p)', default: false },
+        { key: 'dots', type: 'toggle', label: '띄운 곳 가운데에 점 찍기 (-d)', default: false },
+        { key: 'split', type: 'toggle', label: '양쪽 가장자리 두 줄로 (-s)', default: false },
+        { key: 'straight', type: 'toggle', label: '곡선을 덜 휘게 (-p)', default: false },
     ],
     *run(ctx, v) {
         const pattern = ctx.pattern('block');

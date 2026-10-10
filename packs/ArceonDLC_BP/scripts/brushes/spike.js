@@ -22,7 +22,7 @@ export default {
         { key: 'startMax', type: 'number', label: '시작 굵기 최대', default: 4, min: 0, max: 50 },
         { key: 'endMin', type: 'number', label: '끝 굵기 최소', default: 1, min: 0, max: 50 },
         { key: 'endMax', type: 'number', label: '끝 굵기 최대', default: 1, min: 0, max: 50 },
-        { key: 'n', type: 'toggle', label: '모양에 노이즈 (-n)', default: false },
+        { key: 'n', type: 'toggle', label: '모양을 울퉁불퉁하게 (-n)', default: false },
     ],
     *apply(ctx, v, hit) {
         const edit = ctx.edit;

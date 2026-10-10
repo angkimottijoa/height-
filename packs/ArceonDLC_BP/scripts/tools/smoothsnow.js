@@ -10,16 +10,16 @@ const SNOW_BLOCK = 'minecraft:snow';
 
 export default {
     id: 'smoothsnow',
-    name: '부드러운 눈',
-    desc: '마스크에 맞는 지형 위에 높이를 부드럽게 맞춘 눈(층)을 덮습니다.',
+    name: '눈 덮기',
+    desc: '지형 위에 높낮이를 부드럽게 맞춘 눈 층을 덮습니다.',
     icon: 'textures/blocks/snow',
     needs: 'cuboid',
     useMask: true,
     fields: [
-        { key: 'smooth', type: 'slider', label: '부드러움 (높이 평균 거리)', default: 6, min: 1, max: 30 },
-        { key: 'mask', type: 'mask', label: '덮을 블록 마스크', default: '!air', placeholder: '!air 또는 grass_block,stone' },
-        { key: 'block', type: 'block', label: '블록 (눈이면 눈 층으로)', default: 'snow_layer' },
-        { key: 'added', type: 'number', label: '추가 높이', default: 0.4, min: -10, max: 10 },
+        { key: 'smooth', type: 'slider', label: '부드러움 (주변 몇 칸까지 평균)', default: 6, min: 1, max: 30 },
+        { key: 'mask', type: 'mask', label: '눈을 덮을 블록 (마스크)', default: '!air', placeholder: '!air 또는 grass_block,stone' },
+        { key: 'block', type: 'block', label: '덮을 블록 (눈이면 눈 층으로)', default: 'snow_layer' },
+        { key: 'added', type: 'number', label: '더 쌓을 높이', default: 0.4, min: -10, max: 10 },
         { key: 'o', type: 'toggle', label: '블록 위에만 덮기 (-o)', default: false },
     ],
     *run(ctx, v) {

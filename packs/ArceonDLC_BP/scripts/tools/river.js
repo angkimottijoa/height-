@@ -27,7 +27,7 @@ export default {
         { key: 'end', type: 'number', label: '끝 깊이', default: 10, min: 0, max: 200, int: true },
         { key: 'decline', type: 'number', label: '기슭 경사 (클수록 가파름)', default: 1, min: 0, max: 100 },
         { key: 'smooth', type: 'toggle', label: '물/용암/눈 층 부드럽게 (-s)', default: false },
-        { key: 'noise', type: 'toggle', label: '노이즈 추가 (-n)', default: false },
+        { key: 'noise', type: 'toggle', label: '모양을 울퉁불퉁하게 (-n)', default: false },
     ],
     *run(ctx, v) {
         const pattern = ctx.pattern('block');

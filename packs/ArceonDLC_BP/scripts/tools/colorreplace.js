@@ -22,9 +22,9 @@ export default {
     icon: 'textures/blocks/wool_colored_red',
     needs: 'cuboid',
     fields: [
-        { key: 'from', type: 'dropdown', label: '바꿀 색', default: 'white', options: COLOR_OPTIONS },
+        { key: 'from', type: 'dropdown', label: '원래 색', default: 'white', options: COLOR_OPTIONS },
         { key: 'to', type: 'dropdown', label: '새 색', default: 'red', options: COLOR_OPTIONS },
-        { key: 'b', type: 'toggle', label: '현수막은 그대로 (-b, 베드락은 항상 그대로)', default: true },
+        { key: 'b', type: 'toggle', label: '현수막 제외 (-b, 베드락에서는 항상 제외)', default: true },
         { key: 'g', type: 'toggle', label: '유광 테라코타는 그대로 (-g)', default: false },
     ],
     *run(ctx, v) {
@@ -32,7 +32,7 @@ export default {
         if (!FAMILIES.colors[from] || !FAMILIES.colors[to])
             throw new Error('색을 고르세요');
         if (from === to)
-            throw new Error('바꿀 색과 새 색이 같습니다');
+            throw new Error('원래 색과 새 색이 같습니다');
         const target = FAMILIES.colors[to];
         const { min, max } = ctx.region;
         const edit = ctx.edit;

@@ -44,7 +44,7 @@ const fresh = (opts) => { const w = world(opts); session(w.player).points = []; 
     ok(res.connect >= res.plain, 'loft -c closes the loop');
     const { player } = fresh();
     const m = await runTool(loft, {}, { player, frames: [frames[0]] });
-    ok(/2개 이상/.test(last(m)), 'loft needs 2 frames');
+    ok(/블록 변경/.test(last(m)), 'loft with 1 frame falls back to a flat fill');
 }
 
 // ---------------------------------------------------------------- revolve

@@ -186,7 +186,7 @@ function place(dir, col, up) {
 
 export default {
     id: 'text',
-    name: '글자',
+    name: '글자 쓰기',
     desc: '바라보는 방향(동서남북) 2칸 앞 벽에 글자를 블록으로 씁니다. 반블록 패턴이면 반블록으로 다듬습니다.',
     icon: 'textures/blocks/bookshelf',
     needs: 'none',

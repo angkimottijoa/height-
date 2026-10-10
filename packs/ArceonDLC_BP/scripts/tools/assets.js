@@ -105,7 +105,7 @@ export async function saveAsset(player, name, opts = {}) {
     const key = assetKey(name);
     const reg = region(player);
     if (!reg)
-        throw new Error('선택 영역(pos1, pos2)이 없습니다');
+        throw new Error('선택 영역(1번·2번 지점)이 없습니다');
     const s = session(player);
     if (s.dim && s.dim !== player.dimension.id)
         throw new Error('선택 영역이 다른 차원에 있습니다');
@@ -242,7 +242,7 @@ export function selectAsset(player, names, opts = {}) {
     const flip = ['none', 'xz', 'xyz'].includes(opts.flip) ? opts.flip : 'none';
     session(player).settings.assetPlacer = { names: list, rotation, flip };
     save(player);
-    return `에셋 설치기: ${list.join(', ')} (${ROTATIONS.find(r => r.value === rotation).label}, ${FLIPS.find(f => f.value === flip).label})`;
+    return `에셋 도구: ${list.join(', ')} (${ROTATIONS.find(r => r.value === rotation).label}, ${FLIPS.find(f => f.value === flip).label})`;
 }
 
 /** Give the placer item if the player has none (the item is defined by the pack). */
@@ -309,7 +309,7 @@ export function placement(cfg, meta, playerYaw, rand = Math.random) {
 export function* placeAsset(ctx, hit, rand = Math.random) {
     const cfg = ctx.session.settings.assetPlacer;
     if (!cfg?.names?.length)
-        throw new Error('에셋 설치기에 에셋이 없습니다. 아르세온 메뉴 > 에셋에서 고르세요');
+        throw new Error('놓을 에셋을 아직 안 골랐습니다. 에셋 도구를 들고 웅크리고 터치 > 놓을 에셋 고르기');
     const name = cfg.names[Math.floor(rand() * cfg.names.length) % cfg.names.length];
     const st = world.structureManager.get(PREFIX + name);
     if (!st)
@@ -364,14 +364,14 @@ export function* placeAsset(ctx, hit, rand = Math.random) {
 export default {
     id: 'assets',
     name: '에셋',
-    desc: '선택 영역을 이름 붙여 저장하고, 에셋 설치기(우클릭)로 회전·뒤집기 하며 찍어 놓습니다.',
+    desc: '선택 영역을 이름 붙여 저장하고, 에셋 도구로 터치해 회전·뒤집기 하며 찍어 놓습니다.',
     icon: 'textures/blocks/structure_block_save',
     needs: 'none',
     fields: [
         {
             key: 'action', type: 'dropdown', label: '할 일', default: 'select', options: [
                 { value: 'save', label: '선택 영역을 에셋으로 저장' },
-                { value: 'select', label: '에셋 설치기에 에셋 넣기 (+ 설치기 받기)' },
+                { value: 'select', label: '에셋 도구에 에셋 넣기 (+ 설치기 받기)' },
                 { value: 'list', label: '에셋 목록 보기' },
                 { value: 'remove', label: '에셋 지우기' },
             ],

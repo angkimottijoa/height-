@@ -8,26 +8,29 @@
  */
 import { SlabMap } from '../core/blocks.js';
 import { BezierPath, LinePath, resample } from '../core/spline.js';
+import surface from './surface.js';
 
 export default {
     id: 'loft',
-    name: '로프트',
-    desc: '로프트 프레임들을 매끄러운 면으로 이어 채웁니다.',
+    name: '곡면 채우기',
+    desc: '프레임과 프레임 사이를 매끄러운 곡면으로 잇습니다 (아르세온 로프트). 프레임이 1개면 그 도형을 평면으로 채웁니다.',
     icon: 'textures/blocks/wool_colored_white',
     needs: 'frames',
     fields: [
         { key: 'block', type: 'block', label: '블록', default: 'stone' },
         { key: 'count', type: 'number', label: '단면 개수 (0 = 자동)', default: 0, min: 0, max: 2000, tooltip: '프레임 사이에 그릴 단면 수. 0이면 길이에 맞춰 자동' },
-        { key: 'lowPoly', type: 'toggle', label: '로우 폴리 (-p)', default: false },
-        { key: 'outline', type: 'toggle', label: '테두리만 (-o)', default: false, tooltip: '단면 개수를 직접 정하면 단면도 함께 그림' },
-        { key: 'connect', type: 'toggle', label: '처음과 끝 잇기 (-c)', default: false },
-        { key: 'down', type: 'toggle', label: '바닥까지 쌓기 (-d)', default: false },
+        { key: 'lowPoly', type: 'toggle', label: '곡선 대신 직선으로 각지게 (-p)', default: false },
+        { key: 'outline', type: 'toggle', label: '테두리 선만 (-o)', default: false, tooltip: '단면 개수를 직접 정하면 단면 선도 함께 그림' },
+        { key: 'connect', type: 'toggle', label: '마지막 프레임을 처음 프레임과 잇기 (-c)', default: false },
+        { key: 'down', type: 'toggle', label: '아래로 땅까지 채우기 (-d)', default: false },
     ],
     *run(ctx, v) {
         const frames = ctx.frames.filter(f => f.length).map(f => f.map(p => ({ x: p.x + 0.5, y: p.y + 0.5, z: p.z + 0.5 })));
         const e = frames.length;
-        if (e < 2)
-            throw new Error('로프트에는 프레임이 2개 이상 필요합니다');
+        if (e < 2) {
+            // a single frame: fill its outline as a flat face
+            return yield* surface.run(ctx, { ...v, mode: 'faces', outline: !!v.outline });
+        }
         const pattern = ctx.pattern('block');
         const slabs = pattern.slabs;
         const map = slabs ? new SlabMap() : null;

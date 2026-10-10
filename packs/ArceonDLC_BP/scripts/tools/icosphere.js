@@ -54,15 +54,15 @@ function* points(a, b, n) {
 
 export default {
     id: 'icosphere',
-    name: '아이코스피어',
-    desc: '내 위치를 중심으로 삼각형 면으로 된 구(아이코스피어)를 만듭니다.',
+    name: '다면체 구 (아이코스피어)',
+    desc: '내 위치를 중심으로 삼각형 면이 이어진 각진 구를 만듭니다.',
     icon: 'textures/blocks/amethyst_block',
     needs: 'none',
     fields: [
         { key: 'block', type: 'block', label: '블록', default: 'stone' },
         { key: 'size', type: 'number', label: '크기', default: 20, min: 5, max: 10000 },
-        { key: 'subdivide', type: 'slider', label: '세분화 횟수', default: 0, min: 0, max: 5 },
-        { key: 'outline', type: 'toggle', label: '모서리만 (-l)', default: false },
+        { key: 'subdivide', type: 'slider', label: '면 쪼개기 횟수 (클수록 둥글게)', default: 0, min: 0, max: 5 },
+        { key: 'outline', type: 'toggle', label: '모서리 선만 (-l)', default: false },
     ],
     *run(ctx, v) {
         let size = Number(v.size) || 5;
