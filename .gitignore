@@ -3,3 +3,4 @@ __pycache__/
 tools/debug_stick/jstest/*.json
 tools/arceon_dlc/jstest/defs.json
 tools/arceon_dlc/jstest/scripts/
+tools/arceon_dlc/jstest/aio_scripts/
