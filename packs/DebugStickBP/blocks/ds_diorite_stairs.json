@@ -1,0 +1,929 @@
+{
+  "format_version": "1.26.40",
+  "minecraft:block": {
+    "description": {
+      "identifier": "vyt:ds_diorite_stairs",
+      "states": {
+        "vyt:facing": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "vyt:half": [
+          0,
+          1
+        ],
+        "vyt:shape": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ]
+      }
+    },
+    "components": {
+      "minecraft:geometry": {
+        "identifier": "geometry.vyt.ds_diorite_stairs",
+        "bone_visibility": {
+          "p0": "q.block_state('vyt:facing') == 0 && q.block_state('vyt:half') == 0 && q.block_state('vyt:shape') == 0",
+          "p1": "(q.block_state('vyt:facing') == 0 && q.block_state('vyt:half') == 0 && q.block_state('vyt:shape') == 1) || (q.block_state('vyt:facing') == 3 && q.block_state('vyt:half') == 0 && q.block_state('vyt:shape') == 2)",
+          "p2": "(q.block_state('vyt:facing') == 0 && q.block_state('vyt:half') == 0 && q.block_state('vyt:shape') == 2) || (q.block_state('vyt:facing') == 2 && q.block_state('vyt:half') == 0 && q.block_state('vyt:shape') == 1)",
+          "p3": "(q.block_state('vyt:facing') == 0 && q.block_state('vyt:half') == 0 && q.block_state('vyt:shape') == 3) || (q.block_state('vyt:facing') == 3 && q.block_state('vyt:half') == 0 && q.block_state('vyt:shape') == 4)",
+          "p4": "(q.block_state('vyt:facing') == 0 && q.block_state('vyt:half') == 0 && q.block_state('vyt:shape') == 4) || (q.block_state('vyt:facing') == 2 && q.block_state('vyt:half') == 0 && q.block_state('vyt:shape') == 3)",
+          "p5": "q.block_state('vyt:facing') == 0 && q.block_state('vyt:half') == 1 && q.block_state('vyt:shape') == 0",
+          "p6": "(q.block_state('vyt:facing') == 0 && q.block_state('vyt:half') == 1 && q.block_state('vyt:shape') == 1) || (q.block_state('vyt:facing') == 3 && q.block_state('vyt:half') == 1 && q.block_state('vyt:shape') == 2)",
+          "p7": "(q.block_state('vyt:facing') == 0 && q.block_state('vyt:half') == 1 && q.block_state('vyt:shape') == 2) || (q.block_state('vyt:facing') == 2 && q.block_state('vyt:half') == 1 && q.block_state('vyt:shape') == 1)",
+          "p8": "(q.block_state('vyt:facing') == 0 && q.block_state('vyt:half') == 1 && q.block_state('vyt:shape') == 3) || (q.block_state('vyt:facing') == 3 && q.block_state('vyt:half') == 1 && q.block_state('vyt:shape') == 4)",
+          "p9": "(q.block_state('vyt:facing') == 0 && q.block_state('vyt:half') == 1 && q.block_state('vyt:shape') == 4) || (q.block_state('vyt:facing') == 2 && q.block_state('vyt:half') == 1 && q.block_state('vyt:shape') == 3)",
+          "p10": "q.block_state('vyt:facing') == 1 && q.block_state('vyt:half') == 0 && q.block_state('vyt:shape') == 0",
+          "p11": "(q.block_state('vyt:facing') == 1 && q.block_state('vyt:half') == 0 && q.block_state('vyt:shape') == 1) || (q.block_state('vyt:facing') == 2 && q.block_state('vyt:half') == 0 && q.block_state('vyt:shape') == 2)",
+          "p12": "(q.block_state('vyt:facing') == 1 && q.block_state('vyt:half') == 0 && q.block_state('vyt:shape') == 2) || (q.block_state('vyt:facing') == 3 && q.block_state('vyt:half') == 0 && q.block_state('vyt:shape') == 1)",
+          "p13": "(q.block_state('vyt:facing') == 1 && q.block_state('vyt:half') == 0 && q.block_state('vyt:shape') == 3) || (q.block_state('vyt:facing') == 2 && q.block_state('vyt:half') == 0 && q.block_state('vyt:shape') == 4)",
+          "p14": "(q.block_state('vyt:facing') == 1 && q.block_state('vyt:half') == 0 && q.block_state('vyt:shape') == 4) || (q.block_state('vyt:facing') == 3 && q.block_state('vyt:half') == 0 && q.block_state('vyt:shape') == 3)",
+          "p15": "q.block_state('vyt:facing') == 1 && q.block_state('vyt:half') == 1 && q.block_state('vyt:shape') == 0",
+          "p16": "(q.block_state('vyt:facing') == 1 && q.block_state('vyt:half') == 1 && q.block_state('vyt:shape') == 1) || (q.block_state('vyt:facing') == 2 && q.block_state('vyt:half') == 1 && q.block_state('vyt:shape') == 2)",
+          "p17": "(q.block_state('vyt:facing') == 1 && q.block_state('vyt:half') == 1 && q.block_state('vyt:shape') == 2) || (q.block_state('vyt:facing') == 3 && q.block_state('vyt:half') == 1 && q.block_state('vyt:shape') == 1)",
+          "p18": "(q.block_state('vyt:facing') == 1 && q.block_state('vyt:half') == 1 && q.block_state('vyt:shape') == 3) || (q.block_state('vyt:facing') == 2 && q.block_state('vyt:half') == 1 && q.block_state('vyt:shape') == 4)",
+          "p19": "(q.block_state('vyt:facing') == 1 && q.block_state('vyt:half') == 1 && q.block_state('vyt:shape') == 4) || (q.block_state('vyt:facing') == 3 && q.block_state('vyt:half') == 1 && q.block_state('vyt:shape') == 3)",
+          "p20": "q.block_state('vyt:facing') == 2 && q.block_state('vyt:half') == 0 && q.block_state('vyt:shape') == 0",
+          "p21": "q.block_state('vyt:facing') == 2 && q.block_state('vyt:half') == 1 && q.block_state('vyt:shape') == 0",
+          "p22": "q.block_state('vyt:facing') == 3 && q.block_state('vyt:half') == 0 && q.block_state('vyt:shape') == 0",
+          "p23": "q.block_state('vyt:facing') == 3 && q.block_state('vyt:half') == 1 && q.block_state('vyt:shape') == 0"
+        }
+      },
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "vyt_ds_stone_diorite",
+          "face_dimming": true,
+          "ambient_occlusion": 1.0,
+          "render_method": "opaque"
+        },
+        "m0": {
+          "texture": "vyt_ds_stone_diorite",
+          "face_dimming": true,
+          "ambient_occlusion": 1.0,
+          "render_method": "opaque"
+        }
+      },
+      "minecraft:collision_box": [
+        {
+          "origin": [
+            -8,
+            0,
+            -8
+          ],
+          "size": [
+            16,
+            8,
+            16
+          ]
+        },
+        {
+          "origin": [
+            -8,
+            8,
+            -8
+          ],
+          "size": [
+            8,
+            8,
+            16
+          ]
+        }
+      ],
+      "minecraft:selection_box": {
+        "origin": [
+          -8,
+          0,
+          -8
+        ],
+        "size": [
+          16,
+          16,
+          16
+        ]
+      },
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 1.5
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 6.0
+      },
+      "minecraft:light_dampening": 0,
+      "vyt:keep_state": {}
+    },
+    "permutations": [
+      {
+        "condition": "(q.block_state('vyt:facing') == 0 && q.block_state('vyt:half') == 0 && q.block_state('vyt:shape') == 1) || (q.block_state('vyt:facing') == 3 && q.block_state('vyt:half') == 0 && q.block_state('vyt:shape') == 2)",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                8,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                8,
+                -8
+              ],
+              "size": [
+                16,
+                8,
+                8
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                8,
+                0
+              ],
+              "size": [
+                8,
+                8,
+                8
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "(q.block_state('vyt:facing') == 0 && q.block_state('vyt:half') == 0 && q.block_state('vyt:shape') == 2) || (q.block_state('vyt:facing') == 2 && q.block_state('vyt:half') == 0 && q.block_state('vyt:shape') == 1)",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                8,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                8,
+                -8
+              ],
+              "size": [
+                8,
+                8,
+                16
+              ]
+            },
+            {
+              "origin": [
+                0,
+                8,
+                0
+              ],
+              "size": [
+                8,
+                8,
+                8
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "(q.block_state('vyt:facing') == 0 && q.block_state('vyt:half') == 0 && q.block_state('vyt:shape') == 3) || (q.block_state('vyt:facing') == 3 && q.block_state('vyt:half') == 0 && q.block_state('vyt:shape') == 4)",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                8,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                8,
+                -8
+              ],
+              "size": [
+                8,
+                8,
+                8
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "(q.block_state('vyt:facing') == 0 && q.block_state('vyt:half') == 0 && q.block_state('vyt:shape') == 4) || (q.block_state('vyt:facing') == 2 && q.block_state('vyt:half') == 0 && q.block_state('vyt:shape') == 3)",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                8,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                8,
+                0
+              ],
+              "size": [
+                8,
+                8,
+                8
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:facing') == 0 && q.block_state('vyt:half') == 1 && q.block_state('vyt:shape') == 0",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                8,
+                -8
+              ],
+              "size": [
+                16,
+                8,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                8,
+                8,
+                16
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "(q.block_state('vyt:facing') == 0 && q.block_state('vyt:half') == 1 && q.block_state('vyt:shape') == 1) || (q.block_state('vyt:facing') == 3 && q.block_state('vyt:half') == 1 && q.block_state('vyt:shape') == 2)",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                8,
+                -8
+              ],
+              "size": [
+                16,
+                8,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                8,
+                8,
+                16
+              ]
+            },
+            {
+              "origin": [
+                0,
+                0,
+                -8
+              ],
+              "size": [
+                8,
+                8,
+                8
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "(q.block_state('vyt:facing') == 0 && q.block_state('vyt:half') == 1 && q.block_state('vyt:shape') == 2) || (q.block_state('vyt:facing') == 2 && q.block_state('vyt:half') == 1 && q.block_state('vyt:shape') == 1)",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                8,
+                -8
+              ],
+              "size": [
+                16,
+                8,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                0
+              ],
+              "size": [
+                16,
+                8,
+                8
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                8,
+                8,
+                8
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "(q.block_state('vyt:facing') == 0 && q.block_state('vyt:half') == 1 && q.block_state('vyt:shape') == 3) || (q.block_state('vyt:facing') == 3 && q.block_state('vyt:half') == 1 && q.block_state('vyt:shape') == 4)",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                8,
+                -8
+              ],
+              "size": [
+                16,
+                8,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                8,
+                8,
+                8
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "(q.block_state('vyt:facing') == 0 && q.block_state('vyt:half') == 1 && q.block_state('vyt:shape') == 4) || (q.block_state('vyt:facing') == 2 && q.block_state('vyt:half') == 1 && q.block_state('vyt:shape') == 3)",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                8,
+                -8
+              ],
+              "size": [
+                16,
+                8,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                0
+              ],
+              "size": [
+                8,
+                8,
+                8
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:facing') == 1 && q.block_state('vyt:half') == 0 && q.block_state('vyt:shape') == 0",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                8,
+                16
+              ]
+            },
+            {
+              "origin": [
+                0,
+                8,
+                -8
+              ],
+              "size": [
+                8,
+                8,
+                16
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "(q.block_state('vyt:facing') == 1 && q.block_state('vyt:half') == 0 && q.block_state('vyt:shape') == 1) || (q.block_state('vyt:facing') == 2 && q.block_state('vyt:half') == 0 && q.block_state('vyt:shape') == 2)",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                8,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                8,
+                0
+              ],
+              "size": [
+                16,
+                8,
+                8
+              ]
+            },
+            {
+              "origin": [
+                0,
+                8,
+                -8
+              ],
+              "size": [
+                8,
+                8,
+                8
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "(q.block_state('vyt:facing') == 1 && q.block_state('vyt:half') == 0 && q.block_state('vyt:shape') == 2) || (q.block_state('vyt:facing') == 3 && q.block_state('vyt:half') == 0 && q.block_state('vyt:shape') == 1)",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                8,
+                16
+              ]
+            },
+            {
+              "origin": [
+                0,
+                8,
+                -8
+              ],
+              "size": [
+                8,
+                8,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                8,
+                -8
+              ],
+              "size": [
+                8,
+                8,
+                8
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "(q.block_state('vyt:facing') == 1 && q.block_state('vyt:half') == 0 && q.block_state('vyt:shape') == 3) || (q.block_state('vyt:facing') == 2 && q.block_state('vyt:half') == 0 && q.block_state('vyt:shape') == 4)",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                8,
+                16
+              ]
+            },
+            {
+              "origin": [
+                0,
+                8,
+                0
+              ],
+              "size": [
+                8,
+                8,
+                8
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "(q.block_state('vyt:facing') == 1 && q.block_state('vyt:half') == 0 && q.block_state('vyt:shape') == 4) || (q.block_state('vyt:facing') == 3 && q.block_state('vyt:half') == 0 && q.block_state('vyt:shape') == 3)",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                8,
+                16
+              ]
+            },
+            {
+              "origin": [
+                0,
+                8,
+                -8
+              ],
+              "size": [
+                8,
+                8,
+                8
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:facing') == 1 && q.block_state('vyt:half') == 1 && q.block_state('vyt:shape') == 0",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                8,
+                -8
+              ],
+              "size": [
+                16,
+                8,
+                16
+              ]
+            },
+            {
+              "origin": [
+                0,
+                0,
+                -8
+              ],
+              "size": [
+                8,
+                8,
+                16
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "(q.block_state('vyt:facing') == 1 && q.block_state('vyt:half') == 1 && q.block_state('vyt:shape') == 1) || (q.block_state('vyt:facing') == 2 && q.block_state('vyt:half') == 1 && q.block_state('vyt:shape') == 2)",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                8,
+                -8
+              ],
+              "size": [
+                16,
+                8,
+                16
+              ]
+            },
+            {
+              "origin": [
+                0,
+                0,
+                -8
+              ],
+              "size": [
+                8,
+                8,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                0
+              ],
+              "size": [
+                8,
+                8,
+                8
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "(q.block_state('vyt:facing') == 1 && q.block_state('vyt:half') == 1 && q.block_state('vyt:shape') == 2) || (q.block_state('vyt:facing') == 3 && q.block_state('vyt:half') == 1 && q.block_state('vyt:shape') == 1)",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                8,
+                -8
+              ],
+              "size": [
+                16,
+                8,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                8,
+                8
+              ]
+            },
+            {
+              "origin": [
+                0,
+                0,
+                0
+              ],
+              "size": [
+                8,
+                8,
+                8
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "(q.block_state('vyt:facing') == 1 && q.block_state('vyt:half') == 1 && q.block_state('vyt:shape') == 3) || (q.block_state('vyt:facing') == 2 && q.block_state('vyt:half') == 1 && q.block_state('vyt:shape') == 4)",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                8,
+                -8
+              ],
+              "size": [
+                16,
+                8,
+                16
+              ]
+            },
+            {
+              "origin": [
+                0,
+                0,
+                0
+              ],
+              "size": [
+                8,
+                8,
+                8
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "(q.block_state('vyt:facing') == 1 && q.block_state('vyt:half') == 1 && q.block_state('vyt:shape') == 4) || (q.block_state('vyt:facing') == 3 && q.block_state('vyt:half') == 1 && q.block_state('vyt:shape') == 3)",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                8,
+                -8
+              ],
+              "size": [
+                16,
+                8,
+                16
+              ]
+            },
+            {
+              "origin": [
+                0,
+                0,
+                -8
+              ],
+              "size": [
+                8,
+                8,
+                8
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:facing') == 2 && q.block_state('vyt:half') == 0 && q.block_state('vyt:shape') == 0",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                8,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                8,
+                0
+              ],
+              "size": [
+                16,
+                8,
+                8
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:facing') == 2 && q.block_state('vyt:half') == 1 && q.block_state('vyt:shape') == 0",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                8,
+                -8
+              ],
+              "size": [
+                16,
+                8,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                0
+              ],
+              "size": [
+                16,
+                8,
+                8
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:facing') == 3 && q.block_state('vyt:half') == 0 && q.block_state('vyt:shape') == 0",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                8,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                8,
+                -8
+              ],
+              "size": [
+                16,
+                8,
+                8
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:facing') == 3 && q.block_state('vyt:half') == 1 && q.block_state('vyt:shape') == 0",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                8,
+                -8
+              ],
+              "size": [
+                16,
+                8,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                8,
+                8
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "format_version": 3,
+  "header": {
+    "name": "Debug Stick [RP]",
+    "description": "§7Debug Stick — 리소스§r\n\n독립형 블록의 모델·이름·소리입니다. 텍스처는 바닐라 것을 참조합니다.\n§c반드시 행동 팩과 함께 적용하세요.§r",
+    "version": "26.47.0",
+    "min_engine_version": "1.26.40",
+    "uuid": "16d64161-bf17-4f37-af40-3ae0b2505ce1"
+  },
+  "modules": [
+    {
+      "description": "resources",
+      "type": "resources",
+      "version": "1.0.0",
+      "uuid": "5af01655-9657-4f87-ab67-6a6e76dd4c00"
+    }
+  ],
+  "metadata": {
+    "authors": [
+      "VYT"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/vytdev/debug-stick"
+  }
+}

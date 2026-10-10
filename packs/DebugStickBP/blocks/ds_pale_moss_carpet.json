@@ -1,0 +1,1392 @@
+{
+  "format_version": "1.26.40",
+  "minecraft:block": {
+    "description": {
+      "identifier": "vyt:ds_pale_moss_carpet",
+      "states": {
+        "vyt:pale_moss_carpet_side_east": [
+          "none",
+          "short",
+          "tall"
+        ],
+        "vyt:pale_moss_carpet_side_north": [
+          "none",
+          "short",
+          "tall"
+        ],
+        "vyt:pale_moss_carpet_side_south": [
+          "none",
+          "short",
+          "tall"
+        ],
+        "vyt:pale_moss_carpet_side_west": [
+          "none",
+          "short",
+          "tall"
+        ],
+        "vyt:upper_block_bit": [
+          0,
+          1
+        ]
+      }
+    },
+    "components": {
+      "minecraft:geometry": {
+        "identifier": "geometry.vyt.ds_pale_moss_carpet",
+        "bone_visibility": {
+          "p0": "q.block_state('vyt:upper_block_bit') == 0 || (q.block_state('vyt:pale_moss_carpet_side_east') == 'none' && q.block_state('vyt:pale_moss_carpet_side_north') == 'none' && q.block_state('vyt:pale_moss_carpet_side_south') == 'none' && q.block_state('vyt:pale_moss_carpet_side_west') == 'none')",
+          "p1": "(q.block_state('vyt:pale_moss_carpet_side_east') == 'none' && q.block_state('vyt:pale_moss_carpet_side_north') != 'short' && q.block_state('vyt:pale_moss_carpet_side_south') == 'none' && q.block_state('vyt:pale_moss_carpet_side_west') == 'none' && q.block_state('vyt:upper_block_bit') == 1) || q.block_state('vyt:pale_moss_carpet_side_north') == 'tall'",
+          "p2": "(q.block_state('vyt:pale_moss_carpet_side_east') != 'short' && q.block_state('vyt:pale_moss_carpet_side_north') == 'none' && q.block_state('vyt:pale_moss_carpet_side_south') == 'none' && q.block_state('vyt:pale_moss_carpet_side_west') == 'none' && q.block_state('vyt:upper_block_bit') == 1) || q.block_state('vyt:pale_moss_carpet_side_east') == 'tall'",
+          "p3": "(q.block_state('vyt:pale_moss_carpet_side_east') == 'none' && q.block_state('vyt:pale_moss_carpet_side_north') == 'none' && q.block_state('vyt:pale_moss_carpet_side_south') != 'short' && q.block_state('vyt:pale_moss_carpet_side_west') == 'none' && q.block_state('vyt:upper_block_bit') == 1) || q.block_state('vyt:pale_moss_carpet_side_south') == 'tall'",
+          "p4": "(q.block_state('vyt:pale_moss_carpet_side_east') == 'none' && q.block_state('vyt:pale_moss_carpet_side_north') == 'none' && q.block_state('vyt:pale_moss_carpet_side_south') == 'none' && q.block_state('vyt:pale_moss_carpet_side_west') != 'short' && q.block_state('vyt:upper_block_bit') == 1) || q.block_state('vyt:pale_moss_carpet_side_west') == 'tall'",
+          "p5": "q.block_state('vyt:pale_moss_carpet_side_west') == 'short'",
+          "p6": "q.block_state('vyt:pale_moss_carpet_side_south') == 'short'",
+          "p7": "q.block_state('vyt:pale_moss_carpet_side_north') == 'short'",
+          "p8": "q.block_state('vyt:pale_moss_carpet_side_east') == 'short'"
+        }
+      },
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "vyt_ds_pale_moss",
+          "face_dimming": true,
+          "ambient_occlusion": 1.0,
+          "render_method": "alpha_test"
+        },
+        "m0": {
+          "texture": "vyt_ds_pale_moss",
+          "face_dimming": true,
+          "ambient_occlusion": 1.0,
+          "render_method": "alpha_test"
+        },
+        "m1": {
+          "texture": "vyt_ds_pale_moss_carpet_side_base",
+          "face_dimming": true,
+          "ambient_occlusion": 1.0,
+          "render_method": "alpha_test"
+        },
+        "m2": {
+          "texture": "vyt_ds_pale_moss_carpet_side_tip",
+          "face_dimming": true,
+          "ambient_occlusion": 1.0,
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:collision_box": [
+        {
+          "origin": [
+            -8,
+            0,
+            -8
+          ],
+          "size": [
+            16,
+            1,
+            16
+          ]
+        }
+      ],
+      "minecraft:selection_box": {
+        "origin": [
+          -8,
+          0,
+          -8
+        ],
+        "size": [
+          16,
+          1,
+          16
+        ]
+      },
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0.1
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 0.1
+      },
+      "minecraft:light_dampening": 0,
+      "minecraft:flammable": {
+        "catch_chance_modifier": 5,
+        "destroy_chance_modifier": 20
+      }
+    },
+    "permutations": [
+      {
+        "condition": "(q.block_state('vyt:pale_moss_carpet_side_east') == 'none' && q.block_state('vyt:pale_moss_carpet_side_north') == 'none' && q.block_state('vyt:pale_moss_carpet_side_south') == 'none' && q.block_state('vyt:pale_moss_carpet_side_west') == 'none' && q.block_state('vyt:upper_block_bit') == 1) || (q.block_state('vyt:pale_moss_carpet_side_east') != 'none' && q.block_state('vyt:pale_moss_carpet_side_north') != 'none' && q.block_state('vyt:pale_moss_carpet_side_south') != 'none' && q.block_state('vyt:pale_moss_carpet_side_west') != 'none' && q.block_state('vyt:upper_block_bit') == 0)",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                1,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                -7.9
+              ],
+              "size": [
+                16,
+                16,
+                1
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                1,
+                16,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                7
+              ],
+              "size": [
+                16,
+                16,
+                1
+              ]
+            },
+            {
+              "origin": [
+                6.9,
+                0,
+                -8
+              ],
+              "size": [
+                1,
+                16,
+                16
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:pale_moss_carpet_side_east') == 'none' && q.block_state('vyt:pale_moss_carpet_side_north') == 'none' && q.block_state('vyt:pale_moss_carpet_side_south') == 'none' && q.block_state('vyt:pale_moss_carpet_side_west') != 'none' && q.block_state('vyt:upper_block_bit') == 0",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                1,
+                16
+              ]
+            },
+            {
+              "origin": [
+                6.9,
+                0,
+                -8
+              ],
+              "size": [
+                1,
+                16,
+                16
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:pale_moss_carpet_side_east') == 'none' && q.block_state('vyt:pale_moss_carpet_side_north') == 'none' && q.block_state('vyt:pale_moss_carpet_side_south') == 'none' && q.block_state('vyt:pale_moss_carpet_side_west') != 'none' && q.block_state('vyt:upper_block_bit') == 1",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                6.9,
+                0,
+                -8
+              ],
+              "size": [
+                1,
+                16,
+                16
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:pale_moss_carpet_side_east') == 'none' && q.block_state('vyt:pale_moss_carpet_side_north') == 'none' && q.block_state('vyt:pale_moss_carpet_side_south') != 'none' && q.block_state('vyt:pale_moss_carpet_side_west') == 'none' && q.block_state('vyt:upper_block_bit') == 0",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                1,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                7
+              ],
+              "size": [
+                16,
+                16,
+                1
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:pale_moss_carpet_side_east') == 'none' && q.block_state('vyt:pale_moss_carpet_side_north') == 'none' && q.block_state('vyt:pale_moss_carpet_side_south') != 'none' && q.block_state('vyt:pale_moss_carpet_side_west') == 'none' && q.block_state('vyt:upper_block_bit') == 1",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                7
+              ],
+              "size": [
+                16,
+                16,
+                1
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:pale_moss_carpet_side_east') == 'none' && q.block_state('vyt:pale_moss_carpet_side_north') == 'none' && q.block_state('vyt:pale_moss_carpet_side_south') != 'none' && q.block_state('vyt:pale_moss_carpet_side_west') != 'none' && q.block_state('vyt:upper_block_bit') == 0",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                1,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                7
+              ],
+              "size": [
+                16,
+                16,
+                1
+              ]
+            },
+            {
+              "origin": [
+                6.9,
+                0,
+                -8
+              ],
+              "size": [
+                1,
+                16,
+                16
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:pale_moss_carpet_side_east') == 'none' && q.block_state('vyt:pale_moss_carpet_side_north') == 'none' && q.block_state('vyt:pale_moss_carpet_side_south') != 'none' && q.block_state('vyt:pale_moss_carpet_side_west') != 'none' && q.block_state('vyt:upper_block_bit') == 1",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                7
+              ],
+              "size": [
+                16,
+                16,
+                1
+              ]
+            },
+            {
+              "origin": [
+                6.9,
+                0,
+                -8
+              ],
+              "size": [
+                1,
+                16,
+                16
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:pale_moss_carpet_side_east') == 'none' && q.block_state('vyt:pale_moss_carpet_side_north') != 'none' && q.block_state('vyt:pale_moss_carpet_side_south') == 'none' && q.block_state('vyt:pale_moss_carpet_side_west') == 'none' && q.block_state('vyt:upper_block_bit') == 0",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                1,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                -7.9
+              ],
+              "size": [
+                16,
+                16,
+                1
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:pale_moss_carpet_side_east') == 'none' && q.block_state('vyt:pale_moss_carpet_side_north') != 'none' && q.block_state('vyt:pale_moss_carpet_side_south') == 'none' && q.block_state('vyt:pale_moss_carpet_side_west') == 'none' && q.block_state('vyt:upper_block_bit') == 1",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -7.9
+              ],
+              "size": [
+                16,
+                16,
+                1
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:pale_moss_carpet_side_east') == 'none' && q.block_state('vyt:pale_moss_carpet_side_north') != 'none' && q.block_state('vyt:pale_moss_carpet_side_south') == 'none' && q.block_state('vyt:pale_moss_carpet_side_west') != 'none' && q.block_state('vyt:upper_block_bit') == 0",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                1,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                -7.9
+              ],
+              "size": [
+                16,
+                16,
+                1
+              ]
+            },
+            {
+              "origin": [
+                6.9,
+                0,
+                -8
+              ],
+              "size": [
+                1,
+                16,
+                16
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:pale_moss_carpet_side_east') == 'none' && q.block_state('vyt:pale_moss_carpet_side_north') != 'none' && q.block_state('vyt:pale_moss_carpet_side_south') == 'none' && q.block_state('vyt:pale_moss_carpet_side_west') != 'none' && q.block_state('vyt:upper_block_bit') == 1",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -7.9
+              ],
+              "size": [
+                16,
+                16,
+                1
+              ]
+            },
+            {
+              "origin": [
+                6.9,
+                0,
+                -8
+              ],
+              "size": [
+                1,
+                16,
+                16
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:pale_moss_carpet_side_east') == 'none' && q.block_state('vyt:pale_moss_carpet_side_north') != 'none' && q.block_state('vyt:pale_moss_carpet_side_south') != 'none' && q.block_state('vyt:pale_moss_carpet_side_west') == 'none' && q.block_state('vyt:upper_block_bit') == 0",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                1,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                -7.9
+              ],
+              "size": [
+                16,
+                16,
+                1
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                7
+              ],
+              "size": [
+                16,
+                16,
+                1
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:pale_moss_carpet_side_east') == 'none' && q.block_state('vyt:pale_moss_carpet_side_north') != 'none' && q.block_state('vyt:pale_moss_carpet_side_south') != 'none' && q.block_state('vyt:pale_moss_carpet_side_west') == 'none' && q.block_state('vyt:upper_block_bit') == 1",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -7.9
+              ],
+              "size": [
+                16,
+                16,
+                1
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                7
+              ],
+              "size": [
+                16,
+                16,
+                1
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:pale_moss_carpet_side_east') == 'none' && q.block_state('vyt:pale_moss_carpet_side_north') != 'none' && q.block_state('vyt:pale_moss_carpet_side_south') != 'none' && q.block_state('vyt:pale_moss_carpet_side_west') != 'none' && q.block_state('vyt:upper_block_bit') == 0",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                1,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                -7.9
+              ],
+              "size": [
+                16,
+                16,
+                1
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                7
+              ],
+              "size": [
+                16,
+                16,
+                1
+              ]
+            },
+            {
+              "origin": [
+                6.9,
+                0,
+                -8
+              ],
+              "size": [
+                1,
+                16,
+                16
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:pale_moss_carpet_side_east') == 'none' && q.block_state('vyt:pale_moss_carpet_side_north') != 'none' && q.block_state('vyt:pale_moss_carpet_side_south') != 'none' && q.block_state('vyt:pale_moss_carpet_side_west') != 'none' && q.block_state('vyt:upper_block_bit') == 1",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -7.9
+              ],
+              "size": [
+                16,
+                16,
+                1
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                7
+              ],
+              "size": [
+                16,
+                16,
+                1
+              ]
+            },
+            {
+              "origin": [
+                6.9,
+                0,
+                -8
+              ],
+              "size": [
+                1,
+                16,
+                16
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:pale_moss_carpet_side_east') != 'none' && q.block_state('vyt:pale_moss_carpet_side_north') == 'none' && q.block_state('vyt:pale_moss_carpet_side_south') == 'none' && q.block_state('vyt:pale_moss_carpet_side_west') == 'none' && q.block_state('vyt:upper_block_bit') == 0",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                1,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                1,
+                16,
+                16
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:pale_moss_carpet_side_east') != 'none' && q.block_state('vyt:pale_moss_carpet_side_north') == 'none' && q.block_state('vyt:pale_moss_carpet_side_south') == 'none' && q.block_state('vyt:pale_moss_carpet_side_west') == 'none' && q.block_state('vyt:upper_block_bit') == 1",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                1,
+                16,
+                16
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:pale_moss_carpet_side_east') != 'none' && q.block_state('vyt:pale_moss_carpet_side_north') == 'none' && q.block_state('vyt:pale_moss_carpet_side_south') == 'none' && q.block_state('vyt:pale_moss_carpet_side_west') != 'none' && q.block_state('vyt:upper_block_bit') == 0",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                1,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                1,
+                16,
+                16
+              ]
+            },
+            {
+              "origin": [
+                6.9,
+                0,
+                -8
+              ],
+              "size": [
+                1,
+                16,
+                16
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:pale_moss_carpet_side_east') != 'none' && q.block_state('vyt:pale_moss_carpet_side_north') == 'none' && q.block_state('vyt:pale_moss_carpet_side_south') == 'none' && q.block_state('vyt:pale_moss_carpet_side_west') != 'none' && q.block_state('vyt:upper_block_bit') == 1",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                1,
+                16,
+                16
+              ]
+            },
+            {
+              "origin": [
+                6.9,
+                0,
+                -8
+              ],
+              "size": [
+                1,
+                16,
+                16
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:pale_moss_carpet_side_east') != 'none' && q.block_state('vyt:pale_moss_carpet_side_north') == 'none' && q.block_state('vyt:pale_moss_carpet_side_south') != 'none' && q.block_state('vyt:pale_moss_carpet_side_west') == 'none' && q.block_state('vyt:upper_block_bit') == 0",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                1,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                1,
+                16,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                7
+              ],
+              "size": [
+                16,
+                16,
+                1
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:pale_moss_carpet_side_east') != 'none' && q.block_state('vyt:pale_moss_carpet_side_north') == 'none' && q.block_state('vyt:pale_moss_carpet_side_south') != 'none' && q.block_state('vyt:pale_moss_carpet_side_west') == 'none' && q.block_state('vyt:upper_block_bit') == 1",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                1,
+                16,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                7
+              ],
+              "size": [
+                16,
+                16,
+                1
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:pale_moss_carpet_side_east') != 'none' && q.block_state('vyt:pale_moss_carpet_side_north') == 'none' && q.block_state('vyt:pale_moss_carpet_side_south') != 'none' && q.block_state('vyt:pale_moss_carpet_side_west') != 'none' && q.block_state('vyt:upper_block_bit') == 0",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                1,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                1,
+                16,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                7
+              ],
+              "size": [
+                16,
+                16,
+                1
+              ]
+            },
+            {
+              "origin": [
+                6.9,
+                0,
+                -8
+              ],
+              "size": [
+                1,
+                16,
+                16
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:pale_moss_carpet_side_east') != 'none' && q.block_state('vyt:pale_moss_carpet_side_north') == 'none' && q.block_state('vyt:pale_moss_carpet_side_south') != 'none' && q.block_state('vyt:pale_moss_carpet_side_west') != 'none' && q.block_state('vyt:upper_block_bit') == 1",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                1,
+                16,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                7
+              ],
+              "size": [
+                16,
+                16,
+                1
+              ]
+            },
+            {
+              "origin": [
+                6.9,
+                0,
+                -8
+              ],
+              "size": [
+                1,
+                16,
+                16
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:pale_moss_carpet_side_east') != 'none' && q.block_state('vyt:pale_moss_carpet_side_north') != 'none' && q.block_state('vyt:pale_moss_carpet_side_south') == 'none' && q.block_state('vyt:pale_moss_carpet_side_west') == 'none' && q.block_state('vyt:upper_block_bit') == 0",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                1,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                -7.9
+              ],
+              "size": [
+                16,
+                16,
+                1
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                1,
+                16,
+                16
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:pale_moss_carpet_side_east') != 'none' && q.block_state('vyt:pale_moss_carpet_side_north') != 'none' && q.block_state('vyt:pale_moss_carpet_side_south') == 'none' && q.block_state('vyt:pale_moss_carpet_side_west') == 'none' && q.block_state('vyt:upper_block_bit') == 1",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -7.9
+              ],
+              "size": [
+                16,
+                16,
+                1
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                1,
+                16,
+                16
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:pale_moss_carpet_side_east') != 'none' && q.block_state('vyt:pale_moss_carpet_side_north') != 'none' && q.block_state('vyt:pale_moss_carpet_side_south') == 'none' && q.block_state('vyt:pale_moss_carpet_side_west') != 'none' && q.block_state('vyt:upper_block_bit') == 0",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                1,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                -7.9
+              ],
+              "size": [
+                16,
+                16,
+                1
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                1,
+                16,
+                16
+              ]
+            },
+            {
+              "origin": [
+                6.9,
+                0,
+                -8
+              ],
+              "size": [
+                1,
+                16,
+                16
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:pale_moss_carpet_side_east') != 'none' && q.block_state('vyt:pale_moss_carpet_side_north') != 'none' && q.block_state('vyt:pale_moss_carpet_side_south') == 'none' && q.block_state('vyt:pale_moss_carpet_side_west') != 'none' && q.block_state('vyt:upper_block_bit') == 1",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -7.9
+              ],
+              "size": [
+                16,
+                16,
+                1
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                1,
+                16,
+                16
+              ]
+            },
+            {
+              "origin": [
+                6.9,
+                0,
+                -8
+              ],
+              "size": [
+                1,
+                16,
+                16
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:pale_moss_carpet_side_east') != 'none' && q.block_state('vyt:pale_moss_carpet_side_north') != 'none' && q.block_state('vyt:pale_moss_carpet_side_south') != 'none' && q.block_state('vyt:pale_moss_carpet_side_west') == 'none' && q.block_state('vyt:upper_block_bit') == 0",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                1,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                -7.9
+              ],
+              "size": [
+                16,
+                16,
+                1
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                1,
+                16,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                7
+              ],
+              "size": [
+                16,
+                16,
+                1
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:pale_moss_carpet_side_east') != 'none' && q.block_state('vyt:pale_moss_carpet_side_north') != 'none' && q.block_state('vyt:pale_moss_carpet_side_south') != 'none' && q.block_state('vyt:pale_moss_carpet_side_west') == 'none' && q.block_state('vyt:upper_block_bit') == 1",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -7.9
+              ],
+              "size": [
+                16,
+                16,
+                1
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                1,
+                16,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                7
+              ],
+              "size": [
+                16,
+                16,
+                1
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:pale_moss_carpet_side_east') != 'none' && q.block_state('vyt:pale_moss_carpet_side_north') != 'none' && q.block_state('vyt:pale_moss_carpet_side_south') != 'none' && q.block_state('vyt:pale_moss_carpet_side_west') != 'none' && q.block_state('vyt:upper_block_bit') == 1",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -7.9
+              ],
+              "size": [
+                16,
+                16,
+                1
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                1,
+                16,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                7
+              ],
+              "size": [
+                16,
+                16,
+                1
+              ]
+            },
+            {
+              "origin": [
+                6.9,
+                0,
+                -8
+              ],
+              "size": [
+                1,
+                16,
+                16
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "(q.block_state('vyt:pale_moss_carpet_side_east') == 'none' && q.block_state('vyt:pale_moss_carpet_side_north') == 'none' && q.block_state('vyt:pale_moss_carpet_side_south') == 'none' && q.block_state('vyt:pale_moss_carpet_side_west') == 'none' && q.block_state('vyt:upper_block_bit') == 1) || (q.block_state('vyt:pale_moss_carpet_side_west') != 'none' && q.block_state('vyt:upper_block_bit') == 0) || (q.block_state('vyt:pale_moss_carpet_side_south') != 'none' && q.block_state('vyt:upper_block_bit') == 0) || (q.block_state('vyt:pale_moss_carpet_side_south') != 'none' && q.block_state('vyt:pale_moss_carpet_side_west') != 'none') || (q.block_state('vyt:pale_moss_carpet_side_north') != 'none' && q.block_state('vyt:upper_block_bit') == 0) || (q.block_state('vyt:pale_moss_carpet_side_north') != 'none' && q.block_state('vyt:pale_moss_carpet_side_west') != 'none') || (q.block_state('vyt:pale_moss_carpet_side_east') != 'none' && q.block_state('vyt:upper_block_bit') == 0) || (q.block_state('vyt:pale_moss_carpet_side_east') != 'none' && q.block_state('vyt:pale_moss_carpet_side_south') != 'none') || (q.block_state('vyt:pale_moss_carpet_side_east') != 'none' && q.block_state('vyt:pale_moss_carpet_side_north') != 'none')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:pale_moss_carpet_side_east') == 'none' && q.block_state('vyt:pale_moss_carpet_side_north') == 'none' && q.block_state('vyt:pale_moss_carpet_side_south') == 'none' && q.block_state('vyt:pale_moss_carpet_side_west') != 'none' && q.block_state('vyt:upper_block_bit') == 1",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              6.9,
+              0,
+              -8
+            ],
+            "size": [
+              1,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:pale_moss_carpet_side_east') == 'none' && q.block_state('vyt:pale_moss_carpet_side_north') == 'none' && q.block_state('vyt:pale_moss_carpet_side_south') != 'none' && q.block_state('vyt:pale_moss_carpet_side_west') == 'none' && q.block_state('vyt:upper_block_bit') == 1",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              7
+            ],
+            "size": [
+              16,
+              16,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:pale_moss_carpet_side_east') == 'none' && q.block_state('vyt:pale_moss_carpet_side_north') != 'none' && q.block_state('vyt:pale_moss_carpet_side_south') == 'none' && q.block_state('vyt:pale_moss_carpet_side_west') == 'none' && q.block_state('vyt:upper_block_bit') == 1",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -7.9
+            ],
+            "size": [
+              16,
+              16,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:pale_moss_carpet_side_east') == 'none' && q.block_state('vyt:pale_moss_carpet_side_north') != 'none' && q.block_state('vyt:pale_moss_carpet_side_south') != 'none' && q.block_state('vyt:pale_moss_carpet_side_west') == 'none' && q.block_state('vyt:upper_block_bit') == 1",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -7.9
+            ],
+            "size": [
+              16,
+              16,
+              15.8
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:pale_moss_carpet_side_east') != 'none' && q.block_state('vyt:pale_moss_carpet_side_north') == 'none' && q.block_state('vyt:pale_moss_carpet_side_south') == 'none' && q.block_state('vyt:pale_moss_carpet_side_west') == 'none' && q.block_state('vyt:upper_block_bit') == 1",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              1,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:pale_moss_carpet_side_east') != 'none' && q.block_state('vyt:pale_moss_carpet_side_north') == 'none' && q.block_state('vyt:pale_moss_carpet_side_south') == 'none' && q.block_state('vyt:pale_moss_carpet_side_west') != 'none' && q.block_state('vyt:upper_block_bit') == 1",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -7.9,
+              0,
+              -8
+            ],
+            "size": [
+              15.8,
+              16,
+              16
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

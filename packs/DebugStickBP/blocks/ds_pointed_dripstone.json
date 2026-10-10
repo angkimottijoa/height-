@@ -1,0 +1,151 @@
+{
+  "format_version": "1.26.40",
+  "minecraft:block": {
+    "description": {
+      "identifier": "vyt:ds_pointed_dripstone",
+      "states": {
+        "vyt:dripstone_thickness": [
+          "tip",
+          "base",
+          "frustum",
+          "merge",
+          "middle"
+        ],
+        "vyt:hanging": [
+          0,
+          1
+        ]
+      }
+    },
+    "components": {
+      "minecraft:geometry": {
+        "identifier": "geometry.vyt.ds_pointed_dripstone",
+        "bone_visibility": {
+          "p0": "q.block_state('vyt:dripstone_thickness') == 'tip' && q.block_state('vyt:hanging') == 0",
+          "p1": "q.block_state('vyt:dripstone_thickness') == 'tip' && q.block_state('vyt:hanging') == 1",
+          "p2": "q.block_state('vyt:dripstone_thickness') == 'base' && q.block_state('vyt:hanging') == 0",
+          "p3": "q.block_state('vyt:dripstone_thickness') == 'base' && q.block_state('vyt:hanging') == 1",
+          "p4": "q.block_state('vyt:dripstone_thickness') == 'frustum' && q.block_state('vyt:hanging') == 0",
+          "p5": "q.block_state('vyt:dripstone_thickness') == 'frustum' && q.block_state('vyt:hanging') == 1",
+          "p6": "q.block_state('vyt:dripstone_thickness') == 'merge' && q.block_state('vyt:hanging') == 0",
+          "p7": "q.block_state('vyt:dripstone_thickness') == 'merge' && q.block_state('vyt:hanging') == 1",
+          "p8": "q.block_state('vyt:dripstone_thickness') == 'middle' && q.block_state('vyt:hanging') == 0",
+          "p9": "q.block_state('vyt:dripstone_thickness') == 'middle' && q.block_state('vyt:hanging') == 1"
+        }
+      },
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "vyt_ds_pointed_dripstone_up_tip",
+          "face_dimming": false,
+          "ambient_occlusion": 0.0,
+          "render_method": "alpha_test"
+        },
+        "m0": {
+          "texture": "vyt_ds_pointed_dripstone_up_tip",
+          "face_dimming": false,
+          "ambient_occlusion": 0.0,
+          "render_method": "alpha_test"
+        },
+        "m1": {
+          "texture": "vyt_ds_pointed_dripstone_down_tip",
+          "face_dimming": false,
+          "ambient_occlusion": 0.0,
+          "render_method": "alpha_test"
+        },
+        "m2": {
+          "texture": "vyt_ds_pointed_dripstone_up_base",
+          "face_dimming": false,
+          "ambient_occlusion": 0.0,
+          "render_method": "alpha_test"
+        },
+        "m3": {
+          "texture": "vyt_ds_pointed_dripstone_down_base",
+          "face_dimming": false,
+          "ambient_occlusion": 0.0,
+          "render_method": "alpha_test"
+        },
+        "m4": {
+          "texture": "vyt_ds_pointed_dripstone_up_frustum",
+          "face_dimming": false,
+          "ambient_occlusion": 0.0,
+          "render_method": "alpha_test"
+        },
+        "m5": {
+          "texture": "vyt_ds_pointed_dripstone_down_frustum",
+          "face_dimming": false,
+          "ambient_occlusion": 0.0,
+          "render_method": "alpha_test"
+        },
+        "m6": {
+          "texture": "vyt_ds_pointed_dripstone_up_merge",
+          "face_dimming": false,
+          "ambient_occlusion": 0.0,
+          "render_method": "alpha_test"
+        },
+        "m7": {
+          "texture": "vyt_ds_pointed_dripstone_down_merge",
+          "face_dimming": false,
+          "ambient_occlusion": 0.0,
+          "render_method": "alpha_test"
+        },
+        "m8": {
+          "texture": "vyt_ds_pointed_dripstone_up_middle",
+          "face_dimming": false,
+          "ambient_occlusion": 0.0,
+          "render_method": "alpha_test"
+        },
+        "m9": {
+          "texture": "vyt_ds_pointed_dripstone_down_middle",
+          "face_dimming": false,
+          "ambient_occlusion": 0.0,
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:collision_box": [
+        {
+          "origin": [
+            -7.2,
+            0,
+            0
+          ],
+          "size": [
+            14.4,
+            16,
+            1
+          ]
+        },
+        {
+          "origin": [
+            -1,
+            0,
+            -7.2
+          ],
+          "size": [
+            1,
+            16,
+            14.4
+          ]
+        }
+      ],
+      "minecraft:selection_box": {
+        "origin": [
+          -7.2,
+          0,
+          -7.2
+        ],
+        "size": [
+          14.4,
+          16,
+          14.4
+        ]
+      },
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 1.5
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 3.0
+      },
+      "minecraft:light_dampening": 0
+    }
+  }
+}

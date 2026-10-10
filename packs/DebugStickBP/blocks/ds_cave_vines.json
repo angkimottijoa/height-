@@ -1,0 +1,90 @@
+{
+  "format_version": "1.26.40",
+  "minecraft:block": {
+    "description": {
+      "identifier": "vyt:ds_cave_vines",
+      "states": {
+        "vyt:body": [
+          0,
+          1
+        ],
+        "vyt:berries": [
+          0,
+          1
+        ]
+      }
+    },
+    "components": {
+      "minecraft:geometry": {
+        "identifier": "geometry.vyt.ds_cave_vines",
+        "bone_visibility": {
+          "p0": "q.block_state('vyt:body') == 0 && q.block_state('vyt:berries') == 0",
+          "p1": "q.block_state('vyt:body') == 0 && q.block_state('vyt:berries') == 1",
+          "p2": "q.block_state('vyt:body') == 1 && q.block_state('vyt:berries') == 0",
+          "p3": "q.block_state('vyt:body') == 1 && q.block_state('vyt:berries') == 1"
+        }
+      },
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "vyt_ds_cave_vines_head",
+          "face_dimming": false,
+          "ambient_occlusion": 0.0,
+          "render_method": "alpha_test"
+        },
+        "m0": {
+          "texture": "vyt_ds_cave_vines_head",
+          "face_dimming": false,
+          "ambient_occlusion": 0.0,
+          "render_method": "alpha_test"
+        },
+        "m1": {
+          "texture": "vyt_ds_cave_vines_head_berries",
+          "face_dimming": false,
+          "ambient_occlusion": 0.0,
+          "render_method": "alpha_test"
+        },
+        "m2": {
+          "texture": "vyt_ds_cave_vines_body",
+          "face_dimming": false,
+          "ambient_occlusion": 0.0,
+          "render_method": "alpha_test"
+        },
+        "m3": {
+          "texture": "vyt_ds_cave_vines_body_berries",
+          "face_dimming": false,
+          "ambient_occlusion": 0.0,
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:collision_box": false,
+      "minecraft:selection_box": {
+        "origin": [
+          -7.2,
+          0,
+          -7.2
+        ],
+        "size": [
+          14.4,
+          16,
+          14.4
+        ]
+      },
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0.0
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 0.0
+      },
+      "minecraft:light_dampening": 0,
+      "minecraft:light_emission": 0
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('vyt:berries') == 1",
+        "components": {
+          "minecraft:light_emission": 14
+        }
+      }
+    ]
+  }
+}

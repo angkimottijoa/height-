@@ -1,0 +1,985 @@
+{
+  "format_version": "1.26.40",
+  "minecraft:block": {
+    "description": {
+      "identifier": "vyt:ds_sea_pickle",
+      "states": {
+        "vyt:cluster_count": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "vyt:dead_bit": [
+          0,
+          1
+        ]
+      }
+    },
+    "components": {
+      "minecraft:geometry": {
+        "identifier": "geometry.vyt.ds_sea_pickle",
+        "bone_visibility": {
+          "p0": "q.block_state('vyt:cluster_count') == 0 && q.block_state('vyt:dead_bit') == 0",
+          "p1": "q.block_state('vyt:cluster_count') == 0 && q.block_state('vyt:dead_bit') == 1",
+          "p2": "q.block_state('vyt:cluster_count') == 1 && q.block_state('vyt:dead_bit') == 0",
+          "p3": "q.block_state('vyt:cluster_count') == 1 && q.block_state('vyt:dead_bit') == 1",
+          "p4": "q.block_state('vyt:cluster_count') == 2 && q.block_state('vyt:dead_bit') == 0",
+          "p5": "q.block_state('vyt:cluster_count') == 2 && q.block_state('vyt:dead_bit') == 1",
+          "p6": "q.block_state('vyt:cluster_count') == 3 && q.block_state('vyt:dead_bit') == 0",
+          "p7": "q.block_state('vyt:cluster_count') == 3 && q.block_state('vyt:dead_bit') == 1"
+        }
+      },
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "vyt_ds_sea_pickle",
+          "face_dimming": false,
+          "ambient_occlusion": 0.0,
+          "render_method": "alpha_test"
+        },
+        "m0": {
+          "texture": "vyt_ds_sea_pickle",
+          "face_dimming": false,
+          "ambient_occlusion": 0.0,
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:collision_box": [
+        {
+          "origin": [
+            -2,
+            0,
+            -2
+          ],
+          "size": [
+            4,
+            6,
+            4
+          ]
+        },
+        {
+          "origin": [
+            -2,
+            5.95,
+            -2
+          ],
+          "size": [
+            4,
+            1,
+            4
+          ]
+        },
+        {
+          "origin": [
+            -0.5,
+            5.2,
+            0
+          ],
+          "size": [
+            1,
+            3.5,
+            1
+          ]
+        },
+        {
+          "origin": [
+            -1,
+            5.2,
+            -0.5
+          ],
+          "size": [
+            1,
+            3.5,
+            1
+          ]
+        }
+      ],
+      "minecraft:selection_box": {
+        "origin": [
+          -2,
+          0,
+          -2
+        ],
+        "size": [
+          4,
+          8.7,
+          4
+        ]
+      },
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0.0
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 0.0
+      },
+      "minecraft:light_dampening": 0,
+      "minecraft:light_emission": 6
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('vyt:cluster_count') == 0 && q.block_state('vyt:dead_bit') == 1",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -2,
+                0,
+                -2
+              ],
+              "size": [
+                4,
+                6,
+                4
+              ]
+            },
+            {
+              "origin": [
+                -2,
+                5.95,
+                -2
+              ],
+              "size": [
+                4,
+                1,
+                4
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:cluster_count') == 1 && q.block_state('vyt:dead_bit') == 0",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                1,
+                0,
+                -5
+              ],
+              "size": [
+                4,
+                6,
+                4
+              ]
+            },
+            {
+              "origin": [
+                1,
+                5.95,
+                -5
+              ],
+              "size": [
+                4,
+                1,
+                4
+              ]
+            },
+            {
+              "origin": [
+                -4,
+                0,
+                0
+              ],
+              "size": [
+                4,
+                4,
+                4
+              ]
+            },
+            {
+              "origin": [
+                -4,
+                3.95,
+                0
+              ],
+              "size": [
+                4,
+                1,
+                4
+              ]
+            },
+            {
+              "origin": [
+                2.5,
+                5.2,
+                -3
+              ],
+              "size": [
+                1,
+                3.5,
+                1
+              ]
+            },
+            {
+              "origin": [
+                2,
+                5.2,
+                -3.5
+              ],
+              "size": [
+                1,
+                3.5,
+                1
+              ]
+            },
+            {
+              "origin": [
+                -2.5,
+                3.2,
+                2
+              ],
+              "size": [
+                1,
+                3.5,
+                1
+              ]
+            },
+            {
+              "origin": [
+                -3,
+                3.2,
+                1.5
+              ],
+              "size": [
+                1,
+                3.5,
+                1
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:cluster_count') == 1 && q.block_state('vyt:dead_bit') == 1",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                1,
+                0,
+                -5
+              ],
+              "size": [
+                4,
+                6,
+                4
+              ]
+            },
+            {
+              "origin": [
+                1,
+                5.95,
+                -5
+              ],
+              "size": [
+                4,
+                1,
+                4
+              ]
+            },
+            {
+              "origin": [
+                -4,
+                0,
+                0
+              ],
+              "size": [
+                4,
+                4,
+                4
+              ]
+            },
+            {
+              "origin": [
+                -4,
+                3.95,
+                0
+              ],
+              "size": [
+                4,
+                1,
+                4
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:cluster_count') == 2 && q.block_state('vyt:dead_bit') == 0",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -2,
+                0,
+                1
+              ],
+              "size": [
+                4,
+                6,
+                4
+              ]
+            },
+            {
+              "origin": [
+                -2,
+                5.95,
+                1
+              ],
+              "size": [
+                4,
+                1,
+                4
+              ]
+            },
+            {
+              "origin": [
+                2,
+                0,
+                -6
+              ],
+              "size": [
+                4,
+                4,
+                4
+              ]
+            },
+            {
+              "origin": [
+                2,
+                3.95,
+                -6
+              ],
+              "size": [
+                4,
+                1,
+                4
+              ]
+            },
+            {
+              "origin": [
+                -4,
+                0,
+                -4
+              ],
+              "size": [
+                4,
+                6,
+                4
+              ]
+            },
+            {
+              "origin": [
+                -4,
+                5.95,
+                -4
+              ],
+              "size": [
+                4,
+                1,
+                4
+              ]
+            },
+            {
+              "origin": [
+                -0.5,
+                5.2,
+                3
+              ],
+              "size": [
+                1,
+                3.5,
+                1
+              ]
+            },
+            {
+              "origin": [
+                -1,
+                5.2,
+                2.5
+              ],
+              "size": [
+                1,
+                3.5,
+                1
+              ]
+            },
+            {
+              "origin": [
+                3.5,
+                3.2,
+                -4
+              ],
+              "size": [
+                1,
+                3.5,
+                1
+              ]
+            },
+            {
+              "origin": [
+                3,
+                3.2,
+                -4.5
+              ],
+              "size": [
+                1,
+                3.5,
+                1
+              ]
+            },
+            {
+              "origin": [
+                -2.5,
+                5.2,
+                -2
+              ],
+              "size": [
+                1,
+                3.5,
+                1
+              ]
+            },
+            {
+              "origin": [
+                -3,
+                5.2,
+                -2.5
+              ],
+              "size": [
+                1,
+                3.5,
+                1
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:cluster_count') == 2 && q.block_state('vyt:dead_bit') == 1",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -2,
+                0,
+                1
+              ],
+              "size": [
+                4,
+                6,
+                4
+              ]
+            },
+            {
+              "origin": [
+                -2,
+                5.95,
+                1
+              ],
+              "size": [
+                4,
+                1,
+                4
+              ]
+            },
+            {
+              "origin": [
+                2,
+                0,
+                -6
+              ],
+              "size": [
+                4,
+                4,
+                4
+              ]
+            },
+            {
+              "origin": [
+                2,
+                3.95,
+                -6
+              ],
+              "size": [
+                4,
+                1,
+                4
+              ]
+            },
+            {
+              "origin": [
+                -4,
+                0,
+                -4
+              ],
+              "size": [
+                4,
+                6,
+                4
+              ]
+            },
+            {
+              "origin": [
+                -4,
+                5.95,
+                -4
+              ],
+              "size": [
+                4,
+                1,
+                4
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:cluster_count') == 3 && q.block_state('vyt:dead_bit') == 0",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                2,
+                0,
+                -6
+              ],
+              "size": [
+                4,
+                6,
+                4
+              ]
+            },
+            {
+              "origin": [
+                2,
+                5.95,
+                -6
+              ],
+              "size": [
+                4,
+                1,
+                4
+              ]
+            },
+            {
+              "origin": [
+                -5,
+                0,
+                2
+              ],
+              "size": [
+                4,
+                4,
+                4
+              ]
+            },
+            {
+              "origin": [
+                -5,
+                3.95,
+                2
+              ],
+              "size": [
+                4,
+                1,
+                4
+              ]
+            },
+            {
+              "origin": [
+                -5,
+                0,
+                -6
+              ],
+              "size": [
+                4,
+                6,
+                4
+              ]
+            },
+            {
+              "origin": [
+                -5,
+                5.95,
+                -6
+              ],
+              "size": [
+                4,
+                1,
+                4
+              ]
+            },
+            {
+              "origin": [
+                2,
+                0,
+                0
+              ],
+              "size": [
+                4,
+                7,
+                4
+              ]
+            },
+            {
+              "origin": [
+                2,
+                6.95,
+                0
+              ],
+              "size": [
+                4,
+                1,
+                4
+              ]
+            },
+            {
+              "origin": [
+                3.5,
+                5.2,
+                -4
+              ],
+              "size": [
+                1,
+                3.5,
+                1
+              ]
+            },
+            {
+              "origin": [
+                3,
+                5.2,
+                -4.5
+              ],
+              "size": [
+                1,
+                3.5,
+                1
+              ]
+            },
+            {
+              "origin": [
+                -3.5,
+                3.2,
+                4
+              ],
+              "size": [
+                1,
+                3.5,
+                1
+              ]
+            },
+            {
+              "origin": [
+                -4,
+                3.2,
+                3.5
+              ],
+              "size": [
+                1,
+                3.5,
+                1
+              ]
+            },
+            {
+              "origin": [
+                -3.5,
+                5.2,
+                -4
+              ],
+              "size": [
+                1,
+                3.5,
+                1
+              ]
+            },
+            {
+              "origin": [
+                -4,
+                5.2,
+                -4.5
+              ],
+              "size": [
+                1,
+                3.5,
+                1
+              ]
+            },
+            {
+              "origin": [
+                3.5,
+                6.2,
+                2
+              ],
+              "size": [
+                1,
+                3.5,
+                1
+              ]
+            },
+            {
+              "origin": [
+                3,
+                6.2,
+                1.5
+              ],
+              "size": [
+                1,
+                3.5,
+                1
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:cluster_count') == 3 && q.block_state('vyt:dead_bit') == 1",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                2,
+                0,
+                -6
+              ],
+              "size": [
+                4,
+                6,
+                4
+              ]
+            },
+            {
+              "origin": [
+                2,
+                5.95,
+                -6
+              ],
+              "size": [
+                4,
+                1,
+                4
+              ]
+            },
+            {
+              "origin": [
+                -5,
+                0,
+                2
+              ],
+              "size": [
+                4,
+                4,
+                4
+              ]
+            },
+            {
+              "origin": [
+                -5,
+                3.95,
+                2
+              ],
+              "size": [
+                4,
+                1,
+                4
+              ]
+            },
+            {
+              "origin": [
+                -5,
+                0,
+                -6
+              ],
+              "size": [
+                4,
+                6,
+                4
+              ]
+            },
+            {
+              "origin": [
+                -5,
+                5.95,
+                -6
+              ],
+              "size": [
+                4,
+                1,
+                4
+              ]
+            },
+            {
+              "origin": [
+                2,
+                0,
+                0
+              ],
+              "size": [
+                4,
+                7,
+                4
+              ]
+            },
+            {
+              "origin": [
+                2,
+                6.95,
+                0
+              ],
+              "size": [
+                4,
+                1,
+                4
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:cluster_count') == 0 && q.block_state('vyt:dead_bit') == 1",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -2,
+              0,
+              -2
+            ],
+            "size": [
+              4,
+              6,
+              4
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:cluster_count') == 1 && q.block_state('vyt:dead_bit') == 0",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -4,
+              0,
+              -5
+            ],
+            "size": [
+              9,
+              8.7,
+              9
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:cluster_count') == 1 && q.block_state('vyt:dead_bit') == 1",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -4,
+              0,
+              -5
+            ],
+            "size": [
+              9,
+              6,
+              9
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:cluster_count') == 2 && q.block_state('vyt:dead_bit') == 0",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -4,
+              0,
+              -6
+            ],
+            "size": [
+              10,
+              8.7,
+              11
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:cluster_count') == 2 && q.block_state('vyt:dead_bit') == 1",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -4,
+              0,
+              -6
+            ],
+            "size": [
+              10,
+              6,
+              11
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:cluster_count') == 3 && q.block_state('vyt:dead_bit') == 0",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -5,
+              0,
+              -6
+            ],
+            "size": [
+              11,
+              9.7,
+              12
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:cluster_count') == 3 && q.block_state('vyt:dead_bit') == 1",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -5,
+              0,
+              -6
+            ],
+            "size": [
+              11,
+              7,
+              12
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:dead_bit') == 1",
+        "components": {
+          "minecraft:light_emission": 0
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:cluster_count') == 1 && q.block_state('vyt:dead_bit') == 0",
+        "components": {
+          "minecraft:light_emission": 9
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:cluster_count') == 2 && q.block_state('vyt:dead_bit') == 0",
+        "components": {
+          "minecraft:light_emission": 12
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:cluster_count') == 3 && q.block_state('vyt:dead_bit') == 0",
+        "components": {
+          "minecraft:light_emission": 15
+        }
+      }
+    ]
+  }
+}

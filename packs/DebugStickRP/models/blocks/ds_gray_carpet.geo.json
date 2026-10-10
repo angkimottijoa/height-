@@ -1,0 +1,111 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.vyt.ds_gray_carpet",
+        "texture_width": 16,
+        "texture_height": 16,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 3,
+        "visible_bounds_offset": [
+          0,
+          0.5,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "p0",
+          "pivot": [
+            0,
+            8,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                1,
+                16
+              ],
+              "uv": {
+                "down": {
+                  "uv": [
+                    16,
+                    16
+                  ],
+                  "uv_size": [
+                    -16,
+                    -16
+                  ],
+                  "material_instance": "m0"
+                },
+                "up": {
+                  "uv": [
+                    16,
+                    16
+                  ],
+                  "uv_size": [
+                    -16,
+                    -16
+                  ],
+                  "material_instance": "m0"
+                },
+                "north": {
+                  "uv": [
+                    0,
+                    15
+                  ],
+                  "uv_size": [
+                    16,
+                    1
+                  ],
+                  "material_instance": "m0"
+                },
+                "south": {
+                  "uv": [
+                    0,
+                    15
+                  ],
+                  "uv_size": [
+                    16,
+                    1
+                  ],
+                  "material_instance": "m0"
+                },
+                "west": {
+                  "uv": [
+                    0,
+                    15
+                  ],
+                  "uv_size": [
+                    16,
+                    1
+                  ],
+                  "material_instance": "m0"
+                },
+                "east": {
+                  "uv": [
+                    0,
+                    15
+                  ],
+                  "uv_size": [
+                    16,
+                    1
+                  ],
+                  "material_instance": "m0"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,277 @@
+{
+  "format_version": "1.26.40",
+  "minecraft:block": {
+    "description": {
+      "identifier": "vyt:ds_lever",
+      "states": {
+        "vyt:dir": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "vyt:open": [
+          0,
+          1
+        ]
+      }
+    },
+    "components": {
+      "minecraft:geometry": {
+        "identifier": "geometry.vyt.ds_lever",
+        "bone_visibility": {
+          "p0": "q.block_state('vyt:dir') == 0 && q.block_state('vyt:open') == 0",
+          "p0_x": "q.block_state('vyt:dir') == 0 && q.block_state('vyt:open') == 0",
+          "p1": "q.block_state('vyt:dir') == 0 && q.block_state('vyt:open') == 1",
+          "p1_x": "q.block_state('vyt:dir') == 0 && q.block_state('vyt:open') == 1",
+          "p2": "q.block_state('vyt:dir') == 1 && q.block_state('vyt:open') == 0",
+          "p2_x": "q.block_state('vyt:dir') == 1 && q.block_state('vyt:open') == 0",
+          "p3": "q.block_state('vyt:dir') == 1 && q.block_state('vyt:open') == 1",
+          "p3_x": "q.block_state('vyt:dir') == 1 && q.block_state('vyt:open') == 1",
+          "p4": "q.block_state('vyt:dir') == 2 && q.block_state('vyt:open') == 0",
+          "p4_x": "q.block_state('vyt:dir') == 2 && q.block_state('vyt:open') == 0",
+          "p5": "q.block_state('vyt:dir') == 2 && q.block_state('vyt:open') == 1",
+          "p5_x": "q.block_state('vyt:dir') == 2 && q.block_state('vyt:open') == 1",
+          "p6": "q.block_state('vyt:dir') == 3 && q.block_state('vyt:open') == 0",
+          "p6_x": "q.block_state('vyt:dir') == 3 && q.block_state('vyt:open') == 0",
+          "p7": "q.block_state('vyt:dir') == 3 && q.block_state('vyt:open') == 1",
+          "p7_x": "q.block_state('vyt:dir') == 3 && q.block_state('vyt:open') == 1",
+          "p8": "q.block_state('vyt:dir') == 4 && q.block_state('vyt:open') == 0",
+          "p9": "q.block_state('vyt:dir') == 4 && q.block_state('vyt:open') == 1",
+          "p10": "q.block_state('vyt:dir') == 5 && q.block_state('vyt:open') == 0",
+          "p11": "q.block_state('vyt:dir') == 5 && q.block_state('vyt:open') == 1",
+          "p12": "q.block_state('vyt:dir') == 6 && q.block_state('vyt:open') == 0",
+          "p13": "q.block_state('vyt:dir') == 6 && q.block_state('vyt:open') == 1",
+          "p14": "q.block_state('vyt:dir') == 7 && q.block_state('vyt:open') == 0",
+          "p14_x": "q.block_state('vyt:dir') == 7 && q.block_state('vyt:open') == 0",
+          "p15": "q.block_state('vyt:dir') == 7 && q.block_state('vyt:open') == 1",
+          "p15_x": "q.block_state('vyt:dir') == 7 && q.block_state('vyt:open') == 1"
+        }
+      },
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "vyt_ds_cobblestone",
+          "face_dimming": true,
+          "ambient_occlusion": 0.0,
+          "render_method": "alpha_test"
+        },
+        "m0": {
+          "texture": "vyt_ds_cobblestone",
+          "face_dimming": true,
+          "ambient_occlusion": 0.0,
+          "render_method": "alpha_test"
+        },
+        "m1": {
+          "texture": "vyt_ds_lever",
+          "face_dimming": true,
+          "ambient_occlusion": 0.0,
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:collision_box": false,
+      "minecraft:selection_box": {
+        "origin": [
+          -4,
+          5,
+          -3
+        ],
+        "size": [
+          8,
+          11,
+          6
+        ]
+      },
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0.5
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 0.5
+      },
+      "minecraft:light_dampening": 0,
+      "vyt:keep_state": {},
+      "vyt:lever": {},
+      "minecraft:redstone_producer": {
+        "power": 0
+      }
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('vyt:dir') == 1",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -3,
+              4,
+              -3
+            ],
+            "size": [
+              11,
+              8,
+              6
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:dir') == 2",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              4,
+              -3
+            ],
+            "size": [
+              11,
+              8,
+              6
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:dir') == 3",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -3,
+              4,
+              -8
+            ],
+            "size": [
+              6,
+              8,
+              11
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:dir') == 4",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -3,
+              4,
+              -3
+            ],
+            "size": [
+              6,
+              8,
+              11
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:dir') == 5",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -3,
+              0,
+              -4
+            ],
+            "size": [
+              6,
+              11,
+              8
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:dir') == 6",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -4,
+              0,
+              -3
+            ],
+            "size": [
+              8,
+              11,
+              6
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:dir') == 7",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -3,
+              5,
+              -4
+            ],
+            "size": [
+              6,
+              11,
+              8
+            ]
+          }
+        }
+      },
+      {
+        "condition": "(q.block_state('vyt:dir') == 0 || q.block_state('vyt:dir') == 7) && q.block_state('vyt:open') == 1",
+        "components": {
+          "minecraft:redstone_producer": {
+            "power": 15,
+            "strongly_powered_face": "up"
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:dir') == 1 && q.block_state('vyt:open') == 1",
+        "components": {
+          "minecraft:redstone_producer": {
+            "power": 15,
+            "strongly_powered_face": "west"
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:dir') == 2 && q.block_state('vyt:open') == 1",
+        "components": {
+          "minecraft:redstone_producer": {
+            "power": 15,
+            "strongly_powered_face": "east"
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:dir') == 3 && q.block_state('vyt:open') == 1",
+        "components": {
+          "minecraft:redstone_producer": {
+            "power": 15,
+            "strongly_powered_face": "north"
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:dir') == 4 && q.block_state('vyt:open') == 1",
+        "components": {
+          "minecraft:redstone_producer": {
+            "power": 15,
+            "strongly_powered_face": "south"
+          }
+        }
+      },
+      {
+        "condition": "(q.block_state('vyt:dir') == 5 || q.block_state('vyt:dir') == 6) && q.block_state('vyt:open') == 1",
+        "components": {
+          "minecraft:redstone_producer": {
+            "power": 15,
+            "strongly_powered_face": "down"
+          }
+        }
+      }
+    ]
+  }
+}

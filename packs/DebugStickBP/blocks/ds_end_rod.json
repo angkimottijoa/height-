@@ -1,0 +1,599 @@
+{
+  "format_version": "1.26.40",
+  "minecraft:block": {
+    "description": {
+      "identifier": "vyt:ds_end_rod",
+      "states": {
+        "vyt:facing": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "vyt:lit": [
+          1,
+          0
+        ],
+        "vyt:color": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15
+        ]
+      }
+    },
+    "components": {
+      "minecraft:geometry": {
+        "identifier": "geometry.vyt.ds_end_rod",
+        "bone_visibility": {
+          "p0": "q.block_state('vyt:facing') == 0",
+          "p1": "q.block_state('vyt:facing') == 1",
+          "p2": "q.block_state('vyt:facing') == 2",
+          "p2_x": "q.block_state('vyt:facing') == 2",
+          "p3": "q.block_state('vyt:facing') == 3",
+          "p4": "q.block_state('vyt:facing') == 4",
+          "p4_x": "q.block_state('vyt:facing') == 4",
+          "p5": "q.block_state('vyt:facing') == 5",
+          "p5_x": "q.block_state('vyt:facing') == 5"
+        }
+      },
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "vyt_ds_end_rod",
+          "face_dimming": true,
+          "ambient_occlusion": 1.0,
+          "render_method": "alpha_test"
+        },
+        "m0": {
+          "texture": "vyt_ds_end_rod",
+          "face_dimming": true,
+          "ambient_occlusion": 1.0,
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:collision_box": [
+        {
+          "origin": [
+            -2,
+            15,
+            -2
+          ],
+          "size": [
+            4,
+            1,
+            4
+          ]
+        },
+        {
+          "origin": [
+            -1,
+            0,
+            -1
+          ],
+          "size": [
+            2,
+            15,
+            2
+          ]
+        }
+      ],
+      "minecraft:selection_box": {
+        "origin": [
+          -2,
+          0,
+          -2
+        ],
+        "size": [
+          4,
+          16,
+          4
+        ]
+      },
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0.0
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 0.0
+      },
+      "minecraft:light_dampening": 0,
+      "minecraft:light_emission": 14,
+      "vyt:keep_state": {}
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('vyt:facing') == 1",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -2,
+                0,
+                -2
+              ],
+              "size": [
+                4,
+                1,
+                4
+              ]
+            },
+            {
+              "origin": [
+                -1,
+                1,
+                -1
+              ],
+              "size": [
+                2,
+                15,
+                2
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:facing') == 2",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -2,
+                6,
+                -8
+              ],
+              "size": [
+                4,
+                4,
+                1
+              ]
+            },
+            {
+              "origin": [
+                -1,
+                7,
+                -7
+              ],
+              "size": [
+                2,
+                2,
+                15
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:facing') == 3",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -2,
+                6,
+                7
+              ],
+              "size": [
+                4,
+                4,
+                1
+              ]
+            },
+            {
+              "origin": [
+                -1,
+                7,
+                -8
+              ],
+              "size": [
+                2,
+                2,
+                15
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:facing') == 4",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                7,
+                6,
+                -2
+              ],
+              "size": [
+                1,
+                4,
+                4
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                7,
+                -1
+              ],
+              "size": [
+                15,
+                2,
+                2
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:facing') == 5",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                6,
+                -2
+              ],
+              "size": [
+                1,
+                4,
+                4
+              ]
+            },
+            {
+              "origin": [
+                -7,
+                7,
+                -1
+              ],
+              "size": [
+                15,
+                2,
+                2
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "(q.block_state('vyt:facing') == 2 || q.block_state('vyt:facing') == 3)",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -2,
+              6,
+              -8
+            ],
+            "size": [
+              4,
+              4,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "(q.block_state('vyt:facing') == 4 || q.block_state('vyt:facing') == 5)",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              6,
+              -2
+            ],
+            "size": [
+              16,
+              4,
+              4
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:lit') == 0",
+        "components": {
+          "minecraft:light_emission": 0
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:color') == 1",
+        "components": {
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "ds_end_rod_orange",
+              "face_dimming": true,
+              "ambient_occlusion": 1.0,
+              "render_method": "alpha_test"
+            },
+            "m0": {
+              "texture": "ds_end_rod_orange",
+              "face_dimming": true,
+              "ambient_occlusion": 1.0,
+              "render_method": "alpha_test"
+            }
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:color') == 2",
+        "components": {
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "ds_end_rod_magenta",
+              "face_dimming": true,
+              "ambient_occlusion": 1.0,
+              "render_method": "alpha_test"
+            },
+            "m0": {
+              "texture": "ds_end_rod_magenta",
+              "face_dimming": true,
+              "ambient_occlusion": 1.0,
+              "render_method": "alpha_test"
+            }
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:color') == 3",
+        "components": {
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "ds_end_rod_light_blue",
+              "face_dimming": true,
+              "ambient_occlusion": 1.0,
+              "render_method": "alpha_test"
+            },
+            "m0": {
+              "texture": "ds_end_rod_light_blue",
+              "face_dimming": true,
+              "ambient_occlusion": 1.0,
+              "render_method": "alpha_test"
+            }
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:color') == 4",
+        "components": {
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "ds_end_rod_yellow",
+              "face_dimming": true,
+              "ambient_occlusion": 1.0,
+              "render_method": "alpha_test"
+            },
+            "m0": {
+              "texture": "ds_end_rod_yellow",
+              "face_dimming": true,
+              "ambient_occlusion": 1.0,
+              "render_method": "alpha_test"
+            }
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:color') == 5",
+        "components": {
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "ds_end_rod_lime",
+              "face_dimming": true,
+              "ambient_occlusion": 1.0,
+              "render_method": "alpha_test"
+            },
+            "m0": {
+              "texture": "ds_end_rod_lime",
+              "face_dimming": true,
+              "ambient_occlusion": 1.0,
+              "render_method": "alpha_test"
+            }
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:color') == 6",
+        "components": {
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "ds_end_rod_pink",
+              "face_dimming": true,
+              "ambient_occlusion": 1.0,
+              "render_method": "alpha_test"
+            },
+            "m0": {
+              "texture": "ds_end_rod_pink",
+              "face_dimming": true,
+              "ambient_occlusion": 1.0,
+              "render_method": "alpha_test"
+            }
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:color') == 7",
+        "components": {
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "ds_end_rod_gray",
+              "face_dimming": true,
+              "ambient_occlusion": 1.0,
+              "render_method": "alpha_test"
+            },
+            "m0": {
+              "texture": "ds_end_rod_gray",
+              "face_dimming": true,
+              "ambient_occlusion": 1.0,
+              "render_method": "alpha_test"
+            }
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:color') == 8",
+        "components": {
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "ds_end_rod_light_gray",
+              "face_dimming": true,
+              "ambient_occlusion": 1.0,
+              "render_method": "alpha_test"
+            },
+            "m0": {
+              "texture": "ds_end_rod_light_gray",
+              "face_dimming": true,
+              "ambient_occlusion": 1.0,
+              "render_method": "alpha_test"
+            }
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:color') == 9",
+        "components": {
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "ds_end_rod_cyan",
+              "face_dimming": true,
+              "ambient_occlusion": 1.0,
+              "render_method": "alpha_test"
+            },
+            "m0": {
+              "texture": "ds_end_rod_cyan",
+              "face_dimming": true,
+              "ambient_occlusion": 1.0,
+              "render_method": "alpha_test"
+            }
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:color') == 10",
+        "components": {
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "ds_end_rod_purple",
+              "face_dimming": true,
+              "ambient_occlusion": 1.0,
+              "render_method": "alpha_test"
+            },
+            "m0": {
+              "texture": "ds_end_rod_purple",
+              "face_dimming": true,
+              "ambient_occlusion": 1.0,
+              "render_method": "alpha_test"
+            }
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:color') == 11",
+        "components": {
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "ds_end_rod_blue",
+              "face_dimming": true,
+              "ambient_occlusion": 1.0,
+              "render_method": "alpha_test"
+            },
+            "m0": {
+              "texture": "ds_end_rod_blue",
+              "face_dimming": true,
+              "ambient_occlusion": 1.0,
+              "render_method": "alpha_test"
+            }
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:color') == 12",
+        "components": {
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "ds_end_rod_brown",
+              "face_dimming": true,
+              "ambient_occlusion": 1.0,
+              "render_method": "alpha_test"
+            },
+            "m0": {
+              "texture": "ds_end_rod_brown",
+              "face_dimming": true,
+              "ambient_occlusion": 1.0,
+              "render_method": "alpha_test"
+            }
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:color') == 13",
+        "components": {
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "ds_end_rod_green",
+              "face_dimming": true,
+              "ambient_occlusion": 1.0,
+              "render_method": "alpha_test"
+            },
+            "m0": {
+              "texture": "ds_end_rod_green",
+              "face_dimming": true,
+              "ambient_occlusion": 1.0,
+              "render_method": "alpha_test"
+            }
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:color') == 14",
+        "components": {
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "ds_end_rod_red",
+              "face_dimming": true,
+              "ambient_occlusion": 1.0,
+              "render_method": "alpha_test"
+            },
+            "m0": {
+              "texture": "ds_end_rod_red",
+              "face_dimming": true,
+              "ambient_occlusion": 1.0,
+              "render_method": "alpha_test"
+            }
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:color') == 15",
+        "components": {
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "ds_end_rod_black",
+              "face_dimming": true,
+              "ambient_occlusion": 1.0,
+              "render_method": "alpha_test"
+            },
+            "m0": {
+              "texture": "ds_end_rod_black",
+              "face_dimming": true,
+              "ambient_occlusion": 1.0,
+              "render_method": "alpha_test"
+            }
+          }
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,325 @@
+{
+  "format_version": "1.26.40",
+  "minecraft:block": {
+    "description": {
+      "identifier": "vyt:ds_stone_button",
+      "states": {
+        "vyt:facing": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "vyt:pressed": [
+          0,
+          1
+        ]
+      }
+    },
+    "components": {
+      "minecraft:geometry": {
+        "identifier": "geometry.vyt.ds_stone_button",
+        "bone_visibility": {
+          "p0": "q.block_state('vyt:facing') == 0 && q.block_state('vyt:pressed') == 0",
+          "p0_x": "q.block_state('vyt:facing') == 0 && q.block_state('vyt:pressed') == 0",
+          "p1": "q.block_state('vyt:facing') == 0 && q.block_state('vyt:pressed') == 1",
+          "p1_x": "q.block_state('vyt:facing') == 0 && q.block_state('vyt:pressed') == 1",
+          "p2": "q.block_state('vyt:facing') == 1 && q.block_state('vyt:pressed') == 0",
+          "p3": "q.block_state('vyt:facing') == 1 && q.block_state('vyt:pressed') == 1",
+          "p4": "q.block_state('vyt:facing') == 2 && q.block_state('vyt:pressed') == 0",
+          "p5": "q.block_state('vyt:facing') == 2 && q.block_state('vyt:pressed') == 1",
+          "p6": "q.block_state('vyt:facing') == 3 && q.block_state('vyt:pressed') == 0",
+          "p7": "q.block_state('vyt:facing') == 3 && q.block_state('vyt:pressed') == 1",
+          "p8": "q.block_state('vyt:facing') == 4 && q.block_state('vyt:pressed') == 0",
+          "p9": "q.block_state('vyt:facing') == 4 && q.block_state('vyt:pressed') == 1",
+          "p10": "q.block_state('vyt:facing') == 5 && q.block_state('vyt:pressed') == 0",
+          "p11": "q.block_state('vyt:facing') == 5 && q.block_state('vyt:pressed') == 1"
+        }
+      },
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "vyt_ds_stone",
+          "face_dimming": true,
+          "ambient_occlusion": 1.0,
+          "render_method": "opaque"
+        },
+        "m0": {
+          "texture": "vyt_ds_stone",
+          "face_dimming": true,
+          "ambient_occlusion": 1.0,
+          "render_method": "opaque"
+        }
+      },
+      "minecraft:collision_box": false,
+      "minecraft:selection_box": {
+        "origin": [
+          -3,
+          14,
+          -2
+        ],
+        "size": [
+          6,
+          2,
+          4
+        ]
+      },
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0.5
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 0.5
+      },
+      "minecraft:light_dampening": 0,
+      "vyt:keep_state": {},
+      "vyt:button": {},
+      "minecraft:redstone_producer": {
+        "power": 0
+      }
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('vyt:facing') == 0 && q.block_state('vyt:pressed') == 1",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -3,
+              14.98,
+              -2
+            ],
+            "size": [
+              6,
+              1.02,
+              4
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:facing') == 1 && q.block_state('vyt:pressed') == 0",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -3,
+              0,
+              -2
+            ],
+            "size": [
+              6,
+              2,
+              4
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:facing') == 1 && q.block_state('vyt:pressed') == 1",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -3,
+              0,
+              -2
+            ],
+            "size": [
+              6,
+              1.02,
+              4
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:facing') == 2 && q.block_state('vyt:pressed') == 0",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -3,
+              6,
+              6
+            ],
+            "size": [
+              6,
+              4,
+              2
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:facing') == 2 && q.block_state('vyt:pressed') == 1",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -3,
+              6,
+              6.98
+            ],
+            "size": [
+              6,
+              4,
+              1.02
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:facing') == 3 && q.block_state('vyt:pressed') == 0",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -3,
+              6,
+              -8
+            ],
+            "size": [
+              6,
+              4,
+              2
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:facing') == 3 && q.block_state('vyt:pressed') == 1",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -3,
+              6,
+              -8
+            ],
+            "size": [
+              6,
+              4,
+              1.02
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:facing') == 4 && q.block_state('vyt:pressed') == 0",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              6,
+              -3
+            ],
+            "size": [
+              2,
+              4,
+              6
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:facing') == 4 && q.block_state('vyt:pressed') == 1",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              6,
+              -3
+            ],
+            "size": [
+              1.02,
+              4,
+              6
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:facing') == 5 && q.block_state('vyt:pressed') == 0",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              6,
+              6,
+              -3
+            ],
+            "size": [
+              2,
+              4,
+              6
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:facing') == 5 && q.block_state('vyt:pressed') == 1",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              6.98,
+              6,
+              -3
+            ],
+            "size": [
+              1.02,
+              4,
+              6
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:facing') == 0 && q.block_state('vyt:pressed') == 1",
+        "components": {
+          "minecraft:redstone_producer": {
+            "power": 15,
+            "strongly_powered_face": "up"
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:facing') == 1 && q.block_state('vyt:pressed') == 1",
+        "components": {
+          "minecraft:redstone_producer": {
+            "power": 15,
+            "strongly_powered_face": "down"
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:facing') == 2 && q.block_state('vyt:pressed') == 1",
+        "components": {
+          "minecraft:redstone_producer": {
+            "power": 15,
+            "strongly_powered_face": "south"
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:facing') == 3 && q.block_state('vyt:pressed') == 1",
+        "components": {
+          "minecraft:redstone_producer": {
+            "power": 15,
+            "strongly_powered_face": "north"
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:facing') == 4 && q.block_state('vyt:pressed') == 1",
+        "components": {
+          "minecraft:redstone_producer": {
+            "power": 15,
+            "strongly_powered_face": "east"
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:facing') == 5 && q.block_state('vyt:pressed') == 1",
+        "components": {
+          "minecraft:redstone_producer": {
+            "power": 15,
+            "strongly_powered_face": "west"
+          }
+        }
+      }
+    ]
+  }
+}

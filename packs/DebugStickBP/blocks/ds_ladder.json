@@ -1,0 +1,184 @@
+{
+  "format_version": "1.26.40",
+  "minecraft:block": {
+    "description": {
+      "identifier": "vyt:ds_ladder",
+      "states": {
+        "vyt:facing_direction": [
+          2,
+          3,
+          4,
+          5
+        ]
+      }
+    },
+    "components": {
+      "minecraft:geometry": {
+        "identifier": "geometry.vyt.ds_ladder",
+        "bone_visibility": {
+          "p0": "q.block_state('vyt:facing_direction') == 2",
+          "p1": "q.block_state('vyt:facing_direction') == 3",
+          "p2": "q.block_state('vyt:facing_direction') == 4",
+          "p3": "q.block_state('vyt:facing_direction') == 5"
+        }
+      },
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "vyt_ds_ladder",
+          "face_dimming": false,
+          "ambient_occlusion": 0.0,
+          "render_method": "alpha_test"
+        },
+        "m0": {
+          "texture": "vyt_ds_ladder",
+          "face_dimming": false,
+          "ambient_occlusion": 0.0,
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:collision_box": [
+        {
+          "origin": [
+            -8,
+            0,
+            7
+          ],
+          "size": [
+            16,
+            16,
+            1
+          ]
+        }
+      ],
+      "minecraft:selection_box": {
+        "origin": [
+          -8,
+          0,
+          7
+        ],
+        "size": [
+          16,
+          16,
+          1
+        ]
+      },
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0.4
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 0.4
+      },
+      "minecraft:light_dampening": 0
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('vyt:facing_direction') == 3",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -7.2
+              ],
+              "size": [
+                16,
+                16,
+                1
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:facing_direction') == 4",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                1,
+                16,
+                16
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:facing_direction') == 5",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                6.2,
+                0,
+                -8
+              ],
+              "size": [
+                1,
+                16,
+                16
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:facing_direction') == 3",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -7.2
+            ],
+            "size": [
+              16,
+              16,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:facing_direction') == 4",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              1,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:facing_direction') == 5",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              6.2,
+              0,
+              -8
+            ],
+            "size": [
+              1,
+              16,
+              16
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

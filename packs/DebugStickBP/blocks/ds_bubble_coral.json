@@ -1,0 +1,72 @@
+{
+  "format_version": "1.26.40",
+  "minecraft:block": {
+    "description": {
+      "identifier": "vyt:ds_bubble_coral"
+    },
+    "components": {
+      "minecraft:geometry": {
+        "identifier": "geometry.vyt.ds_bubble_coral"
+      },
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "vyt_ds_coral_plant_purple",
+          "face_dimming": false,
+          "ambient_occlusion": 0.0,
+          "render_method": "alpha_test"
+        },
+        "m0": {
+          "texture": "vyt_ds_coral_plant_purple",
+          "face_dimming": false,
+          "ambient_occlusion": 0.0,
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:collision_box": [
+        {
+          "origin": [
+            -7.2,
+            0,
+            0
+          ],
+          "size": [
+            14.4,
+            16,
+            1
+          ]
+        },
+        {
+          "origin": [
+            -1,
+            0,
+            -7.2
+          ],
+          "size": [
+            1,
+            16,
+            14.4
+          ]
+        }
+      ],
+      "minecraft:selection_box": {
+        "origin": [
+          -7.2,
+          0,
+          -7.2
+        ],
+        "size": [
+          14.4,
+          16,
+          14.4
+        ]
+      },
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0.0
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 0.0
+      },
+      "minecraft:light_dampening": 0
+    }
+  }
+}

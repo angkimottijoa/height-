@@ -1,0 +1,43 @@
+{
+  "format_version": 3,
+  "header": {
+    "name": "Debug Stick [BP]",
+    "description": "§7v26.47.0 MCBE 1.26.40+§r\n\nJava §dDebug Stick§r ported to Minecraft: Bedrock Edition, by §bvytdev§r\n§a/give @s vyt:debug_stick§r 로 획득하세요.\n\n§b독립형 블록§r — 바닐라 블록을 디버그 스틱으로 치면 같은 모양의 독립형 블록으로 바뀌어\n이웃 블록이나 받침이 바뀌어도 모양이 그대로 고정됩니다. 텍스처는 바닐라 것을 그대로 씁니다.\n§e333종§r: 울타리·담장·유리판·철창 88, 계단 64, 꽃·잔디 등 40, 횃불 5, 레버, 버튼 14, 압력판 16, 엔드 막대,\n드립리프·철사 덫 갈고리·사다리·덩굴·발광 이끼·랜턴·자수정·산호·작물·큰 꽃 등 §e104종§r 추가.\n§b독립형 철문§r §a/give @s vyt:ds_iron_door§r — 멀리서도 사라지지 않는 철문. 레드스톤으로 열림.\n§7목록: BLOCK_IDS.txt§r\n\n§7조작§r\n§e탭§r = 상태값 변경 (바닐라 블록은 첫 탭에서 변환)\n§e길게 누르기§r = 편집할 상태 선택\n§e웅크리기 + 탭§r = 블록 정보\n§e웅크리기 + 길게 누르기§r = 바닐라로 되돌리기\n§e블록 선택(픽 블록)§r = 기존 독립형 블록은 그 상태 그대로 집어옵니다\n\nCopyright (c) 2023-2026 Vincent Yanzee J. Tan — MIT License.",
+    "version": "26.47.0",
+    "min_engine_version": "1.26.40",
+    "uuid": "21aadfa6-e27c-400c-c596-596021852939"
+  },
+  "modules": [
+    {
+      "description": "behaviour",
+      "type": "data",
+      "version": "1.0.0",
+      "uuid": "d8a9ff21-7aa3-4b83-73ed-eeb141516e74"
+    },
+    {
+      "description": "scripting",
+      "type": "script",
+      "language": "javascript",
+      "version": "1.0.0",
+      "uuid": "86c7bab4-aed9-4297-5f0c-d5d62bd30be1",
+      "entry": "scripts/index.js"
+    }
+  ],
+  "dependencies": [
+    {
+      "module_name": "@minecraft/server",
+      "version": "2.9.0"
+    },
+    {
+      "uuid": "16d64161-bf17-4f37-af40-3ae0b2505ce1",
+      "version": "26.47.0"
+    }
+  ],
+  "metadata": {
+    "authors": [
+      "VYT"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/vytdev/debug-stick"
+  }
+}

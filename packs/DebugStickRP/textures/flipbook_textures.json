@@ -1,0 +1,71 @@
+[
+  {
+    "flipbook_texture": "textures/blocks/firefly_bush_firefly",
+    "atlas_tile": "vyt_ds_firefly_bush_firefly",
+    "ticks_per_frame": 3
+  },
+  {
+    "flipbook_texture": "textures/blocks/prismarine_rough",
+    "atlas_tile": "vyt_ds_prismarine_rough",
+    "ticks_per_frame": 300,
+    "frames": [
+      0,
+      1,
+      0,
+      2,
+      0,
+      3,
+      0,
+      1,
+      2,
+      1,
+      3,
+      1,
+      0,
+      2,
+      1,
+      2,
+      3,
+      2,
+      0,
+      3,
+      1,
+      3
+    ]
+  },
+  {
+    "flipbook_texture": "textures/blocks/sculk_vein",
+    "atlas_tile": "vyt_ds_sculk_vein",
+    "ticks_per_frame": 20
+  },
+  {
+    "flipbook_texture": "textures/blocks/lantern",
+    "atlas_tile": "vyt_ds_lantern",
+    "ticks_per_frame": 8
+  },
+  {
+    "flipbook_texture": "textures/blocks/soul_lantern",
+    "atlas_tile": "vyt_ds_soul_lantern",
+    "ticks_per_frame": 8
+  },
+  {
+    "flipbook_texture": "textures/blocks/copper_lantern",
+    "atlas_tile": "vyt_ds_copper_lantern",
+    "ticks_per_frame": 8
+  },
+  {
+    "flipbook_texture": "textures/blocks/exposed_copper_lantern",
+    "atlas_tile": "vyt_ds_exposed_copper_lantern",
+    "ticks_per_frame": 8
+  },
+  {
+    "flipbook_texture": "textures/blocks/weathered_copper_lantern",
+    "atlas_tile": "vyt_ds_weathered_copper_lantern",
+    "ticks_per_frame": 8
+  },
+  {
+    "flipbook_texture": "textures/blocks/oxidized_copper_lantern",
+    "atlas_tile": "vyt_ds_oxidized_copper_lantern",
+    "ticks_per_frame": 8
+  }
+]

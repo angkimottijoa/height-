@@ -1,0 +1,74 @@
+{
+  "format_version": "1.26.40",
+  "minecraft:block": {
+    "description": {
+      "identifier": "vyt:ds_brain_coral_wall_fan",
+      "states": {
+        "vyt:coral_direction": [
+          2,
+          0,
+          1,
+          3
+        ]
+      }
+    },
+    "components": {
+      "minecraft:geometry": {
+        "identifier": "geometry.vyt.ds_brain_coral_wall_fan",
+        "bone_visibility": {
+          "p0": "q.block_state('vyt:coral_direction') == 2",
+          "p1": "q.block_state('vyt:coral_direction') == 0",
+          "p2": "q.block_state('vyt:coral_direction') == 1",
+          "p3": "q.block_state('vyt:coral_direction') == 3"
+        }
+      },
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "vyt_ds_coral_fan_pink",
+          "face_dimming": false,
+          "ambient_occlusion": 0.0,
+          "render_method": "alpha_test"
+        },
+        "m0": {
+          "texture": "vyt_ds_coral_fan_pink",
+          "face_dimming": false,
+          "ambient_occlusion": 0.0,
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:collision_box": [
+        {
+          "origin": [
+            -8,
+            8,
+            -8
+          ],
+          "size": [
+            16,
+            1,
+            16
+          ]
+        }
+      ],
+      "minecraft:selection_box": {
+        "origin": [
+          -8,
+          8,
+          -8
+        ],
+        "size": [
+          16,
+          1,
+          16
+        ]
+      },
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0.0
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 0.0
+      },
+      "minecraft:light_dampening": 0
+    }
+  }
+}

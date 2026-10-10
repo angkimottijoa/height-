@@ -1,0 +1,1016 @@
+{
+  "resource_pack_name": "vyt_debug_stick",
+  "texture_name": "atlas.terrain",
+  "padding": 8,
+  "num_mip_levels": 4,
+  "texture_data": {
+    "ds_end_rod_white": {
+      "textures": "textures/blocks/ds_end_rod_white"
+    },
+    "ds_end_rod_orange": {
+      "textures": "textures/blocks/ds_end_rod_orange"
+    },
+    "ds_end_rod_magenta": {
+      "textures": "textures/blocks/ds_end_rod_magenta"
+    },
+    "ds_end_rod_light_blue": {
+      "textures": "textures/blocks/ds_end_rod_light_blue"
+    },
+    "ds_end_rod_yellow": {
+      "textures": "textures/blocks/ds_end_rod_yellow"
+    },
+    "ds_end_rod_lime": {
+      "textures": "textures/blocks/ds_end_rod_lime"
+    },
+    "ds_end_rod_pink": {
+      "textures": "textures/blocks/ds_end_rod_pink"
+    },
+    "ds_end_rod_gray": {
+      "textures": "textures/blocks/ds_end_rod_gray"
+    },
+    "ds_end_rod_light_gray": {
+      "textures": "textures/blocks/ds_end_rod_light_gray"
+    },
+    "ds_end_rod_cyan": {
+      "textures": "textures/blocks/ds_end_rod_cyan"
+    },
+    "ds_end_rod_purple": {
+      "textures": "textures/blocks/ds_end_rod_purple"
+    },
+    "ds_end_rod_blue": {
+      "textures": "textures/blocks/ds_end_rod_blue"
+    },
+    "ds_end_rod_brown": {
+      "textures": "textures/blocks/ds_end_rod_brown"
+    },
+    "ds_end_rod_green": {
+      "textures": "textures/blocks/ds_end_rod_green"
+    },
+    "ds_end_rod_red": {
+      "textures": "textures/blocks/ds_end_rod_red"
+    },
+    "ds_end_rod_black": {
+      "textures": "textures/blocks/ds_end_rod_black"
+    },
+    "vyt_ds_planks_acacia": {
+      "textures": "textures/blocks/planks_acacia"
+    },
+    "vyt_ds_sapling_acacia": {
+      "textures": "textures/blocks/sapling_acacia"
+    },
+    "vyt_ds_flower_allium": {
+      "textures": "textures/blocks/flower_allium"
+    },
+    "vyt_ds_stone_andesite": {
+      "textures": "textures/blocks/stone_andesite"
+    },
+    "vyt_ds_flower_houstonia": {
+      "textures": "textures/blocks/flower_houstonia"
+    },
+    "vyt_ds_bamboo_planks": {
+      "textures": "textures/blocks/bamboo_planks"
+    },
+    "vyt_ds_bamboo_fence": {
+      "textures": "textures/blocks/bamboo_fence"
+    },
+    "vyt_ds_bamboo_mosaic": {
+      "textures": "textures/blocks/bamboo_mosaic"
+    },
+    "vyt_ds_bamboo_sapling": {
+      "textures": "textures/blocks/bamboo_sapling"
+    },
+    "vyt_ds_planks_birch": {
+      "textures": "textures/blocks/planks_birch"
+    },
+    "vyt_ds_sapling_birch": {
+      "textures": "textures/blocks/sapling_birch"
+    },
+    "vyt_ds_glass_pane_top_black": {
+      "textures": "textures/blocks/glass_pane_top_black"
+    },
+    "vyt_ds_glass_black": {
+      "textures": "textures/blocks/glass_black"
+    },
+    "vyt_ds_blackstone_top": {
+      "textures": "textures/blocks/blackstone_top"
+    },
+    "vyt_ds_blackstone": {
+      "textures": "textures/blocks/blackstone"
+    },
+    "vyt_ds_flower_blue_orchid": {
+      "textures": "textures/blocks/flower_blue_orchid"
+    },
+    "vyt_ds_glass_pane_top_blue": {
+      "textures": "textures/blocks/glass_pane_top_blue"
+    },
+    "vyt_ds_glass_blue": {
+      "textures": "textures/blocks/glass_blue"
+    },
+    "vyt_ds_brick": {
+      "textures": "textures/blocks/brick"
+    },
+    "vyt_ds_mushroom_brown": {
+      "textures": "textures/blocks/mushroom_brown"
+    },
+    "vyt_ds_glass_pane_top_brown": {
+      "textures": "textures/blocks/glass_pane_top_brown"
+    },
+    "vyt_ds_glass_brown": {
+      "textures": "textures/blocks/glass_brown"
+    },
+    "vyt_ds_bush": {
+      "textures": "textures/blocks/bush"
+    },
+    "vyt_ds_cactus_flower": {
+      "textures": "textures/blocks/cactus_flower"
+    },
+    "vyt_ds_cherry_planks": {
+      "textures": "textures/blocks/cherry_planks"
+    },
+    "vyt_ds_cherry_sapling": {
+      "textures": "textures/blocks/cherry_sapling"
+    },
+    "vyt_ds_cinnabar_bricks": {
+      "textures": "textures/blocks/cinnabar_bricks"
+    },
+    "vyt_ds_cinnabar": {
+      "textures": "textures/blocks/cinnabar"
+    },
+    "vyt_ds_eyeblossom_dormant": {
+      "textures": "textures/blocks/eyeblossom_dormant"
+    },
+    "vyt_ds_deepslate_cobbled_deepslate": {
+      "textures": "textures/blocks/deepslate/cobbled_deepslate"
+    },
+    "vyt_ds_cobblestone": {
+      "textures": "textures/blocks/cobblestone"
+    },
+    "vyt_ds_copper_bars": {
+      "textures": "textures/blocks/copper_bars"
+    },
+    "vyt_ds_copper_torch": {
+      "textures": "textures/blocks/copper_torch"
+    },
+    "vyt_ds_flower_cornflower": {
+      "textures": "textures/blocks/flower_cornflower"
+    },
+    "vyt_ds_huge_fungus_crimson_planks": {
+      "textures": "textures/blocks/huge_fungus/crimson_planks"
+    },
+    "vyt_ds_crimson_roots": {
+      "textures": "textures/blocks/crimson_roots"
+    },
+    "vyt_ds_cut_copper": {
+      "textures": "textures/blocks/cut_copper"
+    },
+    "vyt_ds_glass_pane_top_cyan": {
+      "textures": "textures/blocks/glass_pane_top_cyan"
+    },
+    "vyt_ds_glass_cyan": {
+      "textures": "textures/blocks/glass_cyan"
+    },
+    "vyt_ds_flower_dandelion": {
+      "textures": "textures/blocks/flower_dandelion"
+    },
+    "vyt_ds_planks_big_oak": {
+      "textures": "textures/blocks/planks_big_oak"
+    },
+    "vyt_ds_sapling_roofed_oak": {
+      "textures": "textures/blocks/sapling_roofed_oak"
+    },
+    "vyt_ds_prismarine_dark": {
+      "textures": "textures/blocks/prismarine_dark"
+    },
+    "vyt_ds_deadbush": {
+      "textures": "textures/blocks/deadbush"
+    },
+    "vyt_ds_deepslate_deepslate_bricks": {
+      "textures": "textures/blocks/deepslate/deepslate_bricks"
+    },
+    "vyt_ds_deepslate_deepslate_tiles": {
+      "textures": "textures/blocks/deepslate/deepslate_tiles"
+    },
+    "vyt_ds_stone_diorite": {
+      "textures": "textures/blocks/stone_diorite"
+    },
+    "vyt_ds_end_bricks": {
+      "textures": "textures/blocks/end_bricks"
+    },
+    "vyt_ds_end_rod": {
+      "textures": "textures/blocks/end_rod"
+    },
+    "vyt_ds_exposed_copper_bars": {
+      "textures": "textures/blocks/exposed_copper_bars"
+    },
+    "vyt_ds_exposed_cut_copper": {
+      "textures": "textures/blocks/exposed_cut_copper"
+    },
+    "vyt_ds_fern": {
+      "textures": "textures/blocks/fern"
+    },
+    "vyt_ds_firefly_bush": {
+      "textures": "textures/blocks/firefly_bush"
+    },
+    "vyt_ds_firefly_bush_firefly": {
+      "textures": "textures/blocks/firefly_bush_firefly"
+    },
+    "vyt_ds_glass_pane_top": {
+      "textures": "textures/blocks/glass_pane_top"
+    },
+    "vyt_ds_glass": {
+      "textures": "textures/blocks/glass"
+    },
+    "vyt_ds_golden_dandelion": {
+      "textures": "textures/blocks/golden_dandelion"
+    },
+    "vyt_ds_stone_granite": {
+      "textures": "textures/blocks/stone_granite"
+    },
+    "vyt_ds_glass_pane_top_gray": {
+      "textures": "textures/blocks/glass_pane_top_gray"
+    },
+    "vyt_ds_glass_gray": {
+      "textures": "textures/blocks/glass_gray"
+    },
+    "vyt_ds_glass_pane_top_green": {
+      "textures": "textures/blocks/glass_pane_top_green"
+    },
+    "vyt_ds_glass_green": {
+      "textures": "textures/blocks/glass_green"
+    },
+    "vyt_ds_hanging_roots": {
+      "textures": "textures/blocks/hanging_roots"
+    },
+    "vyt_ds_glass_pane_top_light_blue": {
+      "textures": "textures/blocks/glass_pane_top_light_blue"
+    },
+    "vyt_ds_glass_light_blue": {
+      "textures": "textures/blocks/glass_light_blue"
+    },
+    "vyt_ds_glass_pane_top_silver": {
+      "textures": "textures/blocks/glass_pane_top_silver"
+    },
+    "vyt_ds_glass_silver": {
+      "textures": "textures/blocks/glass_silver"
+    },
+    "vyt_ds_glass_pane_top_lime": {
+      "textures": "textures/blocks/glass_pane_top_lime"
+    },
+    "vyt_ds_glass_lime": {
+      "textures": "textures/blocks/glass_lime"
+    },
+    "vyt_ds_glass_pane_top_magenta": {
+      "textures": "textures/blocks/glass_pane_top_magenta"
+    },
+    "vyt_ds_glass_magenta": {
+      "textures": "textures/blocks/glass_magenta"
+    },
+    "vyt_ds_glass_pane_top_orange": {
+      "textures": "textures/blocks/glass_pane_top_orange"
+    },
+    "vyt_ds_glass_orange": {
+      "textures": "textures/blocks/glass_orange"
+    },
+    "vyt_ds_glass_pane_top_pink": {
+      "textures": "textures/blocks/glass_pane_top_pink"
+    },
+    "vyt_ds_glass_pink": {
+      "textures": "textures/blocks/glass_pink"
+    },
+    "vyt_ds_glass_pane_top_purple": {
+      "textures": "textures/blocks/glass_pane_top_purple"
+    },
+    "vyt_ds_glass_purple": {
+      "textures": "textures/blocks/glass_purple"
+    },
+    "vyt_ds_glass_pane_top_red": {
+      "textures": "textures/blocks/glass_pane_top_red"
+    },
+    "vyt_ds_glass_red": {
+      "textures": "textures/blocks/glass_red"
+    },
+    "vyt_ds_glass_pane_top_white": {
+      "textures": "textures/blocks/glass_pane_top_white"
+    },
+    "vyt_ds_glass_white": {
+      "textures": "textures/blocks/glass_white"
+    },
+    "vyt_ds_glass_pane_top_yellow": {
+      "textures": "textures/blocks/glass_pane_top_yellow"
+    },
+    "vyt_ds_glass_yellow": {
+      "textures": "textures/blocks/glass_yellow"
+    },
+    "vyt_ds_iron_block": {
+      "textures": "textures/blocks/iron_block"
+    },
+    "vyt_ds_iron_bars": {
+      "textures": "textures/blocks/iron_bars"
+    },
+    "vyt_ds_planks_jungle": {
+      "textures": "textures/blocks/planks_jungle"
+    },
+    "vyt_ds_sapling_jungle": {
+      "textures": "textures/blocks/sapling_jungle"
+    },
+    "vyt_ds_lever": {
+      "textures": "textures/blocks/lever"
+    },
+    "vyt_ds_gold_block": {
+      "textures": "textures/blocks/gold_block"
+    },
+    "vyt_ds_flower_lily_of_the_valley": {
+      "textures": "textures/blocks/flower_lily_of_the_valley"
+    },
+    "vyt_ds_mangrove_planks": {
+      "textures": "textures/blocks/mangrove_planks"
+    },
+    "vyt_ds_cobblestone_mossy": {
+      "textures": "textures/blocks/cobblestone_mossy"
+    },
+    "vyt_ds_stonebrick_mossy": {
+      "textures": "textures/blocks/stonebrick_mossy"
+    },
+    "vyt_ds_mud_bricks": {
+      "textures": "textures/blocks/mud_bricks"
+    },
+    "vyt_ds_nether_brick": {
+      "textures": "textures/blocks/nether_brick"
+    },
+    "vyt_ds_nether_sprouts": {
+      "textures": "textures/blocks/nether_sprouts"
+    },
+    "vyt_ds_stone": {
+      "textures": "textures/blocks/stone"
+    },
+    "vyt_ds_planks_oak": {
+      "textures": "textures/blocks/planks_oak"
+    },
+    "vyt_ds_sapling_oak": {
+      "textures": "textures/blocks/sapling_oak"
+    },
+    "vyt_ds_eyeblossom_stem_blooming": {
+      "textures": "textures/blocks/eyeblossom_stem_blooming"
+    },
+    "vyt_ds_eyeblossom_eyes_blooming": {
+      "textures": "textures/blocks/eyeblossom_eyes_blooming"
+    },
+    "vyt_ds_flower_tulip_orange": {
+      "textures": "textures/blocks/flower_tulip_orange"
+    },
+    "vyt_ds_flower_oxeye_daisy": {
+      "textures": "textures/blocks/flower_oxeye_daisy"
+    },
+    "vyt_ds_oxidized_copper_bars": {
+      "textures": "textures/blocks/oxidized_copper_bars"
+    },
+    "vyt_ds_oxidized_cut_copper": {
+      "textures": "textures/blocks/oxidized_cut_copper"
+    },
+    "vyt_ds_pale_oak_planks": {
+      "textures": "textures/blocks/pale_oak_planks"
+    },
+    "vyt_ds_pale_oak_sapling": {
+      "textures": "textures/blocks/pale_oak_sapling"
+    },
+    "vyt_ds_flower_tulip_pink": {
+      "textures": "textures/blocks/flower_tulip_pink"
+    },
+    "vyt_ds_stone_andesite_smooth": {
+      "textures": "textures/blocks/stone_andesite_smooth"
+    },
+    "vyt_ds_polished_blackstone_bricks": {
+      "textures": "textures/blocks/polished_blackstone_bricks"
+    },
+    "vyt_ds_polished_blackstone": {
+      "textures": "textures/blocks/polished_blackstone"
+    },
+    "vyt_ds_polished_cinnabar": {
+      "textures": "textures/blocks/polished_cinnabar"
+    },
+    "vyt_ds_deepslate_polished_deepslate": {
+      "textures": "textures/blocks/deepslate/polished_deepslate"
+    },
+    "vyt_ds_stone_diorite_smooth": {
+      "textures": "textures/blocks/stone_diorite_smooth"
+    },
+    "vyt_ds_stone_granite_smooth": {
+      "textures": "textures/blocks/stone_granite_smooth"
+    },
+    "vyt_ds_polished_sulfur": {
+      "textures": "textures/blocks/polished_sulfur"
+    },
+    "vyt_ds_polished_tuff": {
+      "textures": "textures/blocks/polished_tuff"
+    },
+    "vyt_ds_flower_rose": {
+      "textures": "textures/blocks/flower_rose"
+    },
+    "vyt_ds_prismarine_bricks": {
+      "textures": "textures/blocks/prismarine_bricks"
+    },
+    "vyt_ds_prismarine_rough": {
+      "textures": "textures/blocks/prismarine_rough"
+    },
+    "vyt_ds_purpur_block": {
+      "textures": "textures/blocks/purpur_block"
+    },
+    "vyt_ds_quartz_block_top": {
+      "textures": "textures/blocks/quartz_block_top"
+    },
+    "vyt_ds_quartz_block_side": {
+      "textures": "textures/blocks/quartz_block_side"
+    },
+    "vyt_ds_mushroom_red": {
+      "textures": "textures/blocks/mushroom_red"
+    },
+    "vyt_ds_red_nether_brick": {
+      "textures": "textures/blocks/red_nether_brick"
+    },
+    "vyt_ds_red_sandstone_bottom": {
+      "textures": "textures/blocks/red_sandstone_bottom"
+    },
+    "vyt_ds_red_sandstone_top": {
+      "textures": "textures/blocks/red_sandstone_top"
+    },
+    "vyt_ds_red_sandstone_normal": {
+      "textures": "textures/blocks/red_sandstone_normal"
+    },
+    "vyt_ds_flower_tulip_red": {
+      "textures": "textures/blocks/flower_tulip_red"
+    },
+    "vyt_ds_redstone_torch_on": {
+      "textures": "textures/blocks/redstone_torch_on"
+    },
+    "vyt_ds_resin_bricks": {
+      "textures": "textures/blocks/resin_bricks"
+    },
+    "vyt_ds_sandstone_bottom": {
+      "textures": "textures/blocks/sandstone_bottom"
+    },
+    "vyt_ds_sandstone_top": {
+      "textures": "textures/blocks/sandstone_top"
+    },
+    "vyt_ds_sandstone_normal": {
+      "textures": "textures/blocks/sandstone_normal"
+    },
+    "vyt_ds_short_dry_grass": {
+      "textures": "textures/blocks/short_dry_grass"
+    },
+    "vyt_ds_tallgrass": {
+      "textures": "textures/blocks/tallgrass"
+    },
+    "vyt_ds_quartz_block_bottom": {
+      "textures": "textures/blocks/quartz_block_bottom"
+    },
+    "vyt_ds_soul_torch": {
+      "textures": "textures/blocks/soul_torch"
+    },
+    "vyt_ds_planks_spruce": {
+      "textures": "textures/blocks/planks_spruce"
+    },
+    "vyt_ds_sapling_spruce": {
+      "textures": "textures/blocks/sapling_spruce"
+    },
+    "vyt_ds_stonebrick": {
+      "textures": "textures/blocks/stonebrick"
+    },
+    "vyt_ds_sulfur_bricks": {
+      "textures": "textures/blocks/sulfur_bricks"
+    },
+    "vyt_ds_sulfur": {
+      "textures": "textures/blocks/sulfur"
+    },
+    "vyt_ds_tall_dry_grass": {
+      "textures": "textures/blocks/tall_dry_grass"
+    },
+    "vyt_ds_torch_on": {
+      "textures": "textures/blocks/torch_on"
+    },
+    "vyt_ds_torchflower": {
+      "textures": "textures/blocks/torchflower"
+    },
+    "vyt_ds_tuff_bricks": {
+      "textures": "textures/blocks/tuff_bricks"
+    },
+    "vyt_ds_tuff": {
+      "textures": "textures/blocks/tuff"
+    },
+    "vyt_ds_redstone_torch_off": {
+      "textures": "textures/blocks/redstone_torch_off"
+    },
+    "vyt_ds_huge_fungus_warped_planks": {
+      "textures": "textures/blocks/huge_fungus/warped_planks"
+    },
+    "vyt_ds_warped_roots": {
+      "textures": "textures/blocks/warped_roots"
+    },
+    "vyt_ds_weathered_copper_bars": {
+      "textures": "textures/blocks/weathered_copper_bars"
+    },
+    "vyt_ds_weathered_cut_copper": {
+      "textures": "textures/blocks/weathered_cut_copper"
+    },
+    "vyt_ds_flower_tulip_white": {
+      "textures": "textures/blocks/flower_tulip_white"
+    },
+    "vyt_ds_flower_wither_rose": {
+      "textures": "textures/blocks/flower_wither_rose"
+    },
+    "vyt_ds_ladder": {
+      "textures": "textures/blocks/ladder"
+    },
+    "vyt_ds_trip_wire_source": {
+      "textures": "textures/blocks/trip_wire_source"
+    },
+    "vyt_ds_trip_wire": {
+      "textures": "textures/blocks/trip_wire"
+    },
+    "vyt_ds_vine": {
+      "textures": "textures/blocks/vine"
+    },
+    "vyt_ds_glow_lichen": {
+      "textures": "textures/blocks/glow_lichen"
+    },
+    "vyt_ds_sculk_vein": {
+      "textures": "textures/blocks/sculk_vein"
+    },
+    "vyt_ds_resin_clump": {
+      "textures": "textures/blocks/resin_clump"
+    },
+    "vyt_ds_lantern": {
+      "textures": "textures/blocks/lantern"
+    },
+    "vyt_ds_soul_lantern": {
+      "textures": "textures/blocks/soul_lantern"
+    },
+    "vyt_ds_amethyst_cluster": {
+      "textures": "textures/blocks/amethyst_cluster"
+    },
+    "vyt_ds_large_amethyst_bud": {
+      "textures": "textures/blocks/large_amethyst_bud"
+    },
+    "vyt_ds_medium_amethyst_bud": {
+      "textures": "textures/blocks/medium_amethyst_bud"
+    },
+    "vyt_ds_small_amethyst_bud": {
+      "textures": "textures/blocks/small_amethyst_bud"
+    },
+    "vyt_ds_shelf_mushroom_small": {
+      "textures": "textures/blocks/shelf_mushroom_small"
+    },
+    "vyt_ds_shelf_mushroom_large": {
+      "textures": "textures/blocks/shelf_mushroom_large"
+    },
+    "vyt_ds_copper_lantern": {
+      "textures": "textures/blocks/copper_lantern"
+    },
+    "vyt_ds_exposed_copper_lantern": {
+      "textures": "textures/blocks/exposed_copper_lantern"
+    },
+    "vyt_ds_weathered_copper_lantern": {
+      "textures": "textures/blocks/weathered_copper_lantern"
+    },
+    "vyt_ds_oxidized_copper_lantern": {
+      "textures": "textures/blocks/oxidized_copper_lantern"
+    },
+    "vyt_ds_coral_fan_blue": {
+      "textures": "textures/blocks/coral_fan_blue"
+    },
+    "vyt_ds_coral_fan_pink": {
+      "textures": "textures/blocks/coral_fan_pink"
+    },
+    "vyt_ds_coral_fan_purple": {
+      "textures": "textures/blocks/coral_fan_purple"
+    },
+    "vyt_ds_coral_fan_red": {
+      "textures": "textures/blocks/coral_fan_red"
+    },
+    "vyt_ds_coral_fan_yellow": {
+      "textures": "textures/blocks/coral_fan_yellow"
+    },
+    "vyt_ds_coral_fan_blue_dead": {
+      "textures": "textures/blocks/coral_fan_blue_dead"
+    },
+    "vyt_ds_coral_fan_pink_dead": {
+      "textures": "textures/blocks/coral_fan_pink_dead"
+    },
+    "vyt_ds_coral_fan_purple_dead": {
+      "textures": "textures/blocks/coral_fan_purple_dead"
+    },
+    "vyt_ds_coral_fan_red_dead": {
+      "textures": "textures/blocks/coral_fan_red_dead"
+    },
+    "vyt_ds_coral_fan_yellow_dead": {
+      "textures": "textures/blocks/coral_fan_yellow_dead"
+    },
+    "vyt_ds_crimson_fungus": {
+      "textures": "textures/blocks/crimson_fungus"
+    },
+    "vyt_ds_warped_fungus": {
+      "textures": "textures/blocks/warped_fungus"
+    },
+    "vyt_ds_azalea_top": {
+      "textures": "textures/blocks/azalea_top"
+    },
+    "vyt_ds_azalea_side": {
+      "textures": "textures/blocks/azalea_side"
+    },
+    "vyt_ds_azalea_plant": {
+      "textures": "textures/blocks/azalea_plant"
+    },
+    "vyt_ds_flowering_azalea_top": {
+      "textures": "textures/blocks/flowering_azalea_top"
+    },
+    "vyt_ds_flowering_azalea_side": {
+      "textures": "textures/blocks/flowering_azalea_side"
+    },
+    "vyt_ds_spore_blossom_base": {
+      "textures": "textures/blocks/spore_blossom_base"
+    },
+    "vyt_ds_spore_blossom": {
+      "textures": "textures/blocks/spore_blossom"
+    },
+    "vyt_ds_pale_hanging_moss_tip": {
+      "textures": "textures/blocks/pale_hanging_moss_tip"
+    },
+    "vyt_ds_pale_hanging_moss_middle": {
+      "textures": "textures/blocks/pale_hanging_moss_middle"
+    },
+    "vyt_ds_mangrove_propagule": {
+      "textures": "textures/blocks/mangrove_propagule"
+    },
+    "vyt_ds_mangrove_propagule_hanging": {
+      "textures": "textures/blocks/mangrove_propagule_hanging"
+    },
+    "vyt_ds_pointed_dripstone_up_tip": {
+      "textures": "textures/blocks/pointed_dripstone_up_tip"
+    },
+    "vyt_ds_pointed_dripstone_down_tip": {
+      "textures": "textures/blocks/pointed_dripstone_down_tip"
+    },
+    "vyt_ds_pointed_dripstone_up_base": {
+      "textures": "textures/blocks/pointed_dripstone_up_base"
+    },
+    "vyt_ds_pointed_dripstone_down_base": {
+      "textures": "textures/blocks/pointed_dripstone_down_base"
+    },
+    "vyt_ds_pointed_dripstone_up_frustum": {
+      "textures": "textures/blocks/pointed_dripstone_up_frustum"
+    },
+    "vyt_ds_pointed_dripstone_down_frustum": {
+      "textures": "textures/blocks/pointed_dripstone_down_frustum"
+    },
+    "vyt_ds_pointed_dripstone_up_merge": {
+      "textures": "textures/blocks/pointed_dripstone_up_merge"
+    },
+    "vyt_ds_pointed_dripstone_down_merge": {
+      "textures": "textures/blocks/pointed_dripstone_down_merge"
+    },
+    "vyt_ds_pointed_dripstone_up_middle": {
+      "textures": "textures/blocks/pointed_dripstone_up_middle"
+    },
+    "vyt_ds_pointed_dripstone_down_middle": {
+      "textures": "textures/blocks/pointed_dripstone_down_middle"
+    },
+    "vyt_ds_sulfur_spike_up_tip": {
+      "textures": "textures/blocks/sulfur_spike_up_tip"
+    },
+    "vyt_ds_sulfur_spike_down_tip": {
+      "textures": "textures/blocks/sulfur_spike_down_tip"
+    },
+    "vyt_ds_sulfur_spike_up_base": {
+      "textures": "textures/blocks/sulfur_spike_up_base"
+    },
+    "vyt_ds_sulfur_spike_down_base": {
+      "textures": "textures/blocks/sulfur_spike_down_base"
+    },
+    "vyt_ds_sulfur_spike_up_frustum": {
+      "textures": "textures/blocks/sulfur_spike_up_frustum"
+    },
+    "vyt_ds_sulfur_spike_down_frustum": {
+      "textures": "textures/blocks/sulfur_spike_down_frustum"
+    },
+    "vyt_ds_sulfur_spike_up_tip_merge": {
+      "textures": "textures/blocks/sulfur_spike_up_tip_merge"
+    },
+    "vyt_ds_sulfur_spike_down_tip_merge": {
+      "textures": "textures/blocks/sulfur_spike_down_tip_merge"
+    },
+    "vyt_ds_sulfur_spike_up_middle": {
+      "textures": "textures/blocks/sulfur_spike_up_middle"
+    },
+    "vyt_ds_sulfur_spike_down_middle": {
+      "textures": "textures/blocks/sulfur_spike_down_middle"
+    },
+    "vyt_ds_sea_pickle": {
+      "textures": "textures/blocks/sea_pickle"
+    },
+    "vyt_ds_waterlily_t208030": {
+      "textures": {
+        "path": "textures/blocks/waterlily",
+        "tint_color": "#208030"
+      }
+    },
+    "vyt_ds_reeds": {
+      "textures": "textures/blocks/reeds"
+    },
+    "vyt_ds_sweet_berry_bush_stage0": {
+      "textures": "textures/blocks/sweet_berry_bush_stage0"
+    },
+    "vyt_ds_sweet_berry_bush_stage1": {
+      "textures": "textures/blocks/sweet_berry_bush_stage1"
+    },
+    "vyt_ds_sweet_berry_bush_stage2": {
+      "textures": "textures/blocks/sweet_berry_bush_stage2"
+    },
+    "vyt_ds_sweet_berry_bush_stage3": {
+      "textures": "textures/blocks/sweet_berry_bush_stage3"
+    },
+    "vyt_ds_nether_wart_stage_0": {
+      "textures": "textures/blocks/nether_wart_stage_0"
+    },
+    "vyt_ds_nether_wart_stage_1": {
+      "textures": "textures/blocks/nether_wart_stage_1"
+    },
+    "vyt_ds_nether_wart_stage_2": {
+      "textures": "textures/blocks/nether_wart_stage_2"
+    },
+    "vyt_ds_wheat_stage_0": {
+      "textures": "textures/blocks/wheat_stage_0"
+    },
+    "vyt_ds_wheat_stage_1": {
+      "textures": "textures/blocks/wheat_stage_1"
+    },
+    "vyt_ds_wheat_stage_2": {
+      "textures": "textures/blocks/wheat_stage_2"
+    },
+    "vyt_ds_wheat_stage_3": {
+      "textures": "textures/blocks/wheat_stage_3"
+    },
+    "vyt_ds_wheat_stage_4": {
+      "textures": "textures/blocks/wheat_stage_4"
+    },
+    "vyt_ds_wheat_stage_5": {
+      "textures": "textures/blocks/wheat_stage_5"
+    },
+    "vyt_ds_wheat_stage_6": {
+      "textures": "textures/blocks/wheat_stage_6"
+    },
+    "vyt_ds_wheat_stage_7": {
+      "textures": "textures/blocks/wheat_stage_7"
+    },
+    "vyt_ds_carrots_stage_0": {
+      "textures": "textures/blocks/carrots_stage_0"
+    },
+    "vyt_ds_carrots_stage_1": {
+      "textures": "textures/blocks/carrots_stage_1"
+    },
+    "vyt_ds_carrots_stage_2": {
+      "textures": "textures/blocks/carrots_stage_2"
+    },
+    "vyt_ds_carrots_stage3": {
+      "textures": "textures/blocks/carrots_stage3"
+    },
+    "vyt_ds_potatoes_stage_0": {
+      "textures": "textures/blocks/potatoes_stage_0"
+    },
+    "vyt_ds_potatoes_stage_1": {
+      "textures": "textures/blocks/potatoes_stage_1"
+    },
+    "vyt_ds_potatoes_stage_2": {
+      "textures": "textures/blocks/potatoes_stage_2"
+    },
+    "vyt_ds_potatoes_stage_3": {
+      "textures": "textures/blocks/potatoes_stage_3"
+    },
+    "vyt_ds_beetroots_stage_0": {
+      "textures": "textures/blocks/beetroots_stage_0"
+    },
+    "vyt_ds_beetroots_stage_1": {
+      "textures": "textures/blocks/beetroots_stage_1"
+    },
+    "vyt_ds_beetroots_stage_2": {
+      "textures": "textures/blocks/beetroots_stage_2"
+    },
+    "vyt_ds_beetroots_stage_3": {
+      "textures": "textures/blocks/beetroots_stage_3"
+    },
+    "vyt_ds_torchflower_crop_stage_0": {
+      "textures": "textures/blocks/torchflower_crop_stage_0"
+    },
+    "vyt_ds_torchflower_crop_stage_1": {
+      "textures": "textures/blocks/torchflower_crop_stage_1"
+    },
+    "vyt_ds_pink_petals": {
+      "textures": "textures/blocks/pink_petals"
+    },
+    "vyt_ds_pink_petals_stem": {
+      "textures": "textures/blocks/pink_petals_stem"
+    },
+    "vyt_ds_wildflowers": {
+      "textures": "textures/blocks/wildflowers"
+    },
+    "vyt_ds_wildflowers_stem": {
+      "textures": "textures/blocks/wildflowers_stem"
+    },
+    "vyt_ds_leaf_litter": {
+      "textures": "textures/blocks/leaf_litter"
+    },
+    "vyt_ds_big_dripleaf_top": {
+      "textures": "textures/blocks/big_dripleaf_top"
+    },
+    "vyt_ds_big_dripleaf_side2": {
+      "textures": "textures/blocks/big_dripleaf_side2"
+    },
+    "vyt_ds_big_dripleaf_side1": {
+      "textures": "textures/blocks/big_dripleaf_side1"
+    },
+    "vyt_ds_big_dripleaf_stem": {
+      "textures": "textures/blocks/big_dripleaf_stem"
+    },
+    "vyt_ds_twisting_vines_bottom": {
+      "textures": "textures/blocks/twisting_vines_bottom"
+    },
+    "vyt_ds_twisting_vines_base": {
+      "textures": "textures/blocks/twisting_vines_base"
+    },
+    "vyt_ds_weeping_vines": {
+      "textures": "textures/blocks/weeping_vines"
+    },
+    "vyt_ds_weeping_vines_plant": {
+      "textures": "textures/blocks/weeping_vines_plant"
+    },
+    "vyt_ds_cave_vines_head": {
+      "textures": "textures/blocks/cave_vines_head"
+    },
+    "vyt_ds_cave_vines_head_berries": {
+      "textures": "textures/blocks/cave_vines_head_berries"
+    },
+    "vyt_ds_cave_vines_body": {
+      "textures": "textures/blocks/cave_vines_body"
+    },
+    "vyt_ds_cave_vines_body_berries": {
+      "textures": "textures/blocks/cave_vines_body_berries"
+    },
+    "vyt_ds_poplar_sapling": {
+      "textures": "textures/blocks/poplar_sapling"
+    },
+    "vyt_ds_moss_block": {
+      "textures": "textures/blocks/moss_block"
+    },
+    "vyt_ds_pale_moss": {
+      "textures": "textures/blocks/pale_moss"
+    },
+    "vyt_ds_pale_moss_carpet_side_base": {
+      "textures": "textures/blocks/pale_moss_carpet_side_base"
+    },
+    "vyt_ds_pale_moss_carpet_side_tip": {
+      "textures": "textures/blocks/pale_moss_carpet_side_tip"
+    },
+    "vyt_ds_wool_colored_white": {
+      "textures": "textures/blocks/wool_colored_white"
+    },
+    "vyt_ds_wool_colored_orange": {
+      "textures": "textures/blocks/wool_colored_orange"
+    },
+    "vyt_ds_wool_colored_magenta": {
+      "textures": "textures/blocks/wool_colored_magenta"
+    },
+    "vyt_ds_wool_colored_light_blue": {
+      "textures": "textures/blocks/wool_colored_light_blue"
+    },
+    "vyt_ds_wool_colored_yellow": {
+      "textures": "textures/blocks/wool_colored_yellow"
+    },
+    "vyt_ds_wool_colored_lime": {
+      "textures": "textures/blocks/wool_colored_lime"
+    },
+    "vyt_ds_wool_colored_pink": {
+      "textures": "textures/blocks/wool_colored_pink"
+    },
+    "vyt_ds_wool_colored_gray": {
+      "textures": "textures/blocks/wool_colored_gray"
+    },
+    "vyt_ds_wool_colored_silver": {
+      "textures": "textures/blocks/wool_colored_silver"
+    },
+    "vyt_ds_wool_colored_cyan": {
+      "textures": "textures/blocks/wool_colored_cyan"
+    },
+    "vyt_ds_wool_colored_purple": {
+      "textures": "textures/blocks/wool_colored_purple"
+    },
+    "vyt_ds_wool_colored_blue": {
+      "textures": "textures/blocks/wool_colored_blue"
+    },
+    "vyt_ds_wool_colored_brown": {
+      "textures": "textures/blocks/wool_colored_brown"
+    },
+    "vyt_ds_wool_colored_green": {
+      "textures": "textures/blocks/wool_colored_green"
+    },
+    "vyt_ds_wool_colored_red": {
+      "textures": "textures/blocks/wool_colored_red"
+    },
+    "vyt_ds_wool_colored_black": {
+      "textures": "textures/blocks/wool_colored_black"
+    },
+    "vyt_ds_coral_plant_blue": {
+      "textures": "textures/blocks/coral_plant_blue"
+    },
+    "vyt_ds_coral_plant_pink": {
+      "textures": "textures/blocks/coral_plant_pink"
+    },
+    "vyt_ds_coral_plant_purple": {
+      "textures": "textures/blocks/coral_plant_purple"
+    },
+    "vyt_ds_coral_plant_red": {
+      "textures": "textures/blocks/coral_plant_red"
+    },
+    "vyt_ds_coral_plant_yellow": {
+      "textures": "textures/blocks/coral_plant_yellow"
+    },
+    "vyt_ds_coral_plant_blue_dead": {
+      "textures": "textures/blocks/coral_plant_blue_dead"
+    },
+    "vyt_ds_coral_plant_pink_dead": {
+      "textures": "textures/blocks/coral_plant_pink_dead"
+    },
+    "vyt_ds_coral_plant_purple_dead": {
+      "textures": "textures/blocks/coral_plant_purple_dead"
+    },
+    "vyt_ds_coral_plant_red_dead": {
+      "textures": "textures/blocks/coral_plant_red_dead"
+    },
+    "vyt_ds_coral_plant_yellow_dead": {
+      "textures": "textures/blocks/coral_plant_yellow_dead"
+    },
+    "vyt_ds_double_plant_sunflower_bottom": {
+      "textures": "textures/blocks/double_plant_sunflower_bottom"
+    },
+    "vyt_ds_double_plant_sunflower_top": {
+      "textures": "textures/blocks/double_plant_sunflower_top"
+    },
+    "vyt_ds_double_plant_sunflower_back": {
+      "textures": "textures/blocks/double_plant_sunflower_back"
+    },
+    "vyt_ds_double_plant_sunflower_front": {
+      "textures": "textures/blocks/double_plant_sunflower_front"
+    },
+    "vyt_ds_double_plant_syringa_bottom": {
+      "textures": "textures/blocks/double_plant_syringa_bottom"
+    },
+    "vyt_ds_double_plant_syringa_top": {
+      "textures": "textures/blocks/double_plant_syringa_top"
+    },
+    "vyt_ds_double_plant_rose_bottom": {
+      "textures": "textures/blocks/double_plant_rose_bottom"
+    },
+    "vyt_ds_double_plant_rose_top": {
+      "textures": "textures/blocks/double_plant_rose_top"
+    },
+    "vyt_ds_double_plant_paeonia_bottom": {
+      "textures": "textures/blocks/double_plant_paeonia_bottom"
+    },
+    "vyt_ds_double_plant_paeonia_top": {
+      "textures": "textures/blocks/double_plant_paeonia_top"
+    },
+    "vyt_ds_double_plant_grass_bottom": {
+      "textures": "textures/blocks/double_plant_grass_bottom"
+    },
+    "vyt_ds_double_plant_grass_top": {
+      "textures": "textures/blocks/double_plant_grass_top"
+    },
+    "vyt_ds_double_plant_fern_bottom": {
+      "textures": "textures/blocks/double_plant_fern_bottom"
+    },
+    "vyt_ds_double_plant_fern_top": {
+      "textures": "textures/blocks/double_plant_fern_top"
+    },
+    "vyt_ds_pitcher_crop_bottom_stage_4": {
+      "textures": "textures/blocks/pitcher_crop_bottom_stage_4"
+    },
+    "vyt_ds_pitcher_crop_top_stage_4": {
+      "textures": "textures/blocks/pitcher_crop_top_stage_4"
+    },
+    "vyt_ds_small_dripleaf_stem_bottom": {
+      "textures": "textures/blocks/small_dripleaf_stem_bottom"
+    },
+    "vyt_ds_small_dripleaf_top": {
+      "textures": "textures/blocks/small_dripleaf_top"
+    },
+    "vyt_ds_small_dripleaf_side": {
+      "textures": "textures/blocks/small_dripleaf_side"
+    },
+    "vyt_ds_small_dripleaf_stem_top": {
+      "textures": "textures/blocks/small_dripleaf_stem_top"
+    },
+    "vyt_ds_door_iron_lower": {
+      "textures": "textures/blocks/door_iron_lower"
+    },
+    "vyt_ds_door_iron_upper": {
+      "textures": "textures/blocks/door_iron_upper"
+    }
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "format_version": "1.26.40",
+  "minecraft:block": {
+    "description": {
+      "identifier": "vyt:ds_wooden_pressure_plate",
+      "states": {
+        "vyt:pressed": [
+          0,
+          1
+        ]
+      }
+    },
+    "components": {
+      "minecraft:geometry": {
+        "identifier": "geometry.vyt.ds_wooden_pressure_plate",
+        "bone_visibility": {
+          "p0": "q.block_state('vyt:pressed') == 0",
+          "p1": "q.block_state('vyt:pressed') == 1"
+        }
+      },
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "vyt_ds_planks_oak",
+          "face_dimming": true,
+          "ambient_occlusion": 1.0,
+          "render_method": "opaque"
+        },
+        "m0": {
+          "texture": "vyt_ds_planks_oak",
+          "face_dimming": true,
+          "ambient_occlusion": 1.0,
+          "render_method": "opaque"
+        }
+      },
+      "minecraft:collision_box": false,
+      "minecraft:selection_box": {
+        "origin": [
+          -7,
+          0,
+          -7
+        ],
+        "size": [
+          14,
+          1,
+          14
+        ]
+      },
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0.5
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 0.5
+      },
+      "minecraft:light_dampening": 0,
+      "minecraft:flammable": {
+        "catch_chance_modifier": 5,
+        "destroy_chance_modifier": 20
+      },
+      "vyt:keep_state": {}
+    }
+  }
+}

@@ -1,0 +1,192 @@
+{
+  "format_version": "1.26.40",
+  "minecraft:block": {
+    "description": {
+      "identifier": "vyt:ds_medium_amethyst_bud",
+      "states": {
+        "vyt:minecraft:block_face": [
+          "up",
+          "down",
+          "east",
+          "north",
+          "south",
+          "west"
+        ]
+      }
+    },
+    "components": {
+      "minecraft:geometry": {
+        "identifier": "geometry.vyt.ds_medium_amethyst_bud",
+        "bone_visibility": {
+          "p0": "q.block_state('vyt:minecraft:block_face') == 'up'",
+          "p1": "q.block_state('vyt:minecraft:block_face') == 'down'",
+          "p2": "q.block_state('vyt:minecraft:block_face') == 'east'",
+          "p2_x": "q.block_state('vyt:minecraft:block_face') == 'east'",
+          "p3": "q.block_state('vyt:minecraft:block_face') == 'north'",
+          "p4": "q.block_state('vyt:minecraft:block_face') == 'south'",
+          "p4_x": "q.block_state('vyt:minecraft:block_face') == 'south'",
+          "p5": "q.block_state('vyt:minecraft:block_face') == 'west'",
+          "p5_x": "q.block_state('vyt:minecraft:block_face') == 'west'"
+        }
+      },
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "vyt_ds_medium_amethyst_bud",
+          "face_dimming": false,
+          "ambient_occlusion": 0.0,
+          "render_method": "alpha_test"
+        },
+        "m0": {
+          "texture": "vyt_ds_medium_amethyst_bud",
+          "face_dimming": false,
+          "ambient_occlusion": 0.0,
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:collision_box": [
+        {
+          "origin": [
+            -7.2,
+            0,
+            0
+          ],
+          "size": [
+            14.4,
+            16,
+            1
+          ]
+        },
+        {
+          "origin": [
+            -1,
+            0,
+            -7.2
+          ],
+          "size": [
+            1,
+            16,
+            14.4
+          ]
+        }
+      ],
+      "minecraft:selection_box": {
+        "origin": [
+          -7.2,
+          0,
+          -7.2
+        ],
+        "size": [
+          14.4,
+          16,
+          14.4
+        ]
+      },
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 1.5
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 1.5
+      },
+      "minecraft:light_dampening": 0,
+      "minecraft:light_emission": 2
+    },
+    "permutations": [
+      {
+        "condition": "(q.block_state('vyt:minecraft:block_face') == 'east' || q.block_state('vyt:minecraft:block_face') == 'west')",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                8,
+                -7.2
+              ],
+              "size": [
+                16,
+                1,
+                14.4
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0.8,
+                0
+              ],
+              "size": [
+                16,
+                14.4,
+                1
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "(q.block_state('vyt:minecraft:block_face') == 'north' || q.block_state('vyt:minecraft:block_face') == 'south')",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -7.2,
+                8,
+                -8
+              ],
+              "size": [
+                14.4,
+                1,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -1,
+                0.8,
+                -8
+              ],
+              "size": [
+                1,
+                14.4,
+                16
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "(q.block_state('vyt:minecraft:block_face') == 'east' || q.block_state('vyt:minecraft:block_face') == 'west')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0.8,
+              -7.2
+            ],
+            "size": [
+              16,
+              14.4,
+              14.4
+            ]
+          }
+        }
+      },
+      {
+        "condition": "(q.block_state('vyt:minecraft:block_face') == 'north' || q.block_state('vyt:minecraft:block_face') == 'south')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -7.2,
+              0.8,
+              -8
+            ],
+            "size": [
+              14.4,
+              14.4,
+              16
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

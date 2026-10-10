@@ -1,0 +1,2006 @@
+{
+  "format_version": "1.26.40",
+  "minecraft:block": {
+    "description": {
+      "identifier": "vyt:ds_deepslate_brick_wall",
+      "states": {
+        "vyt:north": [
+          0,
+          1,
+          2
+        ],
+        "vyt:south": [
+          0,
+          1,
+          2
+        ],
+        "vyt:east": [
+          0,
+          1,
+          2
+        ],
+        "vyt:west": [
+          0,
+          1,
+          2
+        ],
+        "vyt:post": [
+          1,
+          0
+        ]
+      }
+    },
+    "components": {
+      "minecraft:geometry": {
+        "identifier": "geometry.vyt.ds_deepslate_brick_wall",
+        "bone_visibility": {
+          "p0": "q.block_state('vyt:post') == 1",
+          "p1": "q.block_state('vyt:west') == 1",
+          "p2": "q.block_state('vyt:west') == 2",
+          "p3": "q.block_state('vyt:east') == 1",
+          "p4": "q.block_state('vyt:east') == 2",
+          "p5": "q.block_state('vyt:south') == 1",
+          "p6": "q.block_state('vyt:south') == 2",
+          "p7": "q.block_state('vyt:north') == 1",
+          "p8": "q.block_state('vyt:north') == 2"
+        }
+      },
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "vyt_ds_deepslate_deepslate_bricks",
+          "face_dimming": true,
+          "ambient_occlusion": 1.0,
+          "render_method": "opaque"
+        },
+        "m0": {
+          "texture": "vyt_ds_deepslate_deepslate_bricks",
+          "face_dimming": true,
+          "ambient_occlusion": 1.0,
+          "render_method": "opaque"
+        }
+      },
+      "minecraft:collision_box": [
+        {
+          "origin": [
+            -4,
+            0,
+            -4
+          ],
+          "size": [
+            8,
+            24,
+            8
+          ]
+        }
+      ],
+      "minecraft:selection_box": {
+        "origin": [
+          -4,
+          0,
+          -4
+        ],
+        "size": [
+          8,
+          16,
+          8
+        ]
+      },
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 3.5
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 6.0
+      },
+      "minecraft:light_dampening": 0,
+      "vyt:keep_state": {}
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('vyt:north') == 0 && q.block_state('vyt:south') == 0 && q.block_state('vyt:east') == 0 && q.block_state('vyt:west') != 0 && q.block_state('vyt:post') == 1",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -4,
+                0,
+                -4
+              ],
+              "size": [
+                8,
+                24,
+                8
+              ]
+            },
+            {
+              "origin": [
+                3,
+                0,
+                -3
+              ],
+              "size": [
+                5,
+                24,
+                6
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') == 0 && q.block_state('vyt:south') == 0 && q.block_state('vyt:east') == 0 && q.block_state('vyt:west') != 0 && q.block_state('vyt:post') == 0",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                3,
+                0,
+                -3
+              ],
+              "size": [
+                5,
+                24,
+                6
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') == 0 && q.block_state('vyt:south') == 0 && q.block_state('vyt:east') != 0 && q.block_state('vyt:west') == 0 && q.block_state('vyt:post') == 1",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -4,
+                0,
+                -4
+              ],
+              "size": [
+                8,
+                24,
+                8
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                -3
+              ],
+              "size": [
+                5,
+                24,
+                6
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') == 0 && q.block_state('vyt:south') == 0 && q.block_state('vyt:east') != 0 && q.block_state('vyt:west') == 0 && q.block_state('vyt:post') == 0",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -3
+              ],
+              "size": [
+                5,
+                24,
+                6
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') == 0 && q.block_state('vyt:south') == 0 && q.block_state('vyt:east') != 0 && q.block_state('vyt:west') != 0 && q.block_state('vyt:post') == 1",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -4,
+                0,
+                -4
+              ],
+              "size": [
+                8,
+                24,
+                8
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                -3
+              ],
+              "size": [
+                5,
+                24,
+                6
+              ]
+            },
+            {
+              "origin": [
+                3,
+                0,
+                -3
+              ],
+              "size": [
+                5,
+                24,
+                6
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') == 0 && q.block_state('vyt:south') == 0 && q.block_state('vyt:east') != 0 && q.block_state('vyt:west') != 0 && q.block_state('vyt:post') == 0",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                0,
+                -3
+              ],
+              "size": [
+                5,
+                24,
+                6
+              ]
+            },
+            {
+              "origin": [
+                3,
+                0,
+                -3
+              ],
+              "size": [
+                5,
+                24,
+                6
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') == 0 && q.block_state('vyt:south') != 0 && q.block_state('vyt:east') == 0 && q.block_state('vyt:west') == 0 && q.block_state('vyt:post') == 1",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -4,
+                0,
+                -4
+              ],
+              "size": [
+                8,
+                24,
+                8
+              ]
+            },
+            {
+              "origin": [
+                -3,
+                0,
+                3
+              ],
+              "size": [
+                6,
+                24,
+                5
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') == 0 && q.block_state('vyt:south') != 0 && q.block_state('vyt:east') == 0 && q.block_state('vyt:west') == 0 && q.block_state('vyt:post') == 0",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -3,
+                0,
+                3
+              ],
+              "size": [
+                6,
+                24,
+                5
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') == 0 && q.block_state('vyt:south') != 0 && q.block_state('vyt:east') == 0 && q.block_state('vyt:west') != 0 && q.block_state('vyt:post') == 1",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -4,
+                0,
+                -4
+              ],
+              "size": [
+                8,
+                24,
+                8
+              ]
+            },
+            {
+              "origin": [
+                -3,
+                0,
+                3
+              ],
+              "size": [
+                6,
+                24,
+                5
+              ]
+            },
+            {
+              "origin": [
+                3,
+                0,
+                -3
+              ],
+              "size": [
+                5,
+                24,
+                6
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') == 0 && q.block_state('vyt:south') != 0 && q.block_state('vyt:east') == 0 && q.block_state('vyt:west') != 0 && q.block_state('vyt:post') == 0",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -3,
+                0,
+                3
+              ],
+              "size": [
+                6,
+                24,
+                5
+              ]
+            },
+            {
+              "origin": [
+                3,
+                0,
+                -3
+              ],
+              "size": [
+                5,
+                24,
+                6
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') == 0 && q.block_state('vyt:south') != 0 && q.block_state('vyt:east') != 0 && q.block_state('vyt:west') == 0 && q.block_state('vyt:post') == 1",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -4,
+                0,
+                -4
+              ],
+              "size": [
+                8,
+                24,
+                8
+              ]
+            },
+            {
+              "origin": [
+                -3,
+                0,
+                3
+              ],
+              "size": [
+                6,
+                24,
+                5
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                -3
+              ],
+              "size": [
+                5,
+                24,
+                6
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') == 0 && q.block_state('vyt:south') != 0 && q.block_state('vyt:east') != 0 && q.block_state('vyt:west') == 0 && q.block_state('vyt:post') == 0",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -3,
+                0,
+                3
+              ],
+              "size": [
+                6,
+                24,
+                5
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                -3
+              ],
+              "size": [
+                5,
+                24,
+                6
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') == 0 && q.block_state('vyt:south') != 0 && q.block_state('vyt:east') != 0 && q.block_state('vyt:west') != 0 && q.block_state('vyt:post') == 1",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -4,
+                0,
+                -4
+              ],
+              "size": [
+                8,
+                24,
+                8
+              ]
+            },
+            {
+              "origin": [
+                -3,
+                0,
+                3
+              ],
+              "size": [
+                6,
+                24,
+                5
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                -3
+              ],
+              "size": [
+                5,
+                24,
+                6
+              ]
+            },
+            {
+              "origin": [
+                3,
+                0,
+                -3
+              ],
+              "size": [
+                5,
+                24,
+                6
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') == 0 && q.block_state('vyt:south') != 0 && q.block_state('vyt:east') != 0 && q.block_state('vyt:west') != 0 && q.block_state('vyt:post') == 0",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -3,
+                0,
+                3
+              ],
+              "size": [
+                6,
+                24,
+                5
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                -3
+              ],
+              "size": [
+                5,
+                24,
+                6
+              ]
+            },
+            {
+              "origin": [
+                3,
+                0,
+                -3
+              ],
+              "size": [
+                5,
+                24,
+                6
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') != 0 && q.block_state('vyt:south') == 0 && q.block_state('vyt:east') == 0 && q.block_state('vyt:west') == 0 && q.block_state('vyt:post') == 1",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -4,
+                0,
+                -4
+              ],
+              "size": [
+                8,
+                24,
+                8
+              ]
+            },
+            {
+              "origin": [
+                -3,
+                0,
+                -8
+              ],
+              "size": [
+                6,
+                24,
+                5
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') != 0 && q.block_state('vyt:south') == 0 && q.block_state('vyt:east') == 0 && q.block_state('vyt:west') == 0 && q.block_state('vyt:post') == 0",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -3,
+                0,
+                -8
+              ],
+              "size": [
+                6,
+                24,
+                5
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') != 0 && q.block_state('vyt:south') == 0 && q.block_state('vyt:east') == 0 && q.block_state('vyt:west') != 0 && q.block_state('vyt:post') == 1",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -4,
+                0,
+                -4
+              ],
+              "size": [
+                8,
+                24,
+                8
+              ]
+            },
+            {
+              "origin": [
+                -3,
+                0,
+                -8
+              ],
+              "size": [
+                6,
+                24,
+                5
+              ]
+            },
+            {
+              "origin": [
+                3,
+                0,
+                -3
+              ],
+              "size": [
+                5,
+                24,
+                6
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') != 0 && q.block_state('vyt:south') == 0 && q.block_state('vyt:east') == 0 && q.block_state('vyt:west') != 0 && q.block_state('vyt:post') == 0",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -3,
+                0,
+                -8
+              ],
+              "size": [
+                6,
+                24,
+                5
+              ]
+            },
+            {
+              "origin": [
+                3,
+                0,
+                -3
+              ],
+              "size": [
+                5,
+                24,
+                6
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') != 0 && q.block_state('vyt:south') == 0 && q.block_state('vyt:east') != 0 && q.block_state('vyt:west') == 0 && q.block_state('vyt:post') == 1",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -4,
+                0,
+                -4
+              ],
+              "size": [
+                8,
+                24,
+                8
+              ]
+            },
+            {
+              "origin": [
+                -3,
+                0,
+                -8
+              ],
+              "size": [
+                6,
+                24,
+                5
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                -3
+              ],
+              "size": [
+                5,
+                24,
+                6
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') != 0 && q.block_state('vyt:south') == 0 && q.block_state('vyt:east') != 0 && q.block_state('vyt:west') == 0 && q.block_state('vyt:post') == 0",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -3,
+                0,
+                -8
+              ],
+              "size": [
+                6,
+                24,
+                5
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                -3
+              ],
+              "size": [
+                5,
+                24,
+                6
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') != 0 && q.block_state('vyt:south') == 0 && q.block_state('vyt:east') != 0 && q.block_state('vyt:west') != 0 && q.block_state('vyt:post') == 1",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -4,
+                0,
+                -4
+              ],
+              "size": [
+                8,
+                24,
+                8
+              ]
+            },
+            {
+              "origin": [
+                -3,
+                0,
+                -8
+              ],
+              "size": [
+                6,
+                24,
+                5
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                -3
+              ],
+              "size": [
+                5,
+                24,
+                6
+              ]
+            },
+            {
+              "origin": [
+                3,
+                0,
+                -3
+              ],
+              "size": [
+                5,
+                24,
+                6
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') != 0 && q.block_state('vyt:south') == 0 && q.block_state('vyt:east') != 0 && q.block_state('vyt:west') != 0 && q.block_state('vyt:post') == 0",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -3,
+                0,
+                -8
+              ],
+              "size": [
+                6,
+                24,
+                5
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                -3
+              ],
+              "size": [
+                5,
+                24,
+                6
+              ]
+            },
+            {
+              "origin": [
+                3,
+                0,
+                -3
+              ],
+              "size": [
+                5,
+                24,
+                6
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') != 0 && q.block_state('vyt:south') != 0 && q.block_state('vyt:east') == 0 && q.block_state('vyt:west') == 0 && q.block_state('vyt:post') == 1",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -4,
+                0,
+                -4
+              ],
+              "size": [
+                8,
+                24,
+                8
+              ]
+            },
+            {
+              "origin": [
+                -3,
+                0,
+                -8
+              ],
+              "size": [
+                6,
+                24,
+                5
+              ]
+            },
+            {
+              "origin": [
+                -3,
+                0,
+                3
+              ],
+              "size": [
+                6,
+                24,
+                5
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') != 0 && q.block_state('vyt:south') != 0 && q.block_state('vyt:east') == 0 && q.block_state('vyt:west') == 0 && q.block_state('vyt:post') == 0",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -3,
+                0,
+                -8
+              ],
+              "size": [
+                6,
+                24,
+                5
+              ]
+            },
+            {
+              "origin": [
+                -3,
+                0,
+                3
+              ],
+              "size": [
+                6,
+                24,
+                5
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') != 0 && q.block_state('vyt:south') != 0 && q.block_state('vyt:east') == 0 && q.block_state('vyt:west') != 0 && q.block_state('vyt:post') == 1",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -4,
+                0,
+                -4
+              ],
+              "size": [
+                8,
+                24,
+                8
+              ]
+            },
+            {
+              "origin": [
+                -3,
+                0,
+                -8
+              ],
+              "size": [
+                6,
+                24,
+                5
+              ]
+            },
+            {
+              "origin": [
+                -3,
+                0,
+                3
+              ],
+              "size": [
+                6,
+                24,
+                5
+              ]
+            },
+            {
+              "origin": [
+                3,
+                0,
+                -3
+              ],
+              "size": [
+                5,
+                24,
+                6
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') != 0 && q.block_state('vyt:south') != 0 && q.block_state('vyt:east') == 0 && q.block_state('vyt:west') != 0 && q.block_state('vyt:post') == 0",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -3,
+                0,
+                -8
+              ],
+              "size": [
+                6,
+                24,
+                5
+              ]
+            },
+            {
+              "origin": [
+                -3,
+                0,
+                3
+              ],
+              "size": [
+                6,
+                24,
+                5
+              ]
+            },
+            {
+              "origin": [
+                3,
+                0,
+                -3
+              ],
+              "size": [
+                5,
+                24,
+                6
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') != 0 && q.block_state('vyt:south') != 0 && q.block_state('vyt:east') != 0 && q.block_state('vyt:west') == 0 && q.block_state('vyt:post') == 1",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -4,
+                0,
+                -4
+              ],
+              "size": [
+                8,
+                24,
+                8
+              ]
+            },
+            {
+              "origin": [
+                -3,
+                0,
+                -8
+              ],
+              "size": [
+                6,
+                24,
+                5
+              ]
+            },
+            {
+              "origin": [
+                -3,
+                0,
+                3
+              ],
+              "size": [
+                6,
+                24,
+                5
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                -3
+              ],
+              "size": [
+                5,
+                24,
+                6
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') != 0 && q.block_state('vyt:south') != 0 && q.block_state('vyt:east') != 0 && q.block_state('vyt:west') == 0 && q.block_state('vyt:post') == 0",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -3,
+                0,
+                -8
+              ],
+              "size": [
+                6,
+                24,
+                5
+              ]
+            },
+            {
+              "origin": [
+                -3,
+                0,
+                3
+              ],
+              "size": [
+                6,
+                24,
+                5
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                -3
+              ],
+              "size": [
+                5,
+                24,
+                6
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') != 0 && q.block_state('vyt:south') != 0 && q.block_state('vyt:east') != 0 && q.block_state('vyt:west') != 0 && q.block_state('vyt:post') == 1",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -4,
+                0,
+                -4
+              ],
+              "size": [
+                8,
+                24,
+                8
+              ]
+            },
+            {
+              "origin": [
+                -3,
+                0,
+                -8
+              ],
+              "size": [
+                6,
+                24,
+                5
+              ]
+            },
+            {
+              "origin": [
+                -3,
+                0,
+                3
+              ],
+              "size": [
+                6,
+                24,
+                5
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                -3
+              ],
+              "size": [
+                5,
+                24,
+                6
+              ]
+            },
+            {
+              "origin": [
+                3,
+                0,
+                -3
+              ],
+              "size": [
+                5,
+                24,
+                6
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') != 0 && q.block_state('vyt:south') != 0 && q.block_state('vyt:east') != 0 && q.block_state('vyt:west') != 0 && q.block_state('vyt:post') == 0",
+        "components": {
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -3,
+                0,
+                -8
+              ],
+              "size": [
+                6,
+                24,
+                5
+              ]
+            },
+            {
+              "origin": [
+                -3,
+                0,
+                3
+              ],
+              "size": [
+                6,
+                24,
+                5
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                0,
+                -3
+              ],
+              "size": [
+                5,
+                24,
+                6
+              ]
+            },
+            {
+              "origin": [
+                3,
+                0,
+                -3
+              ],
+              "size": [
+                5,
+                24,
+                6
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "(q.block_state('vyt:north') == 0 && q.block_state('vyt:south') == 0 && q.block_state('vyt:east') == 0 && q.block_state('vyt:west') == 0 && q.block_state('vyt:post') == 0) || (q.block_state('vyt:north') != 0 && q.block_state('vyt:south') != 0 && q.block_state('vyt:east') != 0 && q.block_state('vyt:west') != 0 && q.block_state('vyt:post') == 1) || (q.block_state('vyt:north') != 0 && q.block_state('vyt:south') != 0 && q.block_state('vyt:east') != 0 && q.block_state('vyt:west') == 2) || (q.block_state('vyt:north') != 0 && q.block_state('vyt:south') != 0 && q.block_state('vyt:east') == 2 && q.block_state('vyt:west') != 0) || (q.block_state('vyt:north') != 0 && q.block_state('vyt:south') == 2 && q.block_state('vyt:east') != 0 && q.block_state('vyt:west') != 0) || (q.block_state('vyt:north') == 2 && q.block_state('vyt:south') != 0 && q.block_state('vyt:east') != 0 && q.block_state('vyt:west') != 0)",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') == 0 && q.block_state('vyt:south') == 0 && q.block_state('vyt:east') == 0 && q.block_state('vyt:west') != 0 && q.block_state('vyt:post') == 1",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -4,
+              0,
+              -4
+            ],
+            "size": [
+              12,
+              16,
+              8
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') == 0 && q.block_state('vyt:south') == 0 && q.block_state('vyt:east') == 0 && q.block_state('vyt:west') == 1 && q.block_state('vyt:post') == 0",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              0,
+              0,
+              -3
+            ],
+            "size": [
+              8,
+              14,
+              6
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') == 0 && q.block_state('vyt:south') == 0 && q.block_state('vyt:east') == 0 && q.block_state('vyt:west') == 2 && q.block_state('vyt:post') == 0",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              0,
+              0,
+              -3
+            ],
+            "size": [
+              8,
+              16,
+              6
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') == 0 && q.block_state('vyt:south') == 0 && q.block_state('vyt:east') != 0 && q.block_state('vyt:west') == 0 && q.block_state('vyt:post') == 1",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -4
+            ],
+            "size": [
+              12,
+              16,
+              8
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') == 0 && q.block_state('vyt:south') == 0 && q.block_state('vyt:east') == 1 && q.block_state('vyt:west') == 0 && q.block_state('vyt:post') == 0",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -3
+            ],
+            "size": [
+              8,
+              14,
+              6
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') == 0 && q.block_state('vyt:south') == 0 && q.block_state('vyt:east') != 0 && q.block_state('vyt:west') != 0 && q.block_state('vyt:post') == 1",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -4
+            ],
+            "size": [
+              16,
+              16,
+              8
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') == 0 && q.block_state('vyt:south') == 0 && q.block_state('vyt:east') == 1 && q.block_state('vyt:west') == 1 && q.block_state('vyt:post') == 0",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -3
+            ],
+            "size": [
+              16,
+              14,
+              6
+            ]
+          }
+        }
+      },
+      {
+        "condition": "(q.block_state('vyt:north') == 0 && q.block_state('vyt:south') == 0 && q.block_state('vyt:east') != 0 && q.block_state('vyt:west') == 2 && q.block_state('vyt:post') == 0) || (q.block_state('vyt:north') == 0 && q.block_state('vyt:south') == 0 && q.block_state('vyt:east') == 2 && q.block_state('vyt:west') != 0 && q.block_state('vyt:post') == 0)",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -3
+            ],
+            "size": [
+              16,
+              16,
+              6
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') == 0 && q.block_state('vyt:south') == 0 && q.block_state('vyt:east') == 2 && q.block_state('vyt:west') == 0 && q.block_state('vyt:post') == 0",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -3
+            ],
+            "size": [
+              8,
+              16,
+              6
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') == 0 && q.block_state('vyt:south') != 0 && q.block_state('vyt:east') == 0 && q.block_state('vyt:west') == 0 && q.block_state('vyt:post') == 1",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -4,
+              0,
+              -4
+            ],
+            "size": [
+              8,
+              16,
+              12
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') == 0 && q.block_state('vyt:south') == 1 && q.block_state('vyt:east') == 0 && q.block_state('vyt:west') == 0 && q.block_state('vyt:post') == 0",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -3,
+              0,
+              0
+            ],
+            "size": [
+              6,
+              14,
+              8
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') == 0 && q.block_state('vyt:south') != 0 && q.block_state('vyt:east') == 0 && q.block_state('vyt:west') != 0 && q.block_state('vyt:post') == 1",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -4,
+              0,
+              -4
+            ],
+            "size": [
+              12,
+              16,
+              12
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') == 0 && q.block_state('vyt:south') == 1 && q.block_state('vyt:east') == 0 && q.block_state('vyt:west') == 1 && q.block_state('vyt:post') == 0",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -3,
+              0,
+              -3
+            ],
+            "size": [
+              11,
+              14,
+              11
+            ]
+          }
+        }
+      },
+      {
+        "condition": "(q.block_state('vyt:north') == 0 && q.block_state('vyt:south') != 0 && q.block_state('vyt:east') == 0 && q.block_state('vyt:west') == 2 && q.block_state('vyt:post') == 0) || (q.block_state('vyt:north') == 0 && q.block_state('vyt:south') == 2 && q.block_state('vyt:east') == 0 && q.block_state('vyt:west') != 0 && q.block_state('vyt:post') == 0)",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -3,
+              0,
+              -3
+            ],
+            "size": [
+              11,
+              16,
+              11
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') == 0 && q.block_state('vyt:south') != 0 && q.block_state('vyt:east') != 0 && q.block_state('vyt:west') == 0 && q.block_state('vyt:post') == 1",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -4
+            ],
+            "size": [
+              12,
+              16,
+              12
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') == 0 && q.block_state('vyt:south') == 1 && q.block_state('vyt:east') == 1 && q.block_state('vyt:west') == 0 && q.block_state('vyt:post') == 0",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -3
+            ],
+            "size": [
+              11,
+              14,
+              11
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') == 0 && q.block_state('vyt:south') != 0 && q.block_state('vyt:east') != 0 && q.block_state('vyt:west') != 0 && q.block_state('vyt:post') == 1",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -4
+            ],
+            "size": [
+              16,
+              16,
+              12
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') == 0 && q.block_state('vyt:south') == 1 && q.block_state('vyt:east') == 1 && q.block_state('vyt:west') == 1 && q.block_state('vyt:post') == 0",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -3
+            ],
+            "size": [
+              16,
+              14,
+              11
+            ]
+          }
+        }
+      },
+      {
+        "condition": "(q.block_state('vyt:north') == 0 && q.block_state('vyt:south') != 0 && q.block_state('vyt:east') != 0 && q.block_state('vyt:west') == 2 && q.block_state('vyt:post') == 0) || (q.block_state('vyt:north') == 0 && q.block_state('vyt:south') != 0 && q.block_state('vyt:east') == 2 && q.block_state('vyt:west') != 0 && q.block_state('vyt:post') == 0) || (q.block_state('vyt:north') == 0 && q.block_state('vyt:south') == 2 && q.block_state('vyt:east') != 0 && q.block_state('vyt:west') != 0 && q.block_state('vyt:post') == 0)",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -3
+            ],
+            "size": [
+              16,
+              16,
+              11
+            ]
+          }
+        }
+      },
+      {
+        "condition": "(q.block_state('vyt:north') == 0 && q.block_state('vyt:south') != 0 && q.block_state('vyt:east') == 2 && q.block_state('vyt:west') == 0 && q.block_state('vyt:post') == 0) || (q.block_state('vyt:north') == 0 && q.block_state('vyt:south') == 2 && q.block_state('vyt:east') != 0 && q.block_state('vyt:west') == 0 && q.block_state('vyt:post') == 0)",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -3
+            ],
+            "size": [
+              11,
+              16,
+              11
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') == 0 && q.block_state('vyt:south') == 2 && q.block_state('vyt:east') == 0 && q.block_state('vyt:west') == 0 && q.block_state('vyt:post') == 0",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -3,
+              0,
+              0
+            ],
+            "size": [
+              6,
+              16,
+              8
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') != 0 && q.block_state('vyt:south') == 0 && q.block_state('vyt:east') == 0 && q.block_state('vyt:west') == 0 && q.block_state('vyt:post') == 1",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -4,
+              0,
+              -8
+            ],
+            "size": [
+              8,
+              16,
+              12
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') == 1 && q.block_state('vyt:south') == 0 && q.block_state('vyt:east') == 0 && q.block_state('vyt:west') == 0 && q.block_state('vyt:post') == 0",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -3,
+              0,
+              -8
+            ],
+            "size": [
+              6,
+              14,
+              8
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') != 0 && q.block_state('vyt:south') == 0 && q.block_state('vyt:east') == 0 && q.block_state('vyt:west') != 0 && q.block_state('vyt:post') == 1",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -4,
+              0,
+              -8
+            ],
+            "size": [
+              12,
+              16,
+              12
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') == 1 && q.block_state('vyt:south') == 0 && q.block_state('vyt:east') == 0 && q.block_state('vyt:west') == 1 && q.block_state('vyt:post') == 0",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -3,
+              0,
+              -8
+            ],
+            "size": [
+              11,
+              14,
+              11
+            ]
+          }
+        }
+      },
+      {
+        "condition": "(q.block_state('vyt:north') != 0 && q.block_state('vyt:south') == 0 && q.block_state('vyt:east') == 0 && q.block_state('vyt:west') == 2 && q.block_state('vyt:post') == 0) || (q.block_state('vyt:north') == 2 && q.block_state('vyt:south') == 0 && q.block_state('vyt:east') == 0 && q.block_state('vyt:west') != 0 && q.block_state('vyt:post') == 0)",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -3,
+              0,
+              -8
+            ],
+            "size": [
+              11,
+              16,
+              11
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') != 0 && q.block_state('vyt:south') == 0 && q.block_state('vyt:east') != 0 && q.block_state('vyt:west') == 0 && q.block_state('vyt:post') == 1",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              12,
+              16,
+              12
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') == 1 && q.block_state('vyt:south') == 0 && q.block_state('vyt:east') == 1 && q.block_state('vyt:west') == 0 && q.block_state('vyt:post') == 0",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              11,
+              14,
+              11
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') != 0 && q.block_state('vyt:south') == 0 && q.block_state('vyt:east') != 0 && q.block_state('vyt:west') != 0 && q.block_state('vyt:post') == 1",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              12
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') == 1 && q.block_state('vyt:south') == 0 && q.block_state('vyt:east') == 1 && q.block_state('vyt:west') == 1 && q.block_state('vyt:post') == 0",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              14,
+              11
+            ]
+          }
+        }
+      },
+      {
+        "condition": "(q.block_state('vyt:north') != 0 && q.block_state('vyt:south') == 0 && q.block_state('vyt:east') != 0 && q.block_state('vyt:west') == 2 && q.block_state('vyt:post') == 0) || (q.block_state('vyt:north') != 0 && q.block_state('vyt:south') == 0 && q.block_state('vyt:east') == 2 && q.block_state('vyt:west') != 0 && q.block_state('vyt:post') == 0) || (q.block_state('vyt:north') == 2 && q.block_state('vyt:south') == 0 && q.block_state('vyt:east') != 0 && q.block_state('vyt:west') != 0 && q.block_state('vyt:post') == 0)",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              11
+            ]
+          }
+        }
+      },
+      {
+        "condition": "(q.block_state('vyt:north') != 0 && q.block_state('vyt:south') == 0 && q.block_state('vyt:east') == 2 && q.block_state('vyt:west') == 0 && q.block_state('vyt:post') == 0) || (q.block_state('vyt:north') == 2 && q.block_state('vyt:south') == 0 && q.block_state('vyt:east') != 0 && q.block_state('vyt:west') == 0 && q.block_state('vyt:post') == 0)",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              11,
+              16,
+              11
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') != 0 && q.block_state('vyt:south') != 0 && q.block_state('vyt:east') == 0 && q.block_state('vyt:west') == 0 && q.block_state('vyt:post') == 1",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -4,
+              0,
+              -8
+            ],
+            "size": [
+              8,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') == 1 && q.block_state('vyt:south') == 1 && q.block_state('vyt:east') == 0 && q.block_state('vyt:west') == 0 && q.block_state('vyt:post') == 0",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -3,
+              0,
+              -8
+            ],
+            "size": [
+              6,
+              14,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') != 0 && q.block_state('vyt:south') != 0 && q.block_state('vyt:east') == 0 && q.block_state('vyt:west') != 0 && q.block_state('vyt:post') == 1",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -4,
+              0,
+              -8
+            ],
+            "size": [
+              12,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') == 1 && q.block_state('vyt:south') == 1 && q.block_state('vyt:east') == 0 && q.block_state('vyt:west') == 1 && q.block_state('vyt:post') == 0",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -3,
+              0,
+              -8
+            ],
+            "size": [
+              11,
+              14,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "(q.block_state('vyt:north') != 0 && q.block_state('vyt:south') != 0 && q.block_state('vyt:east') == 0 && q.block_state('vyt:west') == 2 && q.block_state('vyt:post') == 0) || (q.block_state('vyt:north') != 0 && q.block_state('vyt:south') == 2 && q.block_state('vyt:east') == 0 && q.block_state('vyt:west') != 0 && q.block_state('vyt:post') == 0) || (q.block_state('vyt:north') == 2 && q.block_state('vyt:south') != 0 && q.block_state('vyt:east') == 0 && q.block_state('vyt:west') != 0 && q.block_state('vyt:post') == 0)",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -3,
+              0,
+              -8
+            ],
+            "size": [
+              11,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') != 0 && q.block_state('vyt:south') != 0 && q.block_state('vyt:east') != 0 && q.block_state('vyt:west') == 0 && q.block_state('vyt:post') == 1",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              12,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') == 1 && q.block_state('vyt:south') == 1 && q.block_state('vyt:east') == 1 && q.block_state('vyt:west') == 0 && q.block_state('vyt:post') == 0",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              11,
+              14,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') == 1 && q.block_state('vyt:south') == 1 && q.block_state('vyt:east') == 1 && q.block_state('vyt:west') == 1 && q.block_state('vyt:post') == 0",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              14,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "(q.block_state('vyt:north') != 0 && q.block_state('vyt:south') != 0 && q.block_state('vyt:east') == 2 && q.block_state('vyt:west') == 0 && q.block_state('vyt:post') == 0) || (q.block_state('vyt:north') != 0 && q.block_state('vyt:south') == 2 && q.block_state('vyt:east') != 0 && q.block_state('vyt:west') == 0 && q.block_state('vyt:post') == 0) || (q.block_state('vyt:north') == 2 && q.block_state('vyt:south') != 0 && q.block_state('vyt:east') != 0 && q.block_state('vyt:west') == 0 && q.block_state('vyt:post') == 0)",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              11,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "(q.block_state('vyt:north') != 0 && q.block_state('vyt:south') == 2 && q.block_state('vyt:east') == 0 && q.block_state('vyt:west') == 0 && q.block_state('vyt:post') == 0) || (q.block_state('vyt:north') == 2 && q.block_state('vyt:south') != 0 && q.block_state('vyt:east') == 0 && q.block_state('vyt:west') == 0 && q.block_state('vyt:post') == 0)",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -3,
+              0,
+              -8
+            ],
+            "size": [
+              6,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:north') == 2 && q.block_state('vyt:south') == 0 && q.block_state('vyt:east') == 0 && q.block_state('vyt:west') == 0 && q.block_state('vyt:post') == 0",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -3,
+              0,
+              -8
+            ],
+            "size": [
+              6,
+              16,
+              8
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

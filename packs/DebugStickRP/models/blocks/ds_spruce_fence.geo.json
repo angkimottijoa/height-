@@ -1,0 +1,703 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.vyt.ds_spruce_fence",
+        "texture_width": 16,
+        "texture_height": 16,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 3,
+        "visible_bounds_offset": [
+          0,
+          0.5,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "p0",
+          "pivot": [
+            0,
+            8,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -2,
+                0,
+                -2
+              ],
+              "size": [
+                4,
+                16,
+                4
+              ],
+              "uv": {
+                "down": {
+                  "uv": [
+                    10,
+                    10
+                  ],
+                  "uv_size": [
+                    -4,
+                    -4
+                  ],
+                  "material_instance": "m0"
+                },
+                "up": {
+                  "uv": [
+                    10,
+                    10
+                  ],
+                  "uv_size": [
+                    -4,
+                    -4
+                  ],
+                  "material_instance": "m0"
+                },
+                "north": {
+                  "uv": [
+                    6,
+                    0
+                  ],
+                  "uv_size": [
+                    4,
+                    16
+                  ],
+                  "material_instance": "m0"
+                },
+                "south": {
+                  "uv": [
+                    6,
+                    0
+                  ],
+                  "uv_size": [
+                    4,
+                    16
+                  ],
+                  "material_instance": "m0"
+                },
+                "west": {
+                  "uv": [
+                    6,
+                    0
+                  ],
+                  "uv_size": [
+                    4,
+                    16
+                  ],
+                  "material_instance": "m0"
+                },
+                "east": {
+                  "uv": [
+                    6,
+                    0
+                  ],
+                  "uv_size": [
+                    4,
+                    16
+                  ],
+                  "material_instance": "m0"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "p1",
+          "pivot": [
+            0,
+            8,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -1,
+                12,
+                -1
+              ],
+              "size": [
+                9,
+                3,
+                2
+              ],
+              "uv": {
+                "down": {
+                  "uv": [
+                    9,
+                    9
+                  ],
+                  "uv_size": [
+                    -2,
+                    -9
+                  ],
+                  "material_instance": "m0"
+                },
+                "up": {
+                  "uv": [
+                    9,
+                    9
+                  ],
+                  "uv_size": [
+                    -9,
+                    -2
+                  ],
+                  "material_instance": "m0"
+                },
+                "west": {
+                  "uv": [
+                    7,
+                    1
+                  ],
+                  "uv_size": [
+                    2,
+                    3
+                  ],
+                  "material_instance": "m0"
+                },
+                "south": {
+                  "uv": [
+                    0,
+                    1
+                  ],
+                  "uv_size": [
+                    9,
+                    3
+                  ],
+                  "material_instance": "m0"
+                },
+                "north": {
+                  "uv": [
+                    0,
+                    1
+                  ],
+                  "uv_size": [
+                    9,
+                    3
+                  ],
+                  "material_instance": "m0"
+                }
+              }
+            },
+            {
+              "origin": [
+                -1,
+                6,
+                -1
+              ],
+              "size": [
+                9,
+                3,
+                2
+              ],
+              "uv": {
+                "down": {
+                  "uv": [
+                    9,
+                    9
+                  ],
+                  "uv_size": [
+                    -2,
+                    -9
+                  ],
+                  "material_instance": "m0"
+                },
+                "up": {
+                  "uv": [
+                    9,
+                    9
+                  ],
+                  "uv_size": [
+                    -9,
+                    -2
+                  ],
+                  "material_instance": "m0"
+                },
+                "west": {
+                  "uv": [
+                    7,
+                    7
+                  ],
+                  "uv_size": [
+                    2,
+                    3
+                  ],
+                  "material_instance": "m0"
+                },
+                "south": {
+                  "uv": [
+                    0,
+                    7
+                  ],
+                  "uv_size": [
+                    9,
+                    3
+                  ],
+                  "material_instance": "m0"
+                },
+                "north": {
+                  "uv": [
+                    0,
+                    7
+                  ],
+                  "uv_size": [
+                    9,
+                    3
+                  ],
+                  "material_instance": "m0"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "p2",
+          "pivot": [
+            0,
+            8,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                12,
+                -1
+              ],
+              "size": [
+                9,
+                3,
+                2
+              ],
+              "uv": {
+                "down": {
+                  "uv": [
+                    9,
+                    9
+                  ],
+                  "uv_size": [
+                    -2,
+                    -9
+                  ],
+                  "material_instance": "m0"
+                },
+                "up": {
+                  "uv": [
+                    16,
+                    9
+                  ],
+                  "uv_size": [
+                    -9,
+                    -2
+                  ],
+                  "material_instance": "m0"
+                },
+                "east": {
+                  "uv": [
+                    7,
+                    1
+                  ],
+                  "uv_size": [
+                    2,
+                    3
+                  ],
+                  "material_instance": "m0"
+                },
+                "north": {
+                  "uv": [
+                    0,
+                    1
+                  ],
+                  "uv_size": [
+                    9,
+                    3
+                  ],
+                  "material_instance": "m0"
+                },
+                "south": {
+                  "uv": [
+                    0,
+                    1
+                  ],
+                  "uv_size": [
+                    9,
+                    3
+                  ],
+                  "material_instance": "m0"
+                }
+              }
+            },
+            {
+              "origin": [
+                -8,
+                6,
+                -1
+              ],
+              "size": [
+                9,
+                3,
+                2
+              ],
+              "uv": {
+                "down": {
+                  "uv": [
+                    9,
+                    9
+                  ],
+                  "uv_size": [
+                    -2,
+                    -9
+                  ],
+                  "material_instance": "m0"
+                },
+                "up": {
+                  "uv": [
+                    16,
+                    9
+                  ],
+                  "uv_size": [
+                    -9,
+                    -2
+                  ],
+                  "material_instance": "m0"
+                },
+                "east": {
+                  "uv": [
+                    7,
+                    7
+                  ],
+                  "uv_size": [
+                    2,
+                    3
+                  ],
+                  "material_instance": "m0"
+                },
+                "north": {
+                  "uv": [
+                    0,
+                    7
+                  ],
+                  "uv_size": [
+                    9,
+                    3
+                  ],
+                  "material_instance": "m0"
+                },
+                "south": {
+                  "uv": [
+                    0,
+                    7
+                  ],
+                  "uv_size": [
+                    9,
+                    3
+                  ],
+                  "material_instance": "m0"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "p3",
+          "pivot": [
+            0,
+            8,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -1,
+                12,
+                -1
+              ],
+              "size": [
+                2,
+                3,
+                9
+              ],
+              "uv": {
+                "down": {
+                  "uv": [
+                    9,
+                    9
+                  ],
+                  "uv_size": [
+                    -2,
+                    -9
+                  ],
+                  "material_instance": "m0"
+                },
+                "up": {
+                  "uv": [
+                    9,
+                    16
+                  ],
+                  "uv_size": [
+                    -2,
+                    -9
+                  ],
+                  "material_instance": "m0"
+                },
+                "south": {
+                  "uv": [
+                    7,
+                    1
+                  ],
+                  "uv_size": [
+                    2,
+                    3
+                  ],
+                  "material_instance": "m0"
+                },
+                "east": {
+                  "uv": [
+                    0,
+                    1
+                  ],
+                  "uv_size": [
+                    9,
+                    3
+                  ],
+                  "material_instance": "m0"
+                },
+                "west": {
+                  "uv": [
+                    0,
+                    1
+                  ],
+                  "uv_size": [
+                    9,
+                    3
+                  ],
+                  "material_instance": "m0"
+                }
+              }
+            },
+            {
+              "origin": [
+                -1,
+                6,
+                -1
+              ],
+              "size": [
+                2,
+                3,
+                9
+              ],
+              "uv": {
+                "down": {
+                  "uv": [
+                    9,
+                    9
+                  ],
+                  "uv_size": [
+                    -2,
+                    -9
+                  ],
+                  "material_instance": "m0"
+                },
+                "up": {
+                  "uv": [
+                    9,
+                    16
+                  ],
+                  "uv_size": [
+                    -2,
+                    -9
+                  ],
+                  "material_instance": "m0"
+                },
+                "south": {
+                  "uv": [
+                    7,
+                    7
+                  ],
+                  "uv_size": [
+                    2,
+                    3
+                  ],
+                  "material_instance": "m0"
+                },
+                "east": {
+                  "uv": [
+                    0,
+                    7
+                  ],
+                  "uv_size": [
+                    9,
+                    3
+                  ],
+                  "material_instance": "m0"
+                },
+                "west": {
+                  "uv": [
+                    0,
+                    7
+                  ],
+                  "uv_size": [
+                    9,
+                    3
+                  ],
+                  "material_instance": "m0"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "p4",
+          "pivot": [
+            0,
+            8,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -1,
+                12,
+                -8
+              ],
+              "size": [
+                2,
+                3,
+                9
+              ],
+              "uv": {
+                "down": {
+                  "uv": [
+                    9,
+                    9
+                  ],
+                  "uv_size": [
+                    -2,
+                    -9
+                  ],
+                  "material_instance": "m0"
+                },
+                "up": {
+                  "uv": [
+                    9,
+                    9
+                  ],
+                  "uv_size": [
+                    -2,
+                    -9
+                  ],
+                  "material_instance": "m0"
+                },
+                "north": {
+                  "uv": [
+                    7,
+                    1
+                  ],
+                  "uv_size": [
+                    2,
+                    3
+                  ],
+                  "material_instance": "m0"
+                },
+                "west": {
+                  "uv": [
+                    0,
+                    1
+                  ],
+                  "uv_size": [
+                    9,
+                    3
+                  ],
+                  "material_instance": "m0"
+                },
+                "east": {
+                  "uv": [
+                    0,
+                    1
+                  ],
+                  "uv_size": [
+                    9,
+                    3
+                  ],
+                  "material_instance": "m0"
+                }
+              }
+            },
+            {
+              "origin": [
+                -1,
+                6,
+                -8
+              ],
+              "size": [
+                2,
+                3,
+                9
+              ],
+              "uv": {
+                "down": {
+                  "uv": [
+                    9,
+                    9
+                  ],
+                  "uv_size": [
+                    -2,
+                    -9
+                  ],
+                  "material_instance": "m0"
+                },
+                "up": {
+                  "uv": [
+                    9,
+                    9
+                  ],
+                  "uv_size": [
+                    -2,
+                    -9
+                  ],
+                  "material_instance": "m0"
+                },
+                "north": {
+                  "uv": [
+                    7,
+                    7
+                  ],
+                  "uv_size": [
+                    2,
+                    3
+                  ],
+                  "material_instance": "m0"
+                },
+                "west": {
+                  "uv": [
+                    0,
+                    7
+                  ],
+                  "uv_size": [
+                    9,
+                    3
+                  ],
+                  "material_instance": "m0"
+                },
+                "east": {
+                  "uv": [
+                    0,
+                    7
+                  ],
+                  "uv_size": [
+                    9,
+                    3
+                  ],
+                  "material_instance": "m0"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

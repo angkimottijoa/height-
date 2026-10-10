@@ -1,0 +1,136 @@
+{
+  "format_version": "1.26.40",
+  "minecraft:block": {
+    "description": {
+      "identifier": "vyt:ds_copper_torch",
+      "states": {
+        "vyt:facing": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      }
+    },
+    "components": {
+      "minecraft:geometry": {
+        "identifier": "geometry.vyt.ds_copper_torch",
+        "bone_visibility": {
+          "p0": "(q.block_state('vyt:facing') == 0 || q.block_state('vyt:facing') == 5)",
+          "p1": "q.block_state('vyt:facing') == 1",
+          "p2": "q.block_state('vyt:facing') == 2",
+          "p3": "q.block_state('vyt:facing') == 3",
+          "p4": "q.block_state('vyt:facing') == 4"
+        }
+      },
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "vyt_ds_copper_torch",
+          "face_dimming": false,
+          "ambient_occlusion": 0.0,
+          "render_method": "alpha_test"
+        },
+        "m0": {
+          "texture": "vyt_ds_copper_torch",
+          "face_dimming": false,
+          "ambient_occlusion": 0.0,
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:collision_box": false,
+      "minecraft:selection_box": {
+        "origin": [
+          -1,
+          0,
+          -1
+        ],
+        "size": [
+          2,
+          10,
+          2
+        ]
+      },
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0.0
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 0.0
+      },
+      "minecraft:light_dampening": 0,
+      "minecraft:light_emission": 14,
+      "vyt:keep_state": {}
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('vyt:facing') == 1",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              7,
+              3.5,
+              -1
+            ],
+            "size": [
+              1,
+              10,
+              2
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:facing') == 2",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              3.5,
+              -1
+            ],
+            "size": [
+              1,
+              10,
+              2
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:facing') == 3",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -1,
+              3.5,
+              -8
+            ],
+            "size": [
+              2,
+              10,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('vyt:facing') == 4",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -1,
+              3.5,
+              7
+            ],
+            "size": [
+              2,
+              10,
+              1
+            ]
+          }
+        }
+      }
+    ]
+  }
+}
