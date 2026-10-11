@@ -91,7 +91,7 @@ def build(tmp):
     deps.append({'uuid': RP_UUID, 'version': VERSION})
     json.dump({
         'format_version': 3,
-        'header': {'name': f'에디터 DLC {LABEL} [BP]', 'description': DESC_BP.format(label=LABEL), 'version': VERSION, 'min_engine_version': '1.26.40', 'uuid': BP_UUID},
+        'header': {'name': f'에디터 DLC {LABEL} (행동)', 'description': DESC_BP.format(label=LABEL), 'version': VERSION, 'min_engine_version': '1.26.40', 'uuid': BP_UUID},
         'modules': [
             {'description': 'behaviour', 'type': 'data', 'version': VERSION, 'uuid': BP_DATA},
             {'description': 'scripting', 'type': 'script', 'language': 'javascript', 'version': VERSION, 'uuid': BP_SCRIPT, 'entry': 'scripts/main.js'},
@@ -99,11 +99,15 @@ def build(tmp):
         'dependencies': deps,
     }, open(os.path.join(bp, 'manifest.json'), 'w'), ensure_ascii=False, indent=2)
     # resource pack
-    copytree(P('DebugStickRP'), rp, skip=('manifest.json',))
+    copytree(P('DebugStickRP'), rp, skip=('manifest.json', 'pack_icon.png'))
+    # same icon on both so the pair is easy to spot in the pack list
+    shutil.copy2(os.path.join(bp, 'pack_icon.png'), os.path.join(rp, 'pack_icon.png'))
     json.dump({
         'format_version': 3,
-        'header': {'name': f'에디터 DLC {LABEL} [RP]', 'description': DESC_RP.format(label=LABEL), 'version': VERSION, 'min_engine_version': '1.26.40', 'uuid': RP_UUID},
+        'header': {'name': f'에디터 DLC {LABEL} (리소스)', 'description': DESC_RP.format(label=LABEL), 'version': VERSION, 'min_engine_version': '1.26.40', 'uuid': RP_UUID},
         'modules': [{'description': 'resources', 'type': 'resources', 'version': VERSION, 'uuid': RP_RES}],
+        # linked both ways: turning on either pack turns on the other
+        'dependencies': [{'uuid': BP_UUID, 'version': VERSION}],
     }, open(os.path.join(rp, 'manifest.json'), 'w'), ensure_ascii=False, indent=2)
     return bp, rp
 

@@ -3,7 +3,7 @@
  * opens everything.
  */
 import { ItemStack } from '@minecraft/server';
-import { BLOCK_PICKER, CLIPBOARD, CURVE_WAND, FRAME_PICKER, ITEMS, PLACER, TERRAIN, WAND } from '../core/access.js';
+import { BLOCK_PICKER, CLIPBOARD, FRAME_PICKER, ITEMS, PLACER, TERRAIN, WAND } from '../core/access.js';
 import { isBusy, redo, say, undo } from '../core/edit.js';
 import { parseMask } from '../core/blocks.js';
 import { clearClip, getClip } from '../core/clipboard.js';
@@ -13,7 +13,7 @@ import { BRUSHES, GROUPS, TOOLS } from '../tools/index.js';
 import { ask, menu } from './form.js';
 
 const ITEM_NAMES = {
-    [WAND]: '영역 지팡이', [CURVE_WAND]: '곡선 지팡이', [FRAME_PICKER]: '프레임 피커', [BLOCK_PICKER]: '블록 피커',
+    [WAND]: '선택 지팡이', [FRAME_PICKER]: '프레임 피커', [BLOCK_PICKER]: '블록 피커',
     [CLIPBOARD]: '클립보드 도구', [PLACER]: '에셋 도구', [TERRAIN]: '지형 도구',
 };
 const fmt = (p) => p ? `${p.x} ${p.y} ${p.z}` : '§7없음§r';
@@ -23,6 +23,7 @@ function status(player) {
     const s = session(player);
     const r = region(player);
     const lines = [
+        `§e선택 지팡이§r: ${s.wandMode === 'points' ? '§a곡선 점 모드 (켜짐)' : '§d영역 모드'}§r  §7웅크리고 부수기 = 전환`,
         `§d1번§r ${fmt(s.pos1)}   §d2번§r ${fmt(s.pos2)}${r ? ` §7(${volume(r)}블록)` : ''}`,
         `§a곡선 점§r ${s.points.length}개   §b프레임§r ${frameCount(player)}개   §f클립보드§r ${getClip(player) ? getClip(player).cells.length + '칸' : '비어 있음'}`,
     ];
@@ -66,9 +67,12 @@ export async function openMenu(player) {
     return route(player, v, openMenu);
 }
 
-/** Sneak + tap with the area wand or the curve wand. */
+/** Sneak + tap with the selection wand. */
 export async function wandMenu(player) {
-    const v = await menu(player, '에디터 도구', status(player) + '\n§7영역 지팡이: 터치 = 1번, 부수기 = 2번 · 곡선 지팡이: 터치 = 점 추가, 부수기 = 마지막 점 취소', [
+    const s = session(player);
+    const on = s.wandMode === 'points';
+    const v = await menu(player, '선택 지팡이', status(player), [
+        { text: on ? '곡선 점 모드 끄기 → 영역 모드' : '곡선 점 모드 켜기', icon: 'textures/items/blaze_rod', value: 'mode' },
         ...GROUPS.filter(g => g.id !== 'terrain' && g.id !== 'frame').map(g => ({ text: `${g.name}\n§8${g.desc}`, icon: g.icon, value: 'group:' + g.id })),
         { text: '글자 쓰기', icon: 'textures/items/book_writable', value: 'tool:text' },
         { text: '선택 영역 · 곡선 점 관리', icon: 'textures/items/blaze_rod', value: 'select' },
@@ -78,6 +82,12 @@ export async function wandMenu(player) {
         { text: '설정', icon: 'textures/items/redstone_dust', value: 'settings' },
         { text: '도구 아이템 받기', icon: 'textures/items/blaze_rod', value: 'give' },
     ]);
+    if (v === 'mode') {
+        s.wandMode = on ? 'cuboid' : 'points';
+        save(player);
+        say(player, s.wandMode === 'points' ? '§a곡선 점 모드 켬§r: 터치 = 점 추가, 부수기 = 마지막 점 취소' : '§d영역 모드§r: 터치 = 1번 지점, 부수기 = 2번 지점');
+        return;
+    }
     return route(player, v, wandMenu);
 }
 
@@ -129,7 +139,7 @@ async function groupMenu(player, group, from = openMenu) {
 function needsText(player, tool) {
     const s = session(player);
     if (tool.needs === 'points')
-        return s.points.length >= (tool.minPoints ?? 2) ? `§a곡선 점 ${s.points.length}개를 따라 만듭니다.` : (region(player) ? '§e곡선 점이 없어 1번 → 2번 지점을 잇는 선을 씁니다.' : `§c곡선 점이 ${tool.minPoints ?? 2}개 이상 필요합니다 (곡선 지팡이로 터치).`);
+        return s.points.length >= (tool.minPoints ?? 2) ? `§a곡선 점 ${s.points.length}개를 따라 만듭니다.` : (region(player) ? '§e곡선 점이 없어 1번 → 2번 지점을 잇는 선을 씁니다.' : `§c곡선 점이 ${tool.minPoints ?? 2}개 이상 필요합니다 (선택 지팡이를 곡선 점 모드로 켜고 터치).`);
     if (tool.needs === 'cuboid') {
         const r = region(player);
         return r ? `§a선택 영역 ${fmt(r.min)} ~ ${fmt(r.max)} (${volume(r)}블록)` : '§c선택 영역(1번·2번 지점)이 필요합니다.';
@@ -150,6 +160,13 @@ export async function toolForm(player, tool) {
     const values = await ask(player, 'tool:' + tool.id, tool.name, tool.fields ?? [], { intro });
     if (!values)
         return;
+    // tools may ask follow-up questions that depend on the first answers
+    if (tool.more) {
+        const extra = await tool.more(player, values);
+        if (!extra)
+            return;
+        Object.assign(values, extra);
+    }
     await runTool(player, tool, values);
 }
 

@@ -16,6 +16,7 @@ function fresh() {
     return {
         pos1: null, pos2: null, posM: false, dim: null,
         points: [], frames: [],
+        wandMode: 'cuboid',
         brushes: {},
         settings: { font: 'minecraft', tgSeed: null, gmask: '', particles: true, fontCycle: false, frameFill: 'curved', picks: [] },
         forms: {},

@@ -4,8 +4,9 @@
  * Every tool is its own item. "Tap" is a light touch on mobile (use /
  * right click on PC), "break" is holding to break (left click on PC).
  *
- *   arc:wand          영역 지팡이   tap = pos1, break = pos2
- *   arc:curve_wand    곡선 지팡이   tap = add point, break = undo point, sneak + break = clear
+ *   arc:wand          선택 지팡이   area mode:  tap = pos1, break = pos2
+ *                                  curve mode: tap = add point, break = undo last point
+ *                                  sneak + break = switch area / curve mode
  *   arc:frame_picker  프레임 피커   tap = add point, break = undo point, sneak + break = save frame
  *   arc:block_picker  블록 피커     tap = remember the block, break = forget the last one
  *   arc:clipboard     클립보드 도구 tap = paste (outline shown), break = copy selection,
@@ -26,7 +27,7 @@ import { permToString } from './core/blocks.js';
 import { BRUSHES, TOOLS } from './tools/index.js';
 import { assetSaveForm, assetsMenu, blockPickerMenu, clipboardMenu, frameMenu, giveTools, openMenu, terrainMenu, wandMenu } from './ui/menu.js';
 import { preview } from './ui/preview.js';
-import { allowed, BLOCK_PICKER, CLIPBOARD, CURVE_WAND, FRAME_PICKER, ITEMS, PLACER, TERRAIN, WAND } from './core/access.js';
+import { allowed, BLOCK_PICKER, CLIPBOARD, FRAME_PICKER, ITEMS, PLACER, TERRAIN, WAND } from './core/access.js';
 
 const SELECTION_TOOL = 'andexdb:selection_tool';
 const fl = (p) => ({ x: Math.floor(p.x), y: Math.floor(p.y), z: Math.floor(p.z) });
@@ -70,16 +71,12 @@ const TAP = {
             return void wandMenu(player);
         if (!hit)
             return bar(player, '§c블록을 바라보세요 (최대 300칸)');
+        if (session(player).wandMode === 'points') {
+            const n = addPoint(player, hit.pos);
+            return bar(player, `§a[곡선 점] ${n}개§r ${fmt(hit.pos)}  §7부수기 = 마지막 점 취소`);
+        }
         setCorner(player, 'pos1', hit.pos);
-        bar(player, `§d1번 지점§r ${fmt(hit.pos)}  §7(부수기 = 2번 지점)`);
-    },
-    [CURVE_WAND](player, hit, sneaking) {
-        if (sneaking)
-            return void wandMenu(player);
-        if (!hit)
-            return bar(player, '§c블록을 바라보세요 (최대 300칸)');
-        const n = addPoint(player, hit.pos);
-        bar(player, `§a곡선 점 ${n}개§r ${fmt(hit.pos)}  §7(부수기 = 마지막 점 취소)`);
+        bar(player, `§d[영역] 1번 지점§r ${fmt(hit.pos)}  §7부수기 = 2번 지점`);
     },
     [FRAME_PICKER](player, hit, sneaking) {
         if (sneaking)
@@ -128,18 +125,22 @@ const TAP = {
 };
 
 const BREAK = {
-    [WAND](player, pos) {
-        setCorner(player, 'pos2', pos);
-        bar(player, `§d2번 지점§r ${fmt(pos)}`);
-    },
-    [CURVE_WAND](player, pos, sneaking) {
+    [WAND](player, pos, sneaking) {
+        const s = session(player);
         if (sneaking) {
-            clearPoints(player);
-            return bar(player, '§e곡선 점을 모두 지웠습니다');
+            s.wandMode = s.wandMode === 'points' ? 'cuboid' : 'points';
+            save(player);
+            return bar(player, s.wandMode === 'points'
+                ? '§a곡선 점 모드 켬§r  터치 = 점 추가, 부수기 = 마지막 점 취소'
+                : '§d영역 모드§r (곡선 점 모드 끔)  터치 = 1번, 부수기 = 2번');
         }
-        const had = session(player).points.length;
-        removePoint(player, false);
-        bar(player, had ? `§e마지막 곡선 점 취소§r (남은 점 ${had - 1}개)` : '§7지울 곡선 점이 없습니다');
+        if (s.wandMode === 'points') {
+            const had = s.points.length;
+            removePoint(player, false);
+            return bar(player, had ? `§e[곡선 점] 마지막 점 취소§r (남은 점 ${had - 1}개)` : '§7[곡선 점] 지울 점이 없습니다');
+        }
+        setCorner(player, 'pos2', pos);
+        bar(player, `§d[영역] 2번 지점§r ${fmt(pos)}`);
     },
     [FRAME_PICKER](player, pos, sneaking) {
         if (sneaking) {
@@ -312,8 +313,8 @@ world.afterEvents.entityHitBlock.subscribe(ev => {
 system.beforeEvents.startup.subscribe(({ customCommandRegistry }) => {
     const cmds = [
         ['arc:menu', '아르세온 DLC 전체 메뉴 열기', (p) => openMenu(p)],
-        ['arc:tools', '에디터 도구 아이템 7개 받기', (p) => giveTools(p)],
-        ['arc:wand', '영역 지팡이·곡선 지팡이 받기', (p) => giveTools(p, [WAND, CURVE_WAND])],
+        ['arc:tools', '에디터 도구 아이템 6개 받기', (p) => giveTools(p)],
+        ['arc:wand', '선택 지팡이 받기', (p) => giveTools(p, [WAND])],
         ['arc:undo', '아르세온 작업 되돌리기', (p) => undo(p)],
         ['arc:redo', '아르세온 작업 다시 하기', (p) => redo(p)],
     ];

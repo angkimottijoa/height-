@@ -10,7 +10,9 @@
  *     needs: 'points' | 'cuboid' | 'frames' | 'none',
  *     minPoints: 2,                 // for 'points'
  *     useMask: true,                // apply the global mask (설정 > 전역 마스크)
- *     fields: [ ...form fields (ui/form.js) ],
+ *     noEdit: true,                 // changes nothing in the world (just report the result)
+ *     fields: [ ...form fields (ui/form.js) ],   (may be a getter, read each time the form opens)
+ *     async more(player, values) { return {...} },  optional follow-up form; undefined cancels
  *     *run(ctx, values) { ... yield now and then ...; return '추가 메시지' },
  *   }
  *
@@ -67,12 +69,12 @@ function check(player, tool, ctx) {
                 ctx.points = [s.pos1, s.pos2].map(p => ({ ...p }));
             }
             if (ctx.points.length < min)
-                return `곡선 점이 ${min}개 이상 필요합니다 (지금 ${s.points.length}개). 곡선 지팡이로 블록을 터치해 점을 찍으세요.`;
+                return `곡선 점이 ${min}개 이상 필요합니다 (지금 ${s.points.length}개). 선택 지팡이를 곡선 점 모드로 켜고(웅크리고 부수기) 블록을 터치하세요.`;
             break;
         }
         case 'cuboid':
             if (!ctx.region)
-                return '선택 영역이 없습니다. 영역 지팡이(터치 = 1번, 부수기 = 2번)나 8Crafter 선택 도구로 지정하세요.';
+                return '선택 영역이 없습니다. 선택 지팡이 영역 모드(터치 = 1번, 부수기 = 2번)나 8Crafter 선택 도구로 지정하세요.';
             if (s.dim && s.dim !== player.dimension.id)
                 return '선택 영역이 다른 차원에 있습니다.';
             if (volume(ctx.region) > (tool.maxVolume ?? MAX_REGION))
@@ -129,6 +131,8 @@ export async function runTool(player, tool, values) {
         say(player, `§a${tool.name} 결과를 클립보드에 저장했습니다 (${clip.cells.length}블록). §7클립보드 도구를 들면 놓일 자리가 보이고, 터치하면 붙여넣습니다.`);
         return;
     }
+    if (tool.noEdit)
+        return say(player, `§a${tool.name}: ${extra ?? '완료'}`);
     await finish(player, tool.name, ctx.edit, extra);
 }
 
