@@ -64,11 +64,13 @@ const FIELDS = [
             { value: 'double', label: '노란 실선 2줄 (사이 1칸)' },
             { value: 'dashed', label: '노란 점선 (추월 가능)' },
             { value: 'oneway', label: '없음 - 일방통행 (흰 점선)' },
+            { value: 'one', label: '1차선 도로 (차로 1개, 중앙선 없음)' },
         ],
     },
-    { key: 'median', type: 'slider', label: '중앙분리대 폭 (칸, 0 = 없음)', default: 0, min: 0, max: 12 },
+    { key: 'median', type: 'slider', label: '중앙분리대 폭 (칸, 0 = 없음, 체크무늬는 4 추천)', default: 0, min: 0, max: 12 },
     {
-        key: 'medianStyle', type: 'dropdown', label: '중앙분리대 모양', default: 'fill', options: [
+        key: 'medianStyle', type: 'dropdown', label: '중앙분리대 모양', default: 'checker', options: [
+            { value: 'checker', label: '노란 테두리 + 체크무늬 (지그재그, 사진 모양)' },
             { value: 'fill', label: '노란색으로 꽉 채우기' },
             { value: 'hatch', label: '노란 테두리 + 빗금 (안전지대)' },
             { value: 'lines', label: '노란 테두리 선만' },
@@ -104,7 +106,7 @@ const COMMON = [
 export default {
     id: 'lanes',
     name: '차선 도로',
-    desc: '곡선 점을 따라 차선이 그려진 도로를 깝니다. 좌우는 첫 점 → 마지막 점으로 갈 때 기준. 점이 없으면 1번 → 2번 지점 직선.',
+    desc: '곡선 점을 따라 차선이 그려진 도로를 깝니다. 좌우는 첫 점 → 마지막 점으로 갈 때 기준. 직선 도로는 곡선 점 2개만 찍으면 됩니다.',
     icon: 'textures/blocks/concrete_yellow',
     needs: 'points',
     useMask: true,
@@ -143,10 +145,11 @@ export default {
         if (v.preset)
             return yield* custom(ctx, v);
         const pats = { asphalt: ctx.pattern('asphalt'), center: ctx.pattern('center'), lane: ctx.pattern('lane'), edge: ctx.pattern('edge') };
-        const L = Math.floor(v.left ?? 3), R = Math.floor(v.right ?? 3), w = Math.max(1, Math.floor(v.laneWidth));
+        const one = v.centerType === 'one';
+        const L = one ? 1 : Math.floor(v.left ?? 3), R = one ? 0 : Math.floor(v.right ?? 3), w = Math.max(1, Math.floor(v.laneWidth));
         if (L + R < 1)
             throw new Error('차로가 하나도 없습니다');
-        const M = Math.max(0, Math.floor(v.median || 0));
+        const M = one ? 0 : Math.max(0, Math.floor(v.median || 0));
         const shoulder = Math.max(0, Math.floor(v.shoulder || 0));
         const adv = !!v.advanced;
         // ---------------------------------------------------- cross section
@@ -236,10 +239,15 @@ export default {
                 continue;
             let kind = 'asphalt';
             if (medianFrom >= 0 && !inUturn(c.s) && c.uc > uOf(medianFrom) - 0.5 && c.uc < uOf(medianTo) + 0.5) {
+                const lat = Math.round(c.uc - uOf(medianFrom));
                 if (v.medianStyle === 'fill' || M < 2)
                     kind = 'center';
+                else if (v.medianStyle === 'checker') {
+                    // inside the yellow border: a checkerboard whose squares touch corner to corner
+                    if (((Math.floor(c.s) + lat) % 2 + 2) % 2 === 0)
+                        kind = 'center';
+                }
                 else if (v.medianStyle === 'hatch') {
-                    const lat = Math.round(c.uc - uOf(medianFrom));
                     if (((Math.floor(c.s) + lat) % 4 + 4) % 4 === 0)
                         kind = 'center';
                 }
@@ -270,6 +278,8 @@ export default {
         }
         yield* place(ctx, v, paint, (cell) => pats[cell.kind], () => pats.asphalt);
         const sides = adv ? '' : `, 차로 폭 ${w}`;
+        if (one)
+            return `1차선 도로, 폭 ${W}칸, 길이 약 ${Math.round(total)}칸`;
         return `폭 ${W}칸 (왼쪽 ${L} · 오른쪽 ${R}차로${M ? `, 분리대 ${M}칸` : ''}${sides}), 길이 약 ${Math.round(total)}칸`;
     },
 };

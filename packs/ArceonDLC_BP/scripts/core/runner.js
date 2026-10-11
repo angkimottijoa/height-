@@ -63,11 +63,8 @@ function check(player, tool, ctx) {
     const s = ctx.session;
     switch (tool.needs) {
         case 'points': {
+            // curve tools use only the curve points, never the area corners
             const min = tool.minPoints ?? 2;
-            if (ctx.points.length < min && ctx.region && min <= 2) {
-                // like Arceon, a cuboid selection works as its two corners
-                ctx.points = [s.pos1, s.pos2].map(p => ({ ...p }));
-            }
             if (ctx.points.length < min)
                 return `곡선 점이 ${min}개 이상 필요합니다 (지금 ${s.points.length}개). 선택 지팡이를 곡선 점 모드로 켜고(웅크리고 부수기) 블록을 터치하세요.`;
             break;

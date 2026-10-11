@@ -139,7 +139,7 @@ async function groupMenu(player, group, from = openMenu) {
 function needsText(player, tool) {
     const s = session(player);
     if (tool.needs === 'points')
-        return s.points.length >= (tool.minPoints ?? 2) ? `§a곡선 점 ${s.points.length}개를 따라 만듭니다.` : (region(player) ? '§e곡선 점이 없어 1번 → 2번 지점을 잇는 선을 씁니다.' : `§c곡선 점이 ${tool.minPoints ?? 2}개 이상 필요합니다 (선택 지팡이를 곡선 점 모드로 켜고 터치).`);
+        return s.points.length >= (tool.minPoints ?? 2) ? `§a곡선 점 ${s.points.length}개를 따라 만듭니다.` : `§c곡선 점이 ${tool.minPoints ?? 2}개 이상 필요합니다 (선택 지팡이를 곡선 점 모드로 켜고 터치).`;
     if (tool.needs === 'cuboid') {
         const r = region(player);
         return r ? `§a선택 영역 ${fmt(r.min)} ~ ${fmt(r.max)} (${volume(r)}블록)` : '§c선택 영역(1번·2번 지점)이 필요합니다.';

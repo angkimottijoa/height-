@@ -1,6 +1,7 @@
 /*
  * Particle preview while a tool item is held:
- *   선택 지팡이   selection box (end rod), curve points (green) and the curve (flame)
+ *   선택 지팡이   area mode: the selection box (end rod)
+ *                curve mode: only the curve points (green) and the curve (flame)
  *   프레임 피커   frames (blue flame, the one being drawn in green) and the
  *                rails joining them (flame), as the fill will connect them
  *   클립보드 도구 the box the clipboard would fill at the block you look at
@@ -119,10 +120,12 @@ export function preview(player, item) {
         spawn(player, 'minecraft:villager_happy', c(at));
         return;
     }
-    if (item === WAND) {
+    if (item === WAND && s.wandMode === 'points') {
+        // curve point mode shows only the curve, not the area
         for (const p of s.points.slice(0, 64))
             spawn(player, 'minecraft:villager_happy', c(p));
         curve(player, s.points, 'minecraft:basic_flame_particle');
+        return;
     }
     const r = region(player);
     if (r)

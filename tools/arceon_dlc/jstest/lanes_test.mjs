@@ -38,7 +38,7 @@ for (const [k, p] of dim.map) { if (p.id !== 'minecraft:yellow_concrete') contin
 check(l3 === 0, '30°: yellow lines one block thick: ' + l3);
 // left 3 / right 4, median 3 filled, U-turn at the end
 ({ dim, player } = world({ id: 'l4' }));
-m = await runTool(lanes, { left: 3, right: 4, median: 3, uturn: 12 }, { player, points: [{ x: 0, y: 0, z: 0 }, { x: 40, y: 0, z: 0 }] });
+m = await runTool(lanes, { left: 3, right: 4, median: 3, medianStyle: 'fill', uturn: 12 }, { player, points: [{ x: 0, y: 0, z: 0 }, { x: 40, y: 0, z: 0 }] });
 console.log(m.slice(-1)[0]);
 rows = view(dim, 0, -16, 40, 16);
 console.log(rows.join('\n'));
@@ -87,3 +87,20 @@ for (const [k, p] of dim.map) { if (p.id !== 'minecraft:red_concrete') continue;
 check(thickR === 0, 'custom red line one block thick at 45°: ' + thickR);
 await runTool(preset, { action: 'remove', target: 'test road' }, { player });
 check(!presets.presetNames().includes('test road'), 'custom lane removed');
+// checker median (the photo's zigzag): yellow border lines with a checkerboard inside, start to end
+({ dim, player } = world({ id: 'l9' }));
+m = await runTool(lanes, { left: 2, right: 2, median: 4 }, { player, points: [{ x: 0, y: 0, z: 0 }, { x: 24, y: 0, z: 0 }] });
+rows = view(dim, 0, -13, 24, 13).filter(r => r.trim());
+const med = rows.slice(0).filter(r => /Y/.test(r) && !/^Y+$/.test(r.trim()));
+console.log(rows.join('\n'));
+check(rows.filter(r => /^Y+$/.test(r.trim())).length === 4 && med.length === 2 && med[0] !== med[1] && /^(Y\.)+Y?$|^(\.Y)+\.?$/.test(med[0].trim()), 'checker median: 2 border lines + 2 checker rows along the whole road');
+// one-lane road
+({ dim, player } = world({ id: 'l10' }));
+m = await runTool(lanes, { centerType: 'one', laneWidth: 4 }, { player, points: [{ x: 0, y: 0, z: 0 }, { x: 20, y: 0, z: 0 }] });
+rows = view(dim, 0, -6, 20, 6).filter(r => r.trim());
+console.log(rows.join('\n'), m.slice(-1)[0]);
+check(rows.length === 6 && !rows.some(r => r.includes('W')), '1-lane road: edge + 4 + edge, no lane lines');
+// curve tools ignore the area corners now
+({ dim, player } = world({ id: 'l11' }));
+m = await runTool(lanes, {}, { player, points: [], region: [{ x: 0, y: 0, z: 0 }, { x: 20, y: 0, z: 0 }] });
+check(/곡선 점이 2개 이상/.test(m.slice(-1)[0]) && dim.count() === 0, 'no curve points: refuses instead of using pos1/pos2');
