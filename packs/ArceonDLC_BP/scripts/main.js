@@ -45,6 +45,7 @@ function bar(player, msg) {
 // few ticks. Only the first event of a press acts: every event pushes the
 // window on, so a long hold stays one action.
 const last = new Map();
+const lastTap = new Map(); // player id -> {tick, id, pos, undo}
 function press(player, kind, ticks) {
     const k = player.id + kind;
     const t = system.currentTick;
@@ -71,12 +72,19 @@ const TAP = {
             return void wandMenu(player);
         if (!hit)
             return bar(player, '§c블록을 바라보세요 (최대 300칸)');
-        if (session(player).wandMode === 'points') {
+        const s = session(player);
+        if (s.wandMode === 'points') {
             const n = addPoint(player, hit.pos);
-            return bar(player, `§a[곡선 점] ${n}개§r ${fmt(hit.pos)}  §7부수기 = 마지막 점 취소`);
+            bar(player, `§a[곡선 점] ${n}개§r ${fmt(hit.pos)}  §7부수기 = 마지막 점 취소`);
+            return () => removePoint(player, false);
         }
+        const prev = s.pos1 ? { ...s.pos1 } : null;
         setCorner(player, 'pos1', hit.pos);
         bar(player, `§d[영역] 1번 지점§r ${fmt(hit.pos)}  §7부수기 = 2번 지점`);
+        return () => {
+            s.pos1 = prev;
+            save(player);
+        };
     },
     [FRAME_PICKER](player, hit, sneaking) {
         if (sneaking)
@@ -85,6 +93,7 @@ const TAP = {
             return bar(player, '§c블록을 바라보세요 (최대 300칸)');
         const n = addFramePoint(player, hit.pos);
         bar(player, `§b프레임 ${frameCount(player)}§r 점 ${n}개 ${fmt(hit.pos)}  §7(웅크리고 부수기 = 프레임 저장)`);
+        return () => undoFramePoint(player);
     },
     [BLOCK_PICKER](player, hit, sneaking) {
         if (sneaking)
@@ -101,6 +110,10 @@ const TAP = {
         picks.push({ t, on: false });
         save(player);
         bar(player, `§a블록 저장 ${picks.length}개§r: ${t}`);
+        return () => {
+            picks.pop();
+            save(player);
+        };
     },
     [CLIPBOARD](player, hit, sneaking) {
         if (sneaking)
@@ -229,8 +242,12 @@ function tap(player, id, hit, sneaking) {
         return deny(player);
     if (!press(player, 'tap', 6))
         return;
-    if (TAP[id])
-        return TAP[id](player, hit, sneaking);
+    if (TAP[id]) {
+        const undoTap = TAP[id](player, hit, sneaking);
+        if (typeof undoTap === 'function' && hit)
+            lastTap.set(player.id, { tick: system.currentTick, id, pos: hit.pos, undo: undoTap });
+        return;
+    }
     const b = heldBrush(player, id);
     if (b) {
         if (!b.brush)
@@ -278,6 +295,13 @@ function brk(player, id, pos, sneaking) {
         return deny(player);
     if (!press(player, 'break', 8))
         return;
+    // On a touch screen a long press first arrives as a tap and only then
+    // as a break. A tap on the same block just before a break was the start
+    // of that press: take it back, so the press only does the break.
+    const t = lastTap.get(player.id);
+    lastTap.delete(player.id);
+    if (t && t.id === id && system.currentTick - t.tick <= 20 && t.pos.x === pos.x && t.pos.y === pos.y && t.pos.z === pos.z)
+        t.undo();
     BREAK[id](player, pos, sneaking);
 }
 

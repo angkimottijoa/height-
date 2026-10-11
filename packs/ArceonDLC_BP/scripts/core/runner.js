@@ -29,7 +29,8 @@
  *   location, rotation {x: pitch, y: yaw}, view (unit look vector)
  */
 import { parseMask, parsePattern } from './blocks.js';
-import { EditSession, isBusy, runAsync, say } from './edit.js';
+import { EditSession, isBusy, loadAll, runAsync, say } from './edit.js';
+import { fits, withLoaded } from './loader.js';
 import { CaptureEdit, clipFromMap, setClip } from './clipboard.js';
 import { region, session, volume } from './session.js';
 import { blockValue } from '../ui/form.js';
@@ -86,6 +87,22 @@ function check(player, tool, ctx) {
     return null;
 }
 
+/** The area a tool reads, so it can be loaded before the tool runs. */
+function readBox(tool, ctx) {
+    let pts, pad = 0;
+    if (tool.needs === 'cuboid' && ctx.region)
+        return { from: ctx.region.min, to: ctx.region.max };
+    if (tool.needs === 'points')
+        pts = ctx.points, pad = 48;
+    else if (tool.needs === 'frames')
+        pts = ctx.frames.flat(), pad = 8;
+    if (!pts?.length)
+        return null;
+    const xs = pts.map(p => p.x), zs = pts.map(p => p.z);
+    const y = Math.min(...pts.map(p => p.y));
+    return { from: { x: Math.min(...xs) - pad, y, z: Math.min(...zs) - pad }, to: { x: Math.max(...xs) + pad, y, z: Math.max(...zs) + pad } };
+}
+
 export async function runTool(player, tool, values) {
     if (isBusy(player)) {
         say(player, '§c이전 작업이 아직 진행 중입니다.');
@@ -111,8 +128,13 @@ export async function runTool(player, tool, values) {
     let extra;
     try {
         say(player, `§7${tool.name} 계산 중...`);
-        const r = tool.run(ctx, values);
-        extra = (r && typeof r.next === 'function') ? await runAsync(r) : await r;
+        // tools read the terrain too (river, terragen, smooth snow...): load the area first when it fits
+        const box = readBox(tool, ctx);
+        const go = async () => {
+            const r = tool.run(ctx, values);
+            return (r && typeof r.next === 'function') ? await runAsync(r) : await r;
+        };
+        extra = box && loadAll(player) && fits(box.from, box.to) ? await withLoaded(ctx.dim, box.from, box.to, go) : await go();
     }
     catch (e) {
         say(player, `§c${tool.name}: ${e?.message ?? e}`);

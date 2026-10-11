@@ -49,6 +49,18 @@ for (let i = 0; i < 6; i++) { S.currentTick += 4; W.beforeEvents.playerBreakBloc
 await settle();
 check(s.points.length === 2, 'holding break = one undo: ' + s.points.length);
 await tapAir('arc:wand', { x: 25, y: 0, z: 5 });
+// a long press on a touch screen: first a tap, a few ticks later the break, same block
+{
+  const n0 = s.points.length;
+  S.currentTick += 20;
+  W.beforeEvents.playerInteractWithBlock.fire({ player, itemStack: item('arc:wand'), block: dim.getBlock({ x: 7, y: 0, z: 7 }), blockFace: 'Up', isFirstEvent: true, cancel: false });
+  S.flush();
+  S.currentTick += 6;
+  W.beforeEvents.playerBreakBlock.fire({ player, itemStack: item('arc:wand'), block: dim.getBlock({ x: 7, y: 0, z: 7 }), cancel: false });
+  await settle();
+  check(s.points.length === n0 - 1 && !s.points.some(p => p.x === 7), 'long press (tap + break) = undo last point only: ' + n0 + ' -> ' + s.points.length);
+  await tapAir('arc:wand', { x: 25, y: 0, z: 5 });
+}
 // 8Crafter selection tool is mirrored
 for (const p of [{ x: 0, y: 0, z: 0 }, { x: 9, y: 4, z: 9 }]) { player.lookAt = p; W.beforeEvents.itemUse.fire({ source: player, itemStack: item('andexdb:selection_tool'), cancel: false }); }
 S.flush();

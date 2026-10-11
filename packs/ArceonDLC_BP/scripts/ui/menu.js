@@ -497,6 +497,7 @@ async function settingsMenu(player) {
     const s = session(player);
     const r = await ask(player, 'settings', '설정', [
         { key: 'gmask', type: 'mask', label: '전역 마스크 (끌어 늘리기·채우기·브러시에 적용, 비우면 끔)', placeholder: '예: !air  /  #arcangle[0][40][1]', default: s.settings.gmask },
+        { key: 'loadAll', type: 'toggle', label: '로드 안 된 먼 곳도 불러와서 설치 (권장)', default: s.settings.loadAll !== false, tooltip: '틱킹 영역으로 잠깐 불러와서 설치하고 다시 놓아줍니다. 끄면 로드 안 된 곳은 건너뜁니다' },
         { key: 'particles', type: 'toggle', label: '도구를 들면 점·곡선·영역·붙여넣을 자리를 입자로 보기', default: s.settings.particles },
         { key: 'clearPalettes', type: 'toggle', label: `저장한 팔레트 모두 지우기 (${(s.settings.palettes ?? []).length}개)`, default: false },
     ], { submit: '저장' });
@@ -512,6 +513,7 @@ async function settingsMenu(player) {
     }
     s.settings.gmask = r.gmask.trim();
     s.settings.particles = r.particles;
+    s.settings.loadAll = r.loadAll;
     if (r.clearPalettes)
         s.settings.palettes = [];
     s.forms.settings = {};

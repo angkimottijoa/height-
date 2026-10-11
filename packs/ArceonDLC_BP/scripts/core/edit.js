@@ -10,6 +10,11 @@
  */
 import { system } from '@minecraft/server';
 import { AIR, isAirId, isSolidId } from './blocks.js';
+import { placeAll } from './loader.js';
+import { session } from './session.js';
+
+/** The player's "load unloaded chunks" setting (default on). */
+export const loadAll = (player) => session(player).settings.loadAll !== false;
 
 export const PER_TICK = 3000;
 export const MAX_CHANGES = 2000000;
@@ -130,59 +135,35 @@ export class EditSession {
      * Place the buffer over several ticks and record undo.
      * Resolves to the number of blocks changed.
      */
-    commit(label = '편집') {
+    async commit(label = '편집') {
         const player = this.player;
         if (this.changes.size === 0)
-            return Promise.resolve(0);
+            return 0;
         busy.add(player.id);
-        const dim = this.dim;
-        const entries = [...this.changes];
-        const before = [];
-        return new Promise((resolve, reject) => {
-            function* job() {
-                let n = 0, done = 0, skipped = 0;
-                try {
-                    for (const [k, perm] of entries) {
-                        const [x, y, z] = k.split(',').map(Number);
-                        let b;
-                        try {
-                            b = dim.getBlock({ x, y, z });
-                        }
-                        catch (e) { }
-                        if (!b) {
-                            skipped++;
-                        }
-                        else {
-                            const old = b.permutation;
-                            if (old !== perm) {
-                                before.push([x, y, z, old]);
-                                b.setPermutation(perm);
-                                done++;
-                            }
-                        }
-                        if (++n % PER_TICK === 0)
-                            yield;
-                    }
-                }
-                catch (e) {
-                    busy.delete(player.id);
-                    reject(e);
-                    return;
-                }
-                busy.delete(player.id);
-                if (before.length) {
-                    const h = history(player);
-                    h.undo.push({ label, dim: dim.id, blocks: before });
-                    if (h.undo.length > UNDO_DEPTH)
-                        h.undo.shift();
-                    h.redo.length = 0;
-                }
-                if (skipped)
-                    say(player, `§e로드되지 않은 곳 ${skipped}블록은 건너뛰었습니다.`);
-                resolve(done);
-            }
-            system.runJob(job());
-        });
+        const list = [];
+        for (const [k, perm] of this.changes) {
+            const [x, y, z] = k.split(',').map(Number);
+            list.push([x, y, z, perm]);
+        }
+        let out;
+        try {
+            out = await placeAll(this.dim, list, { load: loadAll(player) });
+        }
+        finally {
+            busy.delete(player.id);
+        }
+        if (out.before.length) {
+            const h = history(player);
+            h.undo.push({ label, dim: this.dim.id, blocks: out.before });
+            if (h.undo.length > UNDO_DEPTH)
+                h.undo.shift();
+            h.redo.length = 0;
+        }
+        if (out.skipped)
+            say(player, loadAll(player)
+                ? `§e불러오지 못한 곳 ${out.skipped}블록은 건너뛰었습니다 (월드 높이 밖이거나 틱킹 영역 한도 초과).`
+                : `§e로드되지 않은 곳 ${out.skipped}블록은 건너뛰었습니다. 설정에서 "로드 안 된 곳도 불러와서 설치"를 켜면 같이 설치됩니다.`);
+        return out.done;
     }
 }
 
@@ -194,31 +175,18 @@ export function say(player, msg) {
 }
 
 /** Swap a recorded change set back, returning the inverse for redo/undo. */
-function replay(player, rec) {
-    return new Promise(resolve => {
-        busy.add(player.id);
-        const dim = player.dimension.id === rec.dim ? player.dimension : player.dimension;
-        const inverse = [];
-        function* job() {
-            let n = 0;
-            for (let i = rec.blocks.length - 1; i >= 0; i--) {
-                const [x, y, z, perm] = rec.blocks[i];
-                try {
-                    const b = dim.getBlock({ x, y, z });
-                    if (b) {
-                        inverse.push([x, y, z, b.permutation]);
-                        b.setPermutation(perm);
-                    }
-                }
-                catch (e) { }
-                if (++n % PER_TICK === 0)
-                    yield;
-            }
-            busy.delete(player.id);
-            resolve({ label: rec.label, dim: rec.dim, blocks: inverse });
-        }
-        system.runJob(job());
-    });
+async function replay(player, rec) {
+    busy.add(player.id);
+    try {
+        const list = [];
+        for (let i = rec.blocks.length - 1; i >= 0; i--)
+            list.push(rec.blocks[i]);
+        const out = await placeAll(player.dimension, list, { load: loadAll(player) });
+        return { label: rec.label, dim: rec.dim, blocks: out.before };
+    }
+    finally {
+        busy.delete(player.id);
+    }
 }
 
 export async function undo(player) {
