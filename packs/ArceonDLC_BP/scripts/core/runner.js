@@ -67,12 +67,12 @@ function check(player, tool, ctx) {
                 ctx.points = [s.pos1, s.pos2].map(p => ({ ...p }));
             }
             if (ctx.points.length < min)
-                return `곡선 점이 ${min}개 이상 필요합니다 (지금 ${s.points.length}개). 선택 지팡이를 곡선 점 모드로 두고 블록을 터치하세요.`;
+                return `곡선 점이 ${min}개 이상 필요합니다 (지금 ${s.points.length}개). 곡선 지팡이로 블록을 터치해 점을 찍으세요.`;
             break;
         }
         case 'cuboid':
             if (!ctx.region)
-                return '선택 영역이 없습니다. 선택 지팡이(터치 = 1번, 부수기 = 2번)나 8Crafter 선택 도구로 지정하세요.';
+                return '선택 영역이 없습니다. 영역 지팡이(터치 = 1번, 부수기 = 2번)나 8Crafter 선택 도구로 지정하세요.';
             if (s.dim && s.dim !== player.dimension.id)
                 return '선택 영역이 다른 차원에 있습니다.';
             if (volume(ctx.region) > (tool.maxVolume ?? MAX_REGION))

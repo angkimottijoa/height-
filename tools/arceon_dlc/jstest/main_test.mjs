@@ -33,17 +33,19 @@ async function brk(id, pos, sneak = false) {
 const btn = (label) => (form) => ({ canceled: false, selection: form.items.filter(i => i[0] === 'button').findIndex(b => b[1].includes(label)) });
 const check = (cond, msg) => { console.log((cond ? 'ok   ' : 'FAIL ') + msg); if (!cond) process.exitCode = 1; };
 
-// --- selection wand: tap = pos1, break = pos2 (default mode)
+// --- area wand: tap = pos1, break = pos2
 await tap('arc:wand', { x: 0, y: 0, z: 0 });
 const cancelled = await brk('arc:wand', { x: 9, y: 3, z: 9 });
-check(JSON.stringify([s.pos1, s.pos2]) === '[{"x":0,"y":0,"z":0},{"x":9,"y":3,"z":9}]' && cancelled, 'wand tap = pos1, break = pos2 (block not broken)');
-// sneak + tap = wand menu, switch to curve points
-ui.answers.push(btn('모드 바꾸기'));
-await tap('arc:wand', { x: 0, y: 0, z: 0 }, true);
-check(s.wandMode === 'points', 'wand menu switches to curve points');
-for (const [x, z] of [[0, 0], [10, 5], [20, 0], [25, 5]]) await tapAir('arc:wand', { x, y: 0, z });
-await brk('arc:wand', { x: 0, y: 0, z: 0 });
-check(s.points.length === 3, 'points: tap adds, break takes back the last');
+check(JSON.stringify([s.pos1, s.pos2]) === '[{"x":0,"y":0,"z":0},{"x":9,"y":3,"z":9}]' && cancelled, 'area wand tap = pos1, break = pos2 (block not broken)');
+// --- curve wand: tap adds, break takes back the last; the selection is untouched
+for (const [x, z] of [[0, 0], [10, 5], [20, 0], [25, 5]]) await tapAir('arc:curve_wand', { x, y: 0, z });
+await brk('arc:curve_wand', { x: 0, y: 0, z: 0 });
+check(s.points.length === 3 && s.pos2.x === 9, 'curve wand: tap adds, break undoes one, selection unchanged');
+// holding break repeats the event every few ticks: still only one undo
+for (let i = 0; i < 6; i++) { S.currentTick += 4; player.isSneaking = false; W.beforeEvents.playerBreakBlock.fire({ player, itemStack: item('arc:curve_wand'), block: dim.getBlock({ x: 1, y: 0, z: 1 }), cancel: false }); }
+await settle();
+check(s.points.length === 2, 'holding break = one undo: ' + s.points.length);
+await tapAir('arc:curve_wand', { x: 25, y: 0, z: 5 });
 // 8Crafter selection tool is mirrored
 for (const p of [{ x: 0, y: 0, z: 0 }, { x: 9, y: 4, z: 9 }]) { player.lookAt = p; W.beforeEvents.itemUse.fire({ source: player, itemStack: item('andexdb:selection_tool'), cancel: false }); }
 S.flush();
@@ -138,7 +140,7 @@ const { ask } = await import('./scripts/ui/form.js');
 for (const t of [...TOOLS, ...BRUSHES]) { ui.answers.push(f => f.defaults()); await ask(player, 'x:' + t.id, t.name, t.fields ?? []); }
 check(true, `forms build: ${TOOLS.length} tools, ${BRUSHES.length} brushes`);
 cmds['arc:tools']({ sourceEntity: player }); await settle();
-check(player.inv.filter(Boolean).length >= 7, 'arc:tools gives the 6 items');
+check(player.inv.filter(Boolean).length >= 8, 'arc:tools gives the 7 items');
 console.log('commands', Object.keys(cmds).join(' '));
 const errs = player.msgs.filter(m => m.startsWith('§c'));
 check(errs.length === 0, 'no error messages ' + JSON.stringify(errs));

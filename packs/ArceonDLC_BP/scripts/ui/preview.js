@@ -1,6 +1,7 @@
 /*
  * Particle preview while a tool item is held:
- *   선택 지팡이   selection box (end rod), curve points (green) and the curve (flame)
+ *   영역 지팡이   selection box (end rod)
+ *   곡선 지팡이   curve points (green), the curve (flame) and the selection box
  *   프레임 피커   frames (blue flame, the one being drawn in green) and the
  *                rails joining them (flame), as the fill will connect them
  *   클립보드 도구 the box the clipboard would fill at the block you look at
@@ -9,7 +10,7 @@
 import { BezierPath, LinePath, resample } from '../core/spline.js';
 import { anchorFor, getClip, placedBounds } from '../core/clipboard.js';
 import { region, session } from '../core/session.js';
-import { CLIPBOARD, FRAME_PICKER, WAND } from '../core/access.js';
+import { CLIPBOARD, CURVE_WAND, FRAME_PICKER } from '../core/access.js';
 
 const MAX = 240;
 
@@ -119,7 +120,7 @@ export function preview(player, item) {
         spawn(player, 'minecraft:villager_happy', c(at));
         return;
     }
-    if (item === WAND) {
+    if (item === CURVE_WAND) {
         for (const p of s.points.slice(0, 64))
             spawn(player, 'minecraft:villager_happy', c(p));
         curve(player, s.points, 'minecraft:basic_flame_particle');

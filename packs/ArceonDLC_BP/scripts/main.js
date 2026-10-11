@@ -4,8 +4,8 @@
  * Every tool is its own item. "Tap" is a light touch on mobile (use /
  * right click on PC), "break" is holding to break (left click on PC).
  *
- *   arc:wand          선택 지팡이   영역: tap = pos1, break = pos2
- *                                  점:   tap = add point, break = undo point, sneak + break = clear
+ *   arc:wand          영역 지팡이   tap = pos1, break = pos2
+ *   arc:curve_wand    곡선 지팡이   tap = add point, break = undo point, sneak + break = clear
  *   arc:frame_picker  프레임 피커   tap = add point, break = undo point, sneak + break = save frame
  *   arc:block_picker  블록 피커     tap = remember the block, break = forget the last one
  *   arc:clipboard     클립보드 도구 tap = paste (outline shown), break = copy selection,
@@ -26,7 +26,7 @@ import { permToString } from './core/blocks.js';
 import { BRUSHES, TOOLS } from './tools/index.js';
 import { assetSaveForm, assetsMenu, blockPickerMenu, clipboardMenu, frameMenu, giveTools, openMenu, terrainMenu, wandMenu } from './ui/menu.js';
 import { preview } from './ui/preview.js';
-import { allowed, BLOCK_PICKER, CLIPBOARD, FRAME_PICKER, ITEMS, PLACER, TERRAIN, WAND } from './core/access.js';
+import { allowed, BLOCK_PICKER, CLIPBOARD, CURVE_WAND, FRAME_PICKER, ITEMS, PLACER, TERRAIN, WAND } from './core/access.js';
 
 const SELECTION_TOOL = 'andexdb:selection_tool';
 const fl = (p) => ({ x: Math.floor(p.x), y: Math.floor(p.y), z: Math.floor(p.z) });
@@ -40,16 +40,16 @@ function bar(player, msg) {
     }
 }
 
-// holding a finger down repeats taps and breaks; act once per short window
+// Holding a finger down (or a mouse button) repeats taps and breaks every
+// few ticks. Only the first event of a press acts: every event pushes the
+// window on, so a long hold stays one action.
 const last = new Map();
-function ready(player, kind, ticks) {
+function press(player, kind, ticks) {
     const k = player.id + kind;
     const t = system.currentTick;
     const prev = last.get(k);
-    if (prev !== undefined && t - prev < ticks)
-        return false;
     last.set(k, t);
-    return true;
+    return prev === undefined || t - prev > ticks;
 }
 
 function raycast(player) {
@@ -70,15 +70,16 @@ const TAP = {
             return void wandMenu(player);
         if (!hit)
             return bar(player, '§c블록을 바라보세요 (최대 300칸)');
-        const s = session(player);
-        if (s.wandMode === 'points') {
-            const n = addPoint(player, hit.pos);
-            bar(player, `§a점 ${n}§r 추가 ${fmt(hit.pos)}  §7(부수기 = 마지막 점 취소)`);
-        }
-        else {
-            setCorner(player, 'pos1', hit.pos);
-            bar(player, `§d1번 지점§r ${fmt(hit.pos)}  §7(부수기 = 2번 지점)`);
-        }
+        setCorner(player, 'pos1', hit.pos);
+        bar(player, `§d1번 지점§r ${fmt(hit.pos)}  §7(부수기 = 2번 지점)`);
+    },
+    [CURVE_WAND](player, hit, sneaking) {
+        if (sneaking)
+            return void wandMenu(player);
+        if (!hit)
+            return bar(player, '§c블록을 바라보세요 (최대 300칸)');
+        const n = addPoint(player, hit.pos);
+        bar(player, `§a곡선 점 ${n}개§r ${fmt(hit.pos)}  §7(부수기 = 마지막 점 취소)`);
     },
     [FRAME_PICKER](player, hit, sneaking) {
         if (sneaking)
@@ -127,18 +128,18 @@ const TAP = {
 };
 
 const BREAK = {
-    [WAND](player, pos, sneaking) {
-        const s = session(player);
-        if (s.wandMode === 'points') {
-            if (sneaking) {
-                clearPoints(player);
-                return bar(player, '§e점을 모두 지웠습니다');
-            }
-            removePoint(player, false);
-            return bar(player, `§e마지막 점 취소§r (남은 점 ${s.points.length}개)`);
-        }
+    [WAND](player, pos) {
         setCorner(player, 'pos2', pos);
         bar(player, `§d2번 지점§r ${fmt(pos)}`);
+    },
+    [CURVE_WAND](player, pos, sneaking) {
+        if (sneaking) {
+            clearPoints(player);
+            return bar(player, '§e곡선 점을 모두 지웠습니다');
+        }
+        const had = session(player).points.length;
+        removePoint(player, false);
+        bar(player, had ? `§e마지막 곡선 점 취소§r (남은 점 ${had - 1}개)` : '§7지울 곡선 점이 없습니다');
     },
     [FRAME_PICKER](player, pos, sneaking) {
         if (sneaking) {
@@ -225,7 +226,7 @@ function heldBrush(player, id) {
 function tap(player, id, hit, sneaking) {
     if (!allowed(player))
         return deny(player);
-    if (!ready(player, 'tap', 4))
+    if (!press(player, 'tap', 6))
         return;
     if (TAP[id])
         return TAP[id](player, hit, sneaking);
@@ -274,7 +275,7 @@ world.beforeEvents.playerInteractWithBlock.subscribe(ev => {
 function brk(player, id, pos, sneaking) {
     if (!allowed(player))
         return deny(player);
-    if (!ready(player, 'break', 6))
+    if (!press(player, 'break', 8))
         return;
     BREAK[id](player, pos, sneaking);
 }
@@ -311,8 +312,8 @@ world.afterEvents.entityHitBlock.subscribe(ev => {
 system.beforeEvents.startup.subscribe(({ customCommandRegistry }) => {
     const cmds = [
         ['arc:menu', '아르세온 DLC 전체 메뉴 열기', (p) => openMenu(p)],
-        ['arc:tools', '아르세온 도구 아이템 6개 받기', (p) => giveTools(p)],
-        ['arc:wand', '선택 지팡이 받기', (p) => giveTools(p, [WAND])],
+        ['arc:tools', '에디터 도구 아이템 7개 받기', (p) => giveTools(p)],
+        ['arc:wand', '영역 지팡이·곡선 지팡이 받기', (p) => giveTools(p, [WAND, CURVE_WAND])],
         ['arc:undo', '아르세온 작업 되돌리기', (p) => undo(p)],
         ['arc:redo', '아르세온 작업 다시 하기', (p) => redo(p)],
     ];

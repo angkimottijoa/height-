@@ -32,7 +32,7 @@ import * as bSpike from '../brushes/spike.js';
 import * as bVine from '../brushes/vine.js';
 
 export const GROUPS = [
-    { id: 'curve', name: '곡선 도구', desc: '지팡이로 찍은 점들을 잇는 곡선을 따라 만듭니다', icon: 'textures/blocks/gravel' },
+    { id: 'curve', name: '곡선 도구', desc: '곡선 지팡이로 찍은 점들을 잇는 곡선을 따라 만듭니다', icon: 'textures/blocks/gravel' },
     { id: 'shape', name: '모양 만들기', desc: '회전 복제, 다면체 구', icon: 'textures/items/amethyst_shard' },
     { id: 'transform', name: '변형', desc: '자유 회전, 크기 조절, 끌어 늘리기', icon: 'textures/items/compass_item' },
     { id: 'replace', name: '채우기 · 바꾸기', desc: '패턴 채우기, 재질 바꾸기, 색 바꾸기', icon: 'textures/items/bucket_empty' },
