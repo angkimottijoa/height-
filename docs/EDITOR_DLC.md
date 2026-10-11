@@ -1,6 +1,9 @@
-# 통합팩
+# 에디터 DLC
 
-`dist/AllInOne.mcaddon` — 행동 팩 1개 + 리소스 팩 1개. MCBE **1.26.40 이상**.
+`dist/EditorDLC_V<버전>.mcaddon` — 행동 팩 1개 + 리소스 팩 1개. MCBE **1.26.40 이상**.
+
+**버전:** 지금 **V0**. 고칠 때마다 0.1씩 올립니다(V0 → V0.1 → V0.2 …). 게임 안 팩 이름에 버전이 보이고,
+새 버전을 가져오면 같은 팩이 업데이트됩니다(예전 버전 파일은 지워도 됩니다).
 
 | 들어 있는 것 | 쓰는 법 | 설명서 |
 |---|---|---|
@@ -10,7 +13,7 @@
 | 주얼 창이 다이아그리드 구조물 | `/function diagrid/build` | 아래 |
 | 코쿤 타워 구조물 | `/function ctw4/build` | 아래 |
 
-**따로 받은 Debug Stick / Arceon DLC / Jewel Diagrid / Cocoon Tower 팩은 월드에서 빼고 이것만 적용하세요.**
+**따로 받은 Debug Stick / Arceon DLC / Jewel Diagrid / Cocoon Tower 팩과 예전 "통합팩"은 월드에서 빼고 이것만 적용하세요.**
 같은 블록 ID와 명령어를 두 팩이 같이 등록하면 충돌합니다. 8Crafter's Server Utilities는 그대로 같이 써도 됩니다.
 
 ## 구조물
@@ -34,7 +37,8 @@
 ## 다시 만들기 (개발자용)
 
 ```
-python3 tools/integrated/build.py     # packs/DebugStickBP·RP + packs/ArceonDLC_BP + packs/StructuresBP → dist/AllInOne.mcaddon
+python3 tools/integrated/build.py          # packs/DebugStickBP·RP + packs/ArceonDLC_BP + packs/StructuresBP → dist/EditorDLC_V<버전>.mcaddon
+python3 tools/integrated/build.py --bump   # 버전 +0.1 하고 빌드 (수정해서 내보낼 때마다)
 ```
 
 스크립트는 `scripts/debugstick/`, `scripts/arceon/` 로 나뉘어 들어가고 `scripts/main.js` 하나가 둘 다 불러옵니다.

@@ -1,4 +1,4 @@
-"""Builds the all-in-one add-on dist/AllInOne.mcaddon from the separate packs:
+"""Builds 에디터 DLC (dist/EditorDLC_V<version>.mcaddon) from the separate packs:
 
   behaviour pack  = Debug Stick (blocks, items, scripts)
                   + Arceon DLC (items, scripts)
@@ -9,8 +9,14 @@ Both script packs keep their own folders under scripts/ and are started by
 one entry file. The structures only come into the world through their
 functions (/function diagrid/build, /function ctw4/build).
 
-    python3 tools/integrated/build.py
+    python3 tools/integrated/build.py          # build the current version
+    python3 tools/integrated/build.py --bump   # +0.1 (do this for every change we ship)
+
+The version lives in tools/integrated/VERSION ("0", "0.1", "0.2" ...). It is
+shown in the pack name (에디터 DLC V0.1) and becomes the manifest version
+(0.1 -> 0.1.0, 1.3 -> 1.3.0).
 """
+import sys
 import json
 import os
 import shutil
@@ -19,18 +25,36 @@ import zipfile
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 P = lambda *a: os.path.join(REPO, 'packs', *a)
-VERSION = '1.0.0'
-BP_UUID, BP_DATA, BP_SCRIPT = '575eb684-c939-4a29-a90d-99250154e80f', 'df28aa6a-c30d-41a3-a43a-9216b9b78fd9', '8c96040f-e0ba-4d12-b4f0-995222aefb07'
-RP_UUID, RP_RES = '702c1168-1ab6-476f-9e61-27bf18b87ee3', 'bbe31d70-f313-468b-befb-8764faa3aefc'
+VFILE = os.path.join(os.path.dirname(__file__), 'VERSION')
 
-DESC_BP = ("§b통합팩§r — 디버그 스틱 + 아르세온 DLC + 구조물\n\n"
+
+def read_version():
+    return open(VFILE).read().strip()
+
+
+def bump(v):
+    major, _, minor = v.partition('.')
+    tenths = int(major) * 10 + int(minor or 0) + 1
+    return f'{tenths // 10}.{tenths % 10}'
+
+
+def semver(v):
+    major, _, minor = v.partition('.')
+    return f'{int(major)}.{int(minor or 0)}.0'
+
+
+LABEL = VERSION = None  # set in main()
+BP_UUID, BP_DATA, BP_SCRIPT = 'ab6e0423-ef96-41ab-aa9f-5975e4681840', '1f479df0-4d33-41ec-82f5-7579507a0afc', 'a7e1e9c0-9be1-43b9-b5c3-f0fdce52658d'
+RP_UUID, RP_RES = '883833f2-e5d0-462c-8136-ea47811b6bae', '442c1e32-188f-4641-aac3-682f63bf4699'
+
+DESC_BP = ("§b에디터 DLC {label}§r — 디버그 스틱 + 아르세온 DLC + 구조물\n\n"
            "§e디버그 스틱§r §a/give @s vyt:debug_stick§r — 독립형 블록 333종, 멀리서도 안 사라지는 철문 (vyt:ds_iron_door)\n"
            "§e아르세온 DLC§r §a/arc:tools§r 도구 6개 · §a/arc:menu§r 메뉴 (8Crafter's Server Utilities와 같이 쓰는 확장)\n"
            "§e구조물§r (치트 필요, 서 있는 자리가 -X/-Z 아래 모서리)\n"
            "  §a/function diagrid/build§r 주얼 창이 다이아그리드 171×46×228 (p01~p12 분할, clear)\n"
            "  §a/function ctw4/build§r 코쿤 타워 52×203×59 (clear)\n\n"
-           "§c따로 받은 Debug Stick / Arceon DLC / Jewel Diagrid / Cocoon Tower 팩은 빼고 이것만 적용하세요.§r")
-DESC_RP = "§b통합팩 리소스§r — 디버그 스틱 독립형 블록의 모델·이름. 텍스처는 바닐라 것을 씁니다.\n§c통합팩 행동 팩과 함께 적용하세요.§r"
+           "§c따로 받은 Debug Stick / Arceon DLC / Jewel Diagrid / Cocoon Tower 팩과 예전 통합팩은 빼고 이것만 적용하세요.§r")
+DESC_RP = "§b에디터 DLC {label} 리소스§r — 디버그 스틱 독립형 블록의 모델·이름. 텍스처는 바닐라 것을 씁니다.\n§c에디터 DLC 행동 팩과 함께 적용하세요.§r"
 
 
 def copytree(src, dst, skip=()):
@@ -49,7 +73,7 @@ def copytree(src, dst, skip=()):
 
 
 def build(tmp):
-    bp, rp = os.path.join(tmp, 'AllInOne_BP'), os.path.join(tmp, 'AllInOne_RP')
+    bp, rp = os.path.join(tmp, 'EditorDLC_BP'), os.path.join(tmp, 'EditorDLC_RP')
     # behaviour pack
     copytree(P('DebugStickBP'), bp, skip=('scripts', 'manifest.json', 'README', 'LICENSE'))
     copytree(P('ArceonDLC_BP'), bp, skip=('scripts', 'manifest.json'))
@@ -67,7 +91,7 @@ def build(tmp):
     deps.append({'uuid': RP_UUID, 'version': VERSION})
     json.dump({
         'format_version': 3,
-        'header': {'name': '통합팩 [BP]', 'description': DESC_BP, 'version': VERSION, 'min_engine_version': '1.26.40', 'uuid': BP_UUID},
+        'header': {'name': f'에디터 DLC {LABEL} [BP]', 'description': DESC_BP.format(label=LABEL), 'version': VERSION, 'min_engine_version': '1.26.40', 'uuid': BP_UUID},
         'modules': [
             {'description': 'behaviour', 'type': 'data', 'version': VERSION, 'uuid': BP_DATA},
             {'description': 'scripting', 'type': 'script', 'language': 'javascript', 'version': VERSION, 'uuid': BP_SCRIPT, 'entry': 'scripts/main.js'},
@@ -78,14 +102,24 @@ def build(tmp):
     copytree(P('DebugStickRP'), rp, skip=('manifest.json',))
     json.dump({
         'format_version': 3,
-        'header': {'name': '통합팩 [RP]', 'description': DESC_RP, 'version': VERSION, 'min_engine_version': '1.26.40', 'uuid': RP_UUID},
+        'header': {'name': f'에디터 DLC {LABEL} [RP]', 'description': DESC_RP.format(label=LABEL), 'version': VERSION, 'min_engine_version': '1.26.40', 'uuid': RP_UUID},
         'modules': [{'description': 'resources', 'type': 'resources', 'version': VERSION, 'uuid': RP_RES}],
     }, open(os.path.join(rp, 'manifest.json'), 'w'), ensure_ascii=False, indent=2)
     return bp, rp
 
 
 def main():
-    out = os.path.join(REPO, 'dist', 'AllInOne.mcaddon')
+    global LABEL, VERSION
+    v = read_version()
+    if '--bump' in sys.argv:
+        v = bump(v)
+        open(VFILE, 'w').write(v + '\n')
+    LABEL, VERSION = 'V' + v, semver(v)
+    dist = os.path.join(REPO, 'dist')
+    for old in os.listdir(dist):
+        if old == 'AllInOne.mcaddon' or (old.startswith('EditorDLC_V') and old.endswith('.mcaddon')):
+            os.remove(os.path.join(dist, old))
+    out = os.path.join(dist, f'EditorDLC_{LABEL}.mcaddon')
     keep = os.environ.get('ALLINONE_KEEP')
     tmp = keep or tempfile.mkdtemp()
     if keep:
