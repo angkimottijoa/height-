@@ -288,7 +288,7 @@ export default {
  * The centre line sampled every third of a block, and every cell of a road
  * W columns wide with its sideways offset `uc` and distance along `s`.
  */
-function* layout(ctx, v, W) {
+export function* layout(ctx, v, W) {
     const off = W % 2 === 0 ? 0.5 : 0; // keep columns on whole blocks for straight roads
     const uOf = (col) => -W / 2 + col + 0.5 + off;
     const pts = curvePoints(ctx, { straight: !!v.straight });
@@ -325,17 +325,17 @@ function* layout(ctx, v, W) {
             const key = x + ',' + z;
             const cur = cells.get(key);
             if (!cur || a < cur.a)
-                cells.set(key, { y: Math.floor(p.y), uc: dx * p.nx + dz * p.nz, s: p.s + (dx * p.tx + dz * p.tz), a });
+                cells.set(key, { y: Math.floor(p.y), uc: dx * p.nx + dz * p.nz, s: p.s + (dx * p.tx + dz * p.tz), a, tx: p.tx, tz: p.tz });
         }
         if (++n % 100 === 0)
             yield;
     }
-    const trace = (u) => thin(S.map(p => ({ x: Math.floor(p.x + p.nx * u), z: Math.floor(p.z + p.nz * u), y: Math.floor(p.y), s: p.s })));
-    return { uOf, total: s, cells, trace };
+    const trace = (u) => thin(S.map(p => ({ x: Math.floor(p.x + p.nx * u), z: Math.floor(p.z + p.nz * u), y: Math.floor(p.y), s: p.s, tx: p.tx, tz: p.tz })));
+    return { uOf, total: s, cells, trace, samples: S };
 }
 
 /** Write the painted cells with thickness, fill-down and clearing above. */
-function* place(ctx, v, paint, surfaceOf, belowOf) {
+export function* place(ctx, v, paint, surfaceOf, belowOf) {
     const edit = ctx.edit;
     const thick = Math.max(1, Math.floor(v.thick)), clear = Math.floor(v.clear) || 0;
     const air = AIR();

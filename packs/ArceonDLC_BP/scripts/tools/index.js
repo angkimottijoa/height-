@@ -10,6 +10,8 @@ import * as fill from './fill.js';
 import * as icosphere from './icosphere.js';
 import * as lanes from './lanes.js';
 import * as lanepreset from './lanepreset.js';
+import * as railway from './railway.js';
+import * as trackpreset from './trackpreset.js';
 import * as loft from './loft.js';
 import * as resize from './resize.js';
 import * as revolve from './revolve.js';
@@ -44,7 +46,7 @@ export const GROUPS = [
 const T = (mod, group) => Object.assign(Object.create(mod.default), { group, module: mod });
 
 export const TOOLS = [
-    T(road, 'curve'), T(lanes, 'curve'), T(lanepreset, 'curve'), T(arch, 'curve'), T(roof, 'curve'), T(spike, 'curve'), T(dashes, 'curve'), T(river, 'curve'),
+    T(road, 'curve'), T(lanes, 'curve'), T(lanepreset, 'curve'), T(railway, 'curve'), T(trackpreset, 'curve'), T(arch, 'curve'), T(roof, 'curve'), T(spike, 'curve'), T(dashes, 'curve'), T(river, 'curve'),
     T(revolve, 'shape'), T(axisrevolve, 'shape'), T(icosphere, 'shape'),
     T(rotate, 'transform'), T(resize, 'transform'), T(smear, 'transform'),
     T(fill, 'replace'), T(typereplace, 'replace'), T(colorreplace, 'replace'),
