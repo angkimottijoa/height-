@@ -17,12 +17,46 @@ console.log(m.slice(-1)[0]);
 console.log('layer 1 (sleepers + rails):\n' + view(dim, 1, 0, -11, 12, 11).join('\n'));
 const l0 = view(dim, 0, 0, -11, 30, 11).filter(r => r.includes('.'));
 const l1 = view(dim, 1, 0, -11, 30, 11);
-check(l0.length === 2 * (1 + 7 + 1) + 1, 'ballast width 19 (2 tracks × (1+7+1) + 1 between): ' + l0.length);
+check(l0.length === 2 * (1 + 6 + 1) + 1, 'ballast width 17 (2 tracks × (1+6+1) + 1 between, 2 cells between the anvils): ' + l0.length);
 const railRows = l1.filter(r => /^A+$/.test(r.trim()));
 check(railRows.length === 4, '4 rails, continuous: ' + railRows.length);
 const anv = [...dim.map.values()].filter(p => p.id.endsWith('anvil'));
 check(anv.every(p => ['east', 'west'].includes(p.states['minecraft:cardinal_direction'])), 'anvils lie along the track (east/west for an x track)');
-check(l1.some(r => /^(s )+s?$/.test(r.trim())), 'sleepers: 1 on, 1 off');
+check(l1.filter(r => /^(#s)+#?$/.test(r.trim())).length === 8, 'sleepers (full blocks) 1 on, 1 off, slabs between');
+const rows = view(dim, 1, 0, -11, 30, 11);
+check(rows.filter(r => r.includes('A')).length === 4 && rows.indexOf(rows.find(r => r.includes('A')), 0) + 3 === rows.findIndex((r, i) => i > rows.findIndex(q => q.includes('A')) && r.includes('A')), 'two cells between the two anvils');
+const top = {}; for (const [k, p] of dim.map) if (k.split(',')[1] === '1' && p.id.endsWith('slab')) top[short(p)] = (top[short(p)] ?? 0) + 1;
+console.log('slabs on the gravel:', JSON.stringify(top));
+const tot = Object.values(top).reduce((a, b) => a + b, 0);
+check(top.andesite_slab / tot > 0.5 && top.andesite_slab / tot < 0.7 && top.normal_stone_slab && top.cobblestone_slab && top.tuff_slab, 'slab mix ~60% andesite, stone, cobblestone, tuff');
+check([...dim.map].every(([k, p]) => !p.id.endsWith('slab') || p.states['minecraft:vertical_half'] === 'bottom'), 'all bottom slabs');
+check([...dim.map.values()].some(p => p.id === 'minecraft:mud_bricks') && ![...dim.map.values()].some(p => p.id === 'minecraft:mud_brick_slab'), 'sleepers are mud bricks (not slabs)');
+
+// ---- three tracks, gauge 3, custom sleeper mix from the advanced form
+({ dim, player } = world({ id: 'r1b' }));
+m = await runTool(railway, { pole: '', tracks: 3, gauge: 3, 'sleeper#src': 1, 'sleeper#text': '50%mud_bricks,50%packed_mud', 'top#src': 1, 'top#text': 'andesite_slab' }, { player, points: [{ x: 0, y: 0, z: 0 }, { x: 30, y: 0, z: 0 }] });
+console.log(m.slice(-1)[0]);
+const l1b = view(dim, 1, 0, -16, 30, 16);
+check(l1b.filter(r => /^A+$/.test(r.trim())).length === 6, '3 tracks: 6 rails');
+const sk = {}; for (const p of dim.map.values()) sk[short(p)] = (sk[short(p)] ?? 0) + 1;
+check(sk.packed_mud > 20 && sk.mud_bricks > 20 && !sk.tuff_slab, 'sleeper mix and top slab from the advanced form: ' + JSON.stringify(sk));
+
+// ---- the built-in pole (the user's gantry) along a double track
+({ dim, player } = world({ id: 'r1c' }));
+m = await runTool(railway, { poleEvery: 20 }, { player, points: [{ x: 0, y: 0, z: 0 }, { x: 40, y: 0, z: 0 }] });
+console.log(m.slice(-1)[0]);
+check(/전신주 3개, 전선 8가닥/.test(m.slice(-1)[0]), 'built-in pole is the default: 3 poles, 8 wires (4 contact + 4 feeder)');
+const pv = (x) => { const r = []; for (let y = 15; y >= 0; y--) { let t = ''; for (let z = -13; z <= 13; z++) { const p = dim.map.get(`${x},${y},${z}`); t += !p ? ' ' : p.id.endsWith('wall') ? '|' : p.id.endsWith('slab') ? (p.states['minecraft:vertical_half'] === 'top' ? '"' : '_') : p.id.endsWith('lantern') ? 'L' : p.id.endsWith('end_rod') ? '-' : p.id.endsWith('button') ? 'b' : p.id.endsWith('anvil') ? 'A' : p.id.endsWith('gravel') ? '.' : '#'; } r.push(t); } return r; };
+console.log('pole at x=20, seen along the track:\n' + pv(20).join('\n'));
+const bposts = [...dim.map].filter(([k, p]) => p.id === 'minecraft:andesite_wall' && k.split(',')[1] === '5').map(([k]) => +k.split(',')[2]);
+check(bposts.length === 6 && bposts.every(z => Math.abs(z) === 11), 'posts 11 blocks either side: ' + bposts.join(' '));
+const hang = [...dim.map].filter(([k, p]) => p.id === 'minecraft:cobbled_deepslate_wall' && k.split(',')[1] === '8' && k.split(',')[0] === '20').map(([k]) => +k.split(',')[2]).sort((a, b) => a - b);
+check(hang.join() === '-6,-3,3,6', 'insulators over each track: ' + hang.join());
+({ dim, player } = world({ id: 'r1d' }));
+m = await runTool(railway, { tracks: 3, poleEvery: 100 }, { player, points: [{ x: 0, y: 0, z: 0 }, { x: 52, y: 0, z: 30 }] });
+console.log(m.slice(-1)[0]);
+const lam = [...dim.map.values()].filter(p => p.id === 'minecraft:lantern').length; console.log('lanterns', lam);
+check(lam === 3 && /전신주 1개/.test(m.slice(-1)[0]), '3 tracks at 30°: one wider gantry, lamps on both posts and the beam');
 
 // ---- 45° diagonal: rails one block wide, anvils turned to the nearest 90°
 ({ dim, player } = world({ id: 'r2' }));
