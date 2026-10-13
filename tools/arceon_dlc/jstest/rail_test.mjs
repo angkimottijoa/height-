@@ -50,13 +50,32 @@ const pv = (x) => { const r = []; for (let y = 15; y >= 0; y--) { let t = ''; fo
 console.log('pole at x=20, seen along the track:\n' + pv(20).join('\n'));
 const bposts = [...dim.map].filter(([k, p]) => p.id === 'minecraft:andesite_wall' && k.split(',')[1] === '5').map(([k]) => +k.split(',')[2]);
 check(bposts.length === 6 && bposts.every(z => Math.abs(z) === 11), 'posts 11 blocks either side: ' + bposts.join(' '));
-const hang = [...dim.map].filter(([k, p]) => p.id === 'minecraft:cobbled_deepslate_wall' && k.split(',')[1] === '8' && k.split(',')[0] === '20').map(([k]) => +k.split(',')[2]).sort((a, b) => a - b);
-check(hang.join() === '-6,-3,3,6', 'insulators over each track: ' + hang.join());
+const hang = [...dim.map].filter(([k, p]) => p.id === 'minecraft:hopper' && k.split(',')[1] === '8' && k.split(',')[0] === '20').map(([k]) => +k.split(',')[2]).sort((a, b) => a - b);
+check(hang.join() === '-6,-3,3,6', 'hangers (hoppers) over the rails, as in the user\'s build: ' + hang.join());
+const wb = [...dim.map].filter(([, p]) => p.id.endsWith('button'));
+const sup = (k, dy) => { const [x, y, z] = k.split(',').map(Number); return dim.map.get(`${x},${y + dy},${z}`); };
+check(wb.every(([k, p]) => p.states.facing_direction === 0 ? sup(k, 1) : sup(k, -1)), 'every wire button is held by a block (barrier) above / below');
+check(wb.some(([, p]) => p.states.facing_direction === 0) && wb.some(([, p]) => p.states.facing_direction === 1), 'contact wires hang, feeder wires lie');
+const { POLES } = await import('./scripts/lib/pole_data.js');
+let same = 0, diff = 0;
+POLES['2'].rows.forEach((r, y) => [...r].forEach((c, z) => { if (c === '.') return; const want = POLES['2'].palette['ABCDEFGHIJKLMNOPQRSTUVWXYZ'.indexOf(c)]; const got = dim.map.get(`20,${y},${z - 13}`); if (got && got.id === want.name && Object.entries(want.states).every(([a, b]) => got.states[a] === b)) same++; else diff++; }));
+check(diff === 0 && same > 80, `pole on an east track = the user's structure block for block (${same} same, ${diff} different)`);
 ({ dim, player } = world({ id: 'r1d' }));
 m = await runTool(railway, { tracks: 3, poleEvery: 100 }, { player, points: [{ x: 0, y: 0, z: 0 }, { x: 52, y: 0, z: 30 }] });
 console.log(m.slice(-1)[0]);
-const lam = [...dim.map.values()].filter(p => p.id === 'minecraft:lantern').length; console.log('lanterns', lam);
-check(lam === 3 && /전신주 1개/.test(m.slice(-1)[0]), '3 tracks at 30°: one wider gantry, lamps on both posts and the beam');
+const skulls = [...dim.map.values()].filter(p => p.id === 'minecraft:wither_skeleton_skull').length;
+check(skulls === 2 && /전신주 1개, 전선 10가닥/.test(m.slice(-1)[0]), '3 tracks at 30°: the 3-track gantry (2 post tops, 10 wires)');
+({ dim, player } = world({ id: 'r1e' }));
+m = await runTool(railway, { tracks: 4, poleEvery: 100, track: '-' }, { player, points: [{ x: 0, y: 0, z: 0 }, { x: 40, y: 0, z: 0 }] });
+const hz = [...dim.map].filter(([k, p]) => p.id === 'minecraft:hopper' && k.split(',')[1] === '8').map(([k]) => +k.split(',')[2]).sort((a, b) => a - b);
+const pz = [...dim.map].filter(([k, p]) => p.id === 'minecraft:andesite_wall' && k.split(',')[1] === '5').map(([k]) => +k.split(',')[2]).sort((a, b) => a - b);
+console.log('4 tracks: hangers', hz.join(), 'posts', pz.join());
+check(hz.length === 8 && pz.length === 2 && pz[1] - pz[0] === 40 && /전선 12가닥/.test(m.slice(-1)[0]), '4 tracks: the gantry widened by one 9-block bay (posts 40 apart, 8 hangers, 12 wires)');
+({ dim, player } = world({ id: 'r1f' }));
+m = await runTool(railway, { pole: '@기둥', poleEvery: 20 }, { player, points: [{ x: 0, y: 0, z: 0 }, { x: 40, y: 0, z: 0 }] });
+console.log(m.slice(-1)[0]);
+const gz = [...dim.map].filter(([k, p]) => p.id === 'minecraft:heavy_core' && k.split(',')[0] === '20').map(([k]) => +k.split(',')[2]).sort((a, b) => a - b);
+check(gz.join() === '-12,-10,10,12' && /전선 4가닥/.test(m.slice(-1)[0]) && ![...dim.map.values()].some(p => p.id === 'minecraft:anvil' && false), 'posts only: both sides, feeder wires from their tops: ' + gz.join());
 
 // ---- 45° diagonal: rails one block wide, anvils turned to the nearest 90°
 ({ dim, player } = world({ id: 'r2' }));
@@ -90,7 +109,7 @@ check(posts.length === 5 * 2, '5 poles × 2 posts, turned across an x track: ' +
 check(posts.every(k => Math.abs(+k.split(',')[2]) === 5), 'posts 5 blocks either side of the track centre');
 const buttons = [...dim.map].filter(([, p]) => p.id.endsWith('button'));
 check(buttons.length > 20 && buttons.some(([k]) => +k.split(',')[1] < 7), 'wires hang between poles (with sag): ' + buttons.length);
-check(buttons.filter(([k]) => k.split(',')[1] !== '7').every(([, p]) => p.states.facing_direction === 1), 'wire buttons lie flat');
+check(buttons.every(([, p]) => p.states.facing_direction === 0), 'wires hang like the pole\'s own buttons (facing down)');
 // diagonal 30° with exact angle, and 90° steps
 for (const ang of ['exact', '90']) {
   ({ dim, player } = world({ id: 'r4' + ang }));

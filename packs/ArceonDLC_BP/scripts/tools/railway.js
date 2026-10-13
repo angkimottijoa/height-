@@ -8,7 +8,7 @@ import { listAssets } from './assets.js';
 import { builtinPole, builtinTile, freeWires, loadPole, presetTile, standPoles, stringWires, sweep, TOP_MIX } from '../lib/rail.js';
 import { loadTracks, trackNames } from '../lib/track_presets.js';
 
-const BUILTIN_POLE = '@기본';
+const BUILTIN_POLE = '@기본', POST_ONLY = '@기둥';
 
 const DETAIL = [
     { key: 'gauge', type: 'slider', label: '레일(모루) 사이 칸 수', default: 2, min: 1, max: 8 },
@@ -52,7 +52,8 @@ export default {
             { key: 'detail', type: 'toggle', label: '기본 선로 고급 설정 (레일 사이 칸 수·블록 비율, 다음 화면)', default: false },
             {
                 key: 'pole', type: 'dropdown', label: '전신주', default: BUILTIN_POLE, options: [
-                    { value: BUILTIN_POLE, label: '기본 전신주 (선로 수에 맞춰 폭 조절)' },
+                    { value: BUILTIN_POLE, label: '기본 전신주 (직접 지은 문형 전신주, 선로 수에 맞춤)' },
+                    { value: POST_ONLY, label: '기본 기둥만 (양쪽 기둥 + 급전선)' },
                     { value: '', label: '없음' },
                     ...assets.map(n => ({ value: n, label: '커스텀 (에셋): ' + n })),
                 ],
@@ -68,6 +69,7 @@ export default {
             },
             { key: 'wires', type: 'toggle', label: '전선 걸기 (전신주 안의 버튼끼리 이음)', default: true },
             { key: 'wireBlock', type: 'block', label: '전선 블록 (버튼)', default: 'polished_blackstone_button', palette: false },
+            { key: 'wireSupport', type: 'toggle', label: '전선 버튼에 보이지 않는 방벽 받치기 (안 떨어지게)', default: true },
             { key: 'wireGap', type: 'slider', label: '전선 버튼 간격 (칸)', default: 2, min: 1, max: 8 },
             { key: 'sag', type: 'slider', label: '전선 처짐 (칸)', default: 1, min: 0, max: 6 },
             { key: 'wireAt', type: 'text', label: '전신주 없이 전선만: 위치 "가로:높이" 쉼표로', placeholder: '-4:7, 4:7', default: '' },
@@ -108,9 +110,9 @@ export default {
         if (tile.describe)
             parts.push(tile.describe);
         if (v.pole) {
-            // the built-in pole spans the track: from the built-in tile, or a default double track
-            const bed = tile.centres ? tile : builtinTile({ tracks: v.tracks ?? 2 });
-            const pole = v.pole === BUILTIN_POLE ? builtinPole(bed.centres, bed.w) : loadPole(v.pole);
+            // the built-in poles come in the width of the chosen number of tracks
+            const pole = v.pole === BUILTIN_POLE ? builtinPole('gantry', v.tracks ?? 2)
+                : v.pole === POST_ONLY ? builtinPole('post', v.tracks ?? 2) : loadPole(v.pole);
             const poles = yield* standPoles(road, pole, v, paint);
             parts.push(`전신주 ${poles.length}개`);
             if (v.wires) {

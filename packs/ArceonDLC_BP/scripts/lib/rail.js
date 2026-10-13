@@ -22,7 +22,10 @@
  * same anchor on the next pole by a sagging line of buttons.
  */
 import { world } from '@minecraft/server';
-import { isAirId, parseBlock, parsePattern, permToString } from '../core/blocks.js';
+import { isAirId, parseBlock, parsePattern, perm, permToString } from '../core/blocks.js';
+import { POLES } from './pole_data.js';
+
+const POLE_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 import { apply, matrix, turnStates } from '../core/turn.js';
 import { layout } from '../tools/lanes.js';
 import { listAssets, PREFIX } from '../tools/assets.js';
@@ -228,87 +231,67 @@ export function loadPole(name) {
                 const d = [x - o.x, y - o.y, z - o.z];
                 cells.set(d.join(','), p);
                 if (/_button$/.test(p.type.id))
-                    buttons.push(d);
+                    buttons.push(d.concat(p.getState('facing_direction') === 0 ? 'hang' : 'lie'));
             }
     // a stable order, so anchor i on one pole meets anchor i on the next
     buttons.sort((a, b) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2]);
-    return { cells, buttons, dirAng: DIR_ANG[meta.dir] ?? 0, name };
+    return { cells, buttons: buttons.map(b => b.slice(0, 3)), styles: buttons.map(b => b[3]), dirAng: DIR_ANG[meta.dir] ?? 0, name };
 }
 
 /**
- * The built-in catenary gantry (after the user's own build): two wall posts
- * just outside the track bed, a truss beam (slab chords with zig-zag slab
- * braces and a lamp in the middle), insulators hanging over each track
- * (contact wires) and arms with insulators at the post tops (feeder wires).
- * Made facing north, x = across (right of travel), so it fits any track:
- * `centres` = the track centres, `width` = the track bed width.
+ * The built-in poles: the user's own gantries for 1, 2 and 3 tracks, block for
+ * block (lib/pole_data.js, extracted from their world). More tracks widen the
+ * 3-track gantry by repeating its middle 9-block bay. 'post' = the single post
+ * (feeder wires only), stood on both sides where the gantry posts would be.
+ * Built with the track running east; cells "along,up,sideways".
  */
-export function builtinPole(centres = [-4.5, 4.5], width = 17) {
-    const cells = new Map(), anchors = [];
-    const B = (t) => parseBlock(t);
-    const m = {
-        foot: B('cobbled_deepslate_wall[wall_post_bit=true]'),
-        post: B('andesite_wall[wall_post_bit=true]'),
-        ring: B('mossy_cobblestone_wall[wall_post_bit=true]'),
-        collar: B('polished_deepslate_wall[wall_post_bit=true]'),
-        head: B('diorite_wall[wall_post_bit=true]'),
-        joint: B('andesite'),
-        low: B('andesite_slab[bottom]'),
-        high: B('andesite_slab[top]'),
-        bracket: B('polished_deepslate_slab[bottom]'),
-        lamp: B('lantern'),
-        insulator: B('cobbled_deepslate_wall[wall_post_bit=true]'),
-        rodUp: B('end_rod[facing_direction=1]'),
-        rodWest: B('end_rod[facing_direction=4]'),
-        rodEast: B('end_rod[facing_direction=5]'),
+export function builtinPole(kind = 'gantry', tracks = 2) {
+    const n = Math.max(1, Math.floor(tracks));
+    const gantry = (k) => {
+        if (k <= 3)
+            return POLES[String(k)];
+        const base = POLES['3'], extra = k - 3, cut = 21, bay = 9;
+        const rows = base.rows.map(r => r.slice(0, cut) + r.slice(cut - bay, cut).repeat(extra) + r.slice(cut));
+        const w = base.w + bay * extra, centre = Math.floor((w - 1) / 2);
+        const anchors = [];
+        for (const [u, y, style] of base.anchors) {
+            const z = u + base.centre;
+            if (z >= cut)
+                anchors.push([z + bay * extra - centre, y, style]);
+            else {
+                anchors.push([z - centre, y, style]);
+                if (z >= cut - bay)
+                    for (let e = 1; e <= extra; e++)
+                        anchors.push([z + bay * e - centre, y, style]);
+            }
+        }
+        return { ...base, w, centre, rows, anchors };
     };
-    const set = (x, y, perm) => cells.set(`${x},${y},0`, perm);
-    const P = Math.ceil(width / 2) + 2;
-    for (const side of [-1, 1]) {
-        const x = side * P, out = x + side, inn = x - side;
-        set(x, 0, m.foot);
-        for (let y = 1; y <= 7; y++)
-            set(x, y, y === 2 ? m.ring : m.post);
-        set(x, 8, m.collar);
-        set(x, 9, m.joint);
-        set(x, 10, m.post);
-        set(x, 11, m.joint);
-        set(x, 12, m.head);
-        set(x, 13, m.head);
-        set(x, 14, m.lamp);
-        // brackets and feeder arms either side of the post top
-        for (const a of [out, inn]) {
-            set(a, 11, m.bracket);
-            set(a, 12, (a - x) * side > 0 ? (side < 0 ? m.rodWest : m.rodEast) : (side < 0 ? m.rodEast : m.rodWest));
-            set(a, 14, m.rodUp);
-            anchors.push([a, 12, 0]);
+    const cells = new Map(), buttons = [], styles = [];
+    const perms = new Map();
+    const add = (data, shift) => {
+        const pal = data.palette.map(q => perm(q.name, q.states));
+        data.rows.forEach((row, y) => {
+            for (let z = 0; z < row.length; z++) {
+                const c = row[z];
+                if (c !== '.')
+                    cells.set(`0,${y},${z - data.centre + shift}`, pal[POLE_CHARS.indexOf(c)]);
+            }
+        });
+        for (const [u, y, style] of data.anchors) {
+            buttons.push([0, y, u + shift]);
+            styles.push(style);
         }
+    };
+    const g = gantry(n);
+    if (kind === 'post') {
+        const post = POLES.post, left = 2 - g.centre, right = g.w - 3 - g.centre;
+        add(post, left);
+        add(post, right);
     }
-    // the truss: bottom chord (top slabs), top chord (bottom slabs), braces between
-    for (let x = -P + 1; x < P; x++)
-        set(x, 9, m.high);
-    for (let x = -P + 2; x <= P - 2; x++)
-        set(x, 11, m.low);
-    const braces = [[-2, -1]];
-    for (let a = -(P - 2); a + 1 < -2; a += 2)
-        braces.push([a, a + 1]);
-    for (const [hi, lo] of braces) {
-        set(hi, 10, m.high);
-        set(lo, 10, m.low);
-        set(-hi, 10, m.high);
-        set(-lo, 10, m.low);
-    }
-    set(0, 10, m.lamp);
-    // over each track: two insulators, the contact wires under them
-    for (const u of centres)
-        for (const x of [Math.round(u - 1.5), Math.round(u + 1.5)]) {
-            if (Math.abs(x) >= P)
-                continue;
-            set(x, 8, m.insulator);
-            anchors.push([x, 7, 0]);
-        }
-    anchors.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
-    return { cells, buttons: anchors, dirAng: 0, name: '기본 전신주' };
+    else
+        add(g, 0);
+    return { cells, buttons, styles, dirAng: 90, name: kind === 'post' ? '기둥만' : '기본 전신주' };
 }
 
 /**
@@ -391,39 +374,51 @@ const anchor = (pole, d) => {
     return { x: pole.at.x + q[0] + 0.5, y: pole.at.y + q[1] + 0.5, z: pole.at.z + q[2] + 0.5 };
 };
 
-/** Lay buttons every `gap` blocks along a sagging line from a to b. */
-function wire(a, b, gap, sag, perm, paint) {
+/**
+ * Lay buttons every `gap` blocks along a sagging line from a to b. 'hang'
+ * buttons hang from the block above, 'lie' ones lie on the block below; with
+ * `support`, an invisible barrier is put there so they never drop.
+ */
+function wire(a, b, gap, sag, w, paint) {
     const L = Math.hypot(b.x - a.x, b.y - a.y, b.z - a.z);
     const n = Math.max(1, Math.round(L / gap));
     for (let i = 0; i <= n; i++) {
         const t = i / n;
-        const x = a.x + (b.x - a.x) * t, z = a.z + (b.z - a.z) * t;
-        const y = a.y + (b.y - a.y) * t - sag * 4 * t * (1 - t);
-        const key = `${Math.floor(x)},${Math.floor(y)},${Math.floor(z)}`;
-        if (!paint.get(key))
-            paint.set(key, perm);
+        const x = Math.floor(a.x + (b.x - a.x) * t), z = Math.floor(a.z + (b.z - a.z) * t);
+        const y = Math.floor(a.y + (b.y - a.y) * t - sag * 4 * t * (1 - t));
+        const key = `${x},${y},${z}`;
+        if (paint.get(key))
+            continue;
+        paint.set(key, w.perm);
+        const sk = `${x},${y + w.up},${z}`;
+        if (w.support && !paint.get(sk))
+            paint.set(sk, w.support);
     }
 }
 
-/** A button lying flat (as wire), whatever button block was chosen. */
-export function wirePerm(text) {
+/** A button as wire, whatever button block was chosen: hanging (facing down) or lying flat. */
+export function wirePerm(text, style = 'lie') {
     let p = parseBlock(text || 'polished_blackstone_button');
     try {
         if ('facing_direction' in p.getAllStates())
-            p = p.withState('facing_direction', 1);
+            p = p.withState('facing_direction', style === 'hang' ? 0 : 1);
     }
     catch (e) { }
     return p;
 }
+const wireStyle = (v, style) => ({
+    perm: wirePerm(v.wireBlock, style),
+    up: style === 'hang' ? 1 : -1,
+    support: v.wireSupport !== false ? perm('minecraft:barrier') : null,
+});
 
 /** Wires between neighbouring poles, anchor to anchor. */
 export function* stringWires(poles, pole, v, paint) {
-    const perm = wirePerm(v.wireBlock);
+    const ws = { hang: wireStyle(v, 'hang'), lie: wireStyle(v, 'lie') };
     const gap = Math.max(1, Math.floor(v.wireGap ?? 2)), sag = Math.max(0, Number(v.sag ?? 1));
     let n = 0;
     for (let i = 0; i + 1 < poles.length; i++) {
-        for (const d of pole.buttons)
-            wire(anchor(poles[i], d), anchor(poles[i + 1], d), gap, sag, perm, paint);
+        pole.buttons.forEach((d, j) => wire(anchor(poles[i], d), anchor(poles[i + 1], d), gap, sag, ws[pole.styles?.[j]] ?? ws.lie, paint));
         if (++n % 8 === 0)
             yield;
     }
@@ -432,13 +427,16 @@ export function* stringWires(poles, pole, v, paint) {
 
 /** Wires without poles: straight along the curve at "sideways:height" offsets. */
 export function* freeWires(road, v, paint) {
-    const perm = wirePerm(v.wireBlock);
+    const w = wireStyle(v, 'lie');
     const gap = Math.max(1, Math.floor(v.wireGap ?? 2));
     const spots = String(v.wireAt ?? '').split(/[,\s]+/).filter(Boolean).map(t => t.split(':').map(Number)).filter(a => a.length === 2 && a.every(Number.isFinite));
     for (const [u, hgt] of spots) {
         road.trace(u).forEach((c, i) => {
-            if (i % gap === 0)
-                paint.set(`${c.x},${c.y + hgt},${c.z}`, perm);
+            if (i % gap === 0) {
+                paint.set(`${c.x},${c.y + hgt},${c.z}`, w.perm);
+                if (w.support)
+                    paint.set(`${c.x},${c.y + hgt - 1},${c.z}`, w.support);
+            }
         });
         yield;
     }
