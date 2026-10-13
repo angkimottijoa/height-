@@ -7,6 +7,8 @@ import { ask } from '../ui/form.js';
 import { listAssets } from './assets.js';
 import { builtinPole, builtinTile, freeWires, loadPole, presetTile, standPoles, stringWires, sweep, TOP_MIX } from '../lib/rail.js';
 import { loadTracks, trackNames } from '../lib/track_presets.js';
+import { BRIDGES, bridgeById, bridgeTile, geometry, pierPiece, polish, STEEL } from '../lib/bridges.js';
+import { poleSpots, stamp } from '../lib/rail.js';
 
 const BUILTIN_POLE = '@기본', POST_ONLY = '@기둥';
 
@@ -49,6 +51,18 @@ export default {
                     ...[3, 4, 5, 6, 7, 8].map(n => ({ value: n, label: n + '개' })),
                 ],
             },
+            {
+                key: 'bridge', type: 'dropdown', label: '교량 (선로를 다리 위에)', default: '', options: [
+                    { value: '', label: '없음 (땅 위)' },
+                    ...BRIDGES.map(b => ({ value: b.id, label: (b.group === 'steel' ? '철교: ' : '콘크리트교: ') + b.name })),
+                ],
+                tooltip: '곡선 점 높이가 선로 바닥 높이입니다. 교각은 경간마다 땅까지 내려갑니다.',
+            },
+            {
+                key: 'steel', type: 'dropdown', label: '철교 색 (강재 도장)', default: 'weathered',
+                options: Object.entries(STEEL).map(([value, s]) => ({ value, label: s.name })),
+            },
+            { key: 'span', type: 'slider', label: '교량 경간 (교각 사이 칸 수, 트러스·아치는 고정)', default: 0, min: 0, max: 60 },
             { key: 'detail', type: 'toggle', label: '기본 선로 고급 설정 (레일 사이 칸 수·블록 비율, 다음 화면)', default: false },
             {
                 key: 'pole', type: 'dropdown', label: '전신주', default: BUILTIN_POLE, options: [
@@ -119,7 +133,49 @@ export default {
             }
             tile = builtinTile(d);
         }
-        const road = yield* sweep(ctx, v.track === '-' ? { ...v, clearAir: false } : v, tile, paint);
+        if (v.bridge) {
+            // the bridge first: the track is laid over it
+            const d = bridgeById(v.bridge);
+            if (!d)
+                throw new Error('없는 교량 종류: ' + v.bridge);
+            const bed = tile.rails ? tile : builtinTile({ tracks: v.tracks ?? 2 });
+            const g = geometry(d, bed, { paint: v.steel });
+            const bt = bridgeTile(d, g);
+            const bp = new Map();
+            const deck = yield* sweep(ctx, { ...v, clearAir: false, down: false }, bt, bp);
+            const span = d.fixed ? d.span : (Math.floor(v.span) || d.span);
+            const S = deck.samples, edit = ctx.edit;
+            let si = 0, piers = 0;
+            const turned = new Map();
+            // a pier every span and one at each end (a short last span is stretched to the end)
+            const spots = poleSpots(deck, { poleMode: 'every', poleEvery: span });
+            const rest = deck.total - spots[spots.length - 1];
+            if (rest > 1) {
+                if (!d.fixed && rest < span / 2 && spots.length > 1)
+                    spots[spots.length - 1] = deck.total;
+                else
+                    spots.push(deck.total);
+            }
+            for (const s of spots) {
+                while (si + 1 < S.length && S[si].s + 1e-6 < s)
+                    si++;
+                const p = S[si];
+                const y = Math.floor(p.y);
+                const ground = edit.highest(Math.floor(p.x), Math.floor(p.z), Math.max(edit.minY, y - 96), y + d.dyMin - 1);
+                const gdy = Math.max(ground - y, d.dyMin - 96);
+                if (gdy >= d.dyMin - 1)
+                    continue; // the deck is on the ground here
+                stamp(p, pierPiece(d, g, gdy, bt.perm), v.poleAngle, bp, turned);
+                if (++piers % 2 === 0)
+                    yield;
+            }
+            yield* polish(bp);
+            for (const [k, perm] of bp)
+                if (perm)
+                    paint.set(k, perm);
+            parts.push(`${d.name} (교각 ${piers}개, 경간 ${span}칸)`);
+        }
+        const road = yield* sweep(ctx, v.track === '-' ? { ...v, clearAir: false } : v.bridge ? { ...v, down: false } : v, tile, paint);
         if (tile.describe)
             parts.push(tile.describe);
         if (v.pole) {

@@ -523,65 +523,69 @@ export function* standPoles(road, pole, v, paint) {
     for (const s of poleSpots(road, v)) {
         while (si + 1 < S.length && S[si].s + 1e-6 < s)
             si++;
-        const p = S[si];
-        const at = { x: Math.floor(p.x), y: Math.floor(p.y), z: Math.floor(p.z) };
-        const delta = ang(p.tx, p.tz) - pole.dirAng;
-        const m90 = matrix(snap90(delta), 0, 0).map(r => r.map(Math.round));
-        const turnState = (perm) => {
-            const k = permToString(perm) + '@' + snap90(delta);
-            let o = turned.get(k);
-            if (!o)
-                turned.set(k, o = turnStates(perm, m90));
-            return o;
-        };
-        // right angles turn exactly by 90° steps (no half-way points needed)
-        const square = Math.abs(delta - Math.round(delta / 90) * 90) < 0.5;
-        if (v.poleAngle === '90' || square) {
-            for (const [k, perm] of pole.cells) {
-                const d = apply(m90, k.split(',').map(Number)).map(Math.round);
-                paint.set(`${at.x + d[0]},${at.y + d[1]},${at.z + d[2]}`, turnState(perm));
-            }
-            out.push({ at, m: m90 });
-        }
-        else {
-            // exact angle: push every source block forward, plus half-way points
-            // towards the pole blocks next to it, so parts stay joined when turned
-            // (no gaps) and one-block-thin parts stay thin
-            const m = matrix(delta, 0, 0);
-            const has = (x, y, z) => pole.cells.has(x + ',' + y + ',' + z);
-            const own = new Set();
-            for (const [k, perm] of pole.cells) {
-                const [dx, dy, dz] = k.split(',').map(Number);
-                const out2 = turnState(perm);
-                const xs = [0], zs = [0];
-                if (has(dx + 1, dy, dz))
-                    xs.push(0.5);
-                if (has(dx - 1, dy, dz))
-                    xs.push(-0.5);
-                if (has(dx, dy, dz + 1))
-                    zs.push(0.5);
-                if (has(dx, dy, dz - 1))
-                    zs.push(-0.5);
-                for (const sx of xs)
-                    for (const sz of zs) {
-                        if (sx && sz && !has(dx + Math.sign(sx), dy, dz + Math.sign(sz)))
-                            continue;
-                        const q = apply(m, [dx + sx, dy, dz + sz]);
-                        const key = `${at.x + Math.round(q[0])},${at.y + dy},${at.z + Math.round(q[2])}`;
-                        // a block's own spot wins over a neighbour's half-way fill
-                        if (!sx && !sz)
-                            own.add(key);
-                        else if (own.has(key))
-                            continue;
-                        paint.set(key, out2);
-                    }
-            }
-            out.push({ at, m });
-        }
+        out.push(stamp(S[si], pole, v.poleAngle, paint, turned));
         if (++i % 4 === 0)
             yield;
     }
     return out;
+}
+
+/**
+ * Put a pole-like piece (cells "dx,dy,dz" made facing pole.dirAng) at curve
+ * sample p, turned to the track there: exactly (each block pushed forward with
+ * half-way points to its neighbours, so parts stay joined and thin parts thin)
+ * or by 90° steps (angle '90', or when the track is square anyway).
+ * Returns {at, m}: where it stands and the turn used (for its wire anchors).
+ */
+export function stamp(p, pole, angle, paint, turned = new Map()) {
+    const at = { x: Math.floor(p.x), y: Math.floor(p.y), z: Math.floor(p.z) };
+    const delta = ang(p.tx, p.tz) - pole.dirAng;
+    const m90 = matrix(snap90(delta), 0, 0).map(r => r.map(Math.round));
+    const turnState = (perm) => {
+        const k = permToString(perm) + '@' + snap90(delta);
+        let o = turned.get(k);
+        if (!o)
+            turned.set(k, o = turnStates(perm, m90));
+        return o;
+    };
+    const square = Math.abs(delta - Math.round(delta / 90) * 90) < 0.5;
+    if (angle === '90' || square) {
+        for (const [k, perm] of pole.cells) {
+            const d = apply(m90, k.split(',').map(Number)).map(Math.round);
+            paint.set(`${at.x + d[0]},${at.y + d[1]},${at.z + d[2]}`, turnState(perm));
+        }
+        return { at, m: m90 };
+    }
+    const m = matrix(delta, 0, 0);
+    const has = (x, y, z) => pole.cells.has(x + ',' + y + ',' + z);
+    const own = new Set();
+    for (const [k, perm] of pole.cells) {
+        const [dx, dy, dz] = k.split(',').map(Number);
+        const out2 = turnState(perm);
+        const xs = [0], zs = [0];
+        if (has(dx + 1, dy, dz))
+            xs.push(0.5);
+        if (has(dx - 1, dy, dz))
+            xs.push(-0.5);
+        if (has(dx, dy, dz + 1))
+            zs.push(0.5);
+        if (has(dx, dy, dz - 1))
+            zs.push(-0.5);
+        for (const sx of xs)
+            for (const sz of zs) {
+                if (sx && sz && !has(dx + Math.sign(sx), dy, dz + Math.sign(sz)))
+                    continue;
+                const q = apply(m, [dx + sx, dy, dz + sz]);
+                const key = `${at.x + Math.round(q[0])},${at.y + dy},${at.z + Math.round(q[2])}`;
+                // a block's own spot wins over a neighbour's half-way fill
+                if (!sx && !sz)
+                    own.add(key);
+                else if (own.has(key))
+                    continue;
+                paint.set(key, out2);
+            }
+    }
+    return { at, m };
 }
 
 /** World position of anchor `d` on a stood pole (block centre). */

@@ -205,3 +205,27 @@ check(lonely.length === 0 && st6.length <= 27 * 1.6, 'exact 30° pole: joined, n
 const beam = st6.filter(([, y]) => y === 8);
 const zs = new Set(beam.map(a => a[0] + ',' + a[2]));
 console.log(view(dim, 8, -8, -8, 8, 8).join('\n'));
+
+// ---- bridges: every design builds over the ground, piers reach it, bolts sit on plates, bars join up
+{
+  const { BRIDGES } = await import('./scripts/lib/bridges.js');
+  check(BRIDGES.filter(b => b.group === 'steel').length === 3 && BRIDGES.filter(b => b.group === 'concrete').length === 5, '3 steel + 5 concrete bridge designs');
+  for (const b of BRIDGES) for (const pts of [[{ x: 0, y: 0, z: 0 }, { x: 60, y: 0, z: 0 }], [{ x: 0, y: 0, z: 0 }, { x: 30, y: 0, z: 6 }, { x: 52, y: 0, z: 34 }]]) {
+    const { dim, player } = world({ id: 'br' + b.id + pts.length });
+    for (let x = -20; x <= 90; x++) for (let z = -30; z <= 70; z++) put(dim, x, -24, z, 'grass_block');
+    const m = await runTool(railway, { bridge: b.id, steel: 'weathered' }, { player, points: pts });
+    const last = m.slice(-1)[0];
+    const piers = +(/교각 (\d+)개/.exec(last)?.[1] ?? 0);
+    const cells = [...dim.map].filter(([k, p]) => !p.id.endsWith('air') && !(p.id === 'minecraft:grass_block' && k.split(',')[1] === '-24'));
+    const ys = cells.map(([k]) => +k.split(',')[1]);
+    const footings = cells.filter(([k]) => k.split(',')[1] === '-24').length;
+    const get = (x, y, z) => dim.map.get(`${x},${y},${z}`);
+    const FACE = [[0, -1, 0], [0, 1, 0], [0, 0, -1], [0, 0, 1], [-1, 0, 0], [1, 0, 0]];
+    const bolts = cells.filter(([k, p]) => p.id.endsWith('button') && !(p.states.facing_direction <= 1));
+    const loose = bolts.filter(([k, p]) => { const [x, y, z] = k.split(',').map(Number); const f = FACE[p.states.facing_direction]; const q = get(x - f[0], y - f[1], z - f[2]); return !q || /air|button|bars|chain|rod/.test(q.id); });
+    const bars = cells.filter(([, p]) => p.id.endsWith('bars'));
+    const joined = bars.filter(([, p]) => Object.entries(p.states).some(([k, v]) => k.startsWith('minecraft:connection_') && v));
+    check(/교각 \d+개/.test(last) && piers >= 2 && footings > 20 && Math.min(...ys) <= -24 + 1 && loose.length === 0 && (!bars.length || joined.length / bars.length > (b.id === "truss" ? 0.7 : 0.8)),
+      `${b.id} (${pts.length === 2 ? 'straight' : 'curve'}): piers ${piers}, footing ${footings}, bolts ${bolts.length} all on plates (${loose.length} loose), bars joined ${joined.length}/${bars.length}`);
+  }
+}
