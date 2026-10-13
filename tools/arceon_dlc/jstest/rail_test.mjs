@@ -5,9 +5,10 @@ const { session } = await import('./scripts/core/session.js');
 const assets = await import('./scripts/tools/assets.js');
 const railway = await load('tools/railway.js');
 const trackpreset = await load('tools/trackpreset.js');
+const { POLES } = await import('./scripts/lib/pole_data.js');
 const check = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); if (!c) process.exitCode = 1; };
 const short = (p) => p.id.replace('minecraft:', '');
-const ch = (p) => !p ? ' ' : p.id.endsWith('anvil') ? 'A' : p.id.endsWith('slab') ? 's' : p.id.endsWith('gravel') ? '.' : p.id.endsWith('button') ? 'b' : p.id.endsWith('air') ? ' ' : '#';
+const ch = (p) => !p ? ' ' : p.id.endsWith('anvil') ? 'A' : p.id.endsWith('stairs') ? 'S' : p.id === 'minecraft:mud_bricks' ? 'M' : p.id.endsWith('slab') ? 's' : p.id.endsWith('gravel') ? '.' : p.id.endsWith('button') ? 'b' : p.id.endsWith('air') ? ' ' : '#';
 const view = (dim, y, x0, z0, x1, z1) => { const r = []; for (let z = z0; z <= z1; z++) { let s = ''; for (let x = x0; x <= x1; x++) s += ch(dim.map.get(`${x},${y},${z}`)); r.push(s); } return r; };
 
 // ---- straight along +x, built-in double track
@@ -22,7 +23,10 @@ const railRows = l1.filter(r => /^A+$/.test(r.trim()));
 check(railRows.length === 4, '4 rails, continuous: ' + railRows.length);
 const anv = [...dim.map.values()].filter(p => p.id.endsWith('anvil'));
 check(anv.every(p => ['east', 'west'].includes(p.states['minecraft:cardinal_direction'])), 'anvils lie along the track (east/west for an x track)');
-check(l1.filter(r => /^(#s)+#?$/.test(r.trim())).length === 8, 'sleepers (full blocks) 1 on, 1 off, slabs between');
+check(l1.filter(r => /^(Ms)+M?$/.test(r.trim())).length === 4 && l1.filter(r => /^(Ss)+S?$/.test(r.trim())).length === 4, 'sleepers: mud bricks between the rails, stairs at both ends, 1 on 1 off, slabs between');
+const stairs = [...dim.map].filter(([k, p]) => p.id.endsWith('stairs') && +k.split(',')[0] === 4).map(([k, p]) => [+k.split(',')[2], p.states.weirdo_direction]).sort((a, b) => a[0] - b[0]);
+console.log('sleeper end stairs at x=4 (z, facing):', JSON.stringify(stairs));
+check(stairs.map(a => a[1]).join() === '2,3,2,3', 'end stairs climb towards the rails (high side inside), like the hand-built sleeper');
 const rows = view(dim, 1, 0, -11, 30, 11);
 check(rows.filter(r => r.includes('A')).length === 4 && rows.indexOf(rows.find(r => r.includes('A')), 0) + 3 === rows.findIndex((r, i) => i > rows.findIndex(q => q.includes('A')) && r.includes('A')), 'two cells between the two anvils');
 const top = {}; for (const [k, p] of dim.map) if (k.split(',')[1] === '1' && p.id.endsWith('slab')) top[short(p)] = (top[short(p)] ?? 0) + 1;
@@ -56,7 +60,6 @@ const wb = [...dim.map].filter(([, p]) => p.id.endsWith('button'));
 const sup = (k, dy) => { const [x, y, z] = k.split(',').map(Number); return dim.map.get(`${x},${y + dy},${z}`); };
 check(wb.every(([k, p]) => p.states.facing_direction === 0 ? sup(k, 1) : sup(k, -1)), 'every wire button is held by a block (barrier) above / below');
 check(wb.some(([, p]) => p.states.facing_direction === 0) && wb.some(([, p]) => p.states.facing_direction === 1), 'contact wires hang, feeder wires lie');
-const { POLES } = await import('./scripts/lib/pole_data.js');
 let same = 0, diff = 0;
 POLES['2'].rows.forEach((r, y) => [...r].forEach((c, z) => { if (c === '.') return; const want = POLES['2'].palette['ABCDEFGHIJKLMNOPQRSTUVWXYZ'.indexOf(c)]; const got = dim.map.get(`20,${y},${z - 13}`); if (got && got.id === want.name && Object.entries(want.states).every(([a, b]) => got.states[a] === b)) same++; else diff++; }));
 check(diff === 0 && same > 80, `pole on an east track = the user's structure block for block (${same} same, ${diff} different)`);
@@ -76,6 +79,61 @@ m = await runTool(railway, { pole: '@기둥', poleEvery: 20 }, { player, points:
 console.log(m.slice(-1)[0]);
 const gz = [...dim.map].filter(([k, p]) => p.id === 'minecraft:heavy_core' && k.split(',')[0] === '20').map(([k]) => +k.split(',')[2]).sort((a, b) => a - b);
 check(gz.join() === '-12,-10,10,12' && /전선 4가닥/.test(m.slice(-1)[0]) && ![...dim.map.values()].some(p => p.id === 'minecraft:anvil' && false), 'posts only: both sides, feeder wires from their tops: ' + gz.join());
+
+// ---- the gantry generator rebuilds the user's 1 / 2 / 3-track structures
+{
+  const rail = await import('./scripts/lib/rail.js');
+  const CH = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  for (const n of [1, 2, 3]) {
+    const t = rail.builtinTile({ tracks: n });
+    const g = rail.builtinPole('gantry', t.rails, t.bed);
+    const d = POLES[String(n)];
+    const want = new Map();
+    d.rows.forEach((r, y) => [...r].forEach((c, z) => { if (c !== '.') want.set(`0,${y},${z - d.centre}`, d.palette[CH.indexOf(c)]); }));
+    let bad = [];
+    for (const [k, w] of want) { const p = g.cells.get(k); const st = { ...w.states }; if (n === 3 && w.name.endsWith('trapdoor')) delete st.direction;
+      if (!p || p.id !== w.name || !Object.entries(st).every(([a, b]) => p.states[a] === b)) bad.push(k + ' ' + w.name + ' got ' + (p?.id ?? '-')); }
+    for (const k of g.cells.keys()) if (!want.has(k)) bad.push(k + ' extra ' + g.cells.get(k).id);
+    const wa = d.anchors.map(a => `${a[0]},${a[1]},${a[2]}`).sort().join(' '), ga = g.buttons.map((b, i) => `${b[2]},${b[1]},${g.styles[i]}`).sort().join(' ');
+    check(bad.length === 0 && wa === ga, `${n} track(s): generated gantry = mystructure:${n} block for block, same wire ends` + (bad.length ? ' ' + bad.slice(0, 5).join('; ') : '') + (wa !== ga ? ` ${wa} | ${ga}` : ''));
+  }
+  for (const n of [5, 6]) {
+    const t = rail.builtinTile({ tracks: n });
+    const g = rail.builtinPole('gantry', t.rails, t.bed);
+    const hz = [...g.cells].filter(([k, p]) => p.id === 'minecraft:hopper' && k.split(',')[1] === '8').length;
+    check(hz === 2 * n && g.buttons.length === 2 * n + 4, `${n} tracks: a hanger over each of the ${2 * n} rails, ${2 * n + 4} wires`);
+  }
+  const t = rail.builtinTile({ tracks: 2, gauge: 4, between: 3, margin: 2 });
+  const g = rail.builtinPole('gantry', t.rails, t.bed);
+  const hz = [...g.cells].filter(([k, p]) => p.id === 'minecraft:hopper' && k.split(',')[1] === '8').map(([k]) => +k.split(',')[2]).sort((a, b) => a - b);
+  const posts = [...g.cells].filter(([k, p]) => p.id === 'minecraft:tuff_brick_wall').map(([k]) => +k.split(',')[2]).sort((a, b) => a - b);
+  check(hz.join() === t.rails.join() && posts[0] < t.bed[0] && posts[1] > t.bed[1], `wider gauge / spacing: hangers follow the rails (${hz}), posts outside the bed (${posts} vs ${t.bed})`);
+}
+
+// ---- pole spacing: fixed, closer on curves, by count, typed gaps
+{
+  const rail = await import('./scripts/lib/rail.js');
+  // a road: 60 blocks straight east, then a quarter circle of radius 30
+  const S = []; let sAcc = 0, prev = null;
+  const push = (x, z, tx, tz) => { if (prev) sAcc += Math.hypot(x - prev.x, z - prev.z); prev = { x, z }; S.push({ x, y: 0, z, tx, tz, nx: -tz, nz: tx, s: sAcc }); };
+  for (let x = 0; x <= 60; x += 1 / 3) push(x, 0, 1, 0);
+  for (let a = 0; a <= Math.PI / 2; a += 1 / 90) push(60 + 30 * Math.sin(a), 30 - 30 * Math.cos(a), Math.cos(a), Math.sin(a));
+  const road = { samples: S, total: sAcc };
+  if (road) {
+    const gaps = (a) => a.slice(1).map((x, i) => Math.round(x - a[i]));
+    const every = rail.poleSpots(road, { poleMode: 'every', poleEvery: 20 });
+    const curve = rail.poleSpots(road, { poleMode: 'curve', poleEvery: 20, poleMin: 6, poleStray: 1 });
+    console.log('every', gaps(every).join(), '| curve', gaps(curve).join());
+    check(gaps(every).every(g => g === 20), 'every 20 blocks');
+    check(Math.min(...gaps(curve)) < 20 && Math.min(...gaps(curve)) >= 6 && gaps(curve)[0] === 20, 'closer on the curve (not below the minimum), 20 on the straight');
+    const count = rail.poleSpots(road, { poleMode: 'count', poleCount: 6 });
+    check(count.length === 6 && count[0] === 0 && Math.abs(count[5] - road.total) < 1e-6, 'count: 6 poles from start to end');
+    const list = rail.poleSpots(road, { poleMode: 'list', poleList: '10, 25' });
+    check(gaps(list).slice(0, 4).join() === '10,25,10,25', 'typed gaps repeat: ' + gaps(list).join());
+    const end = rail.poleSpots(road, { poleMode: 'every', poleEvery: 30, poleEnd: true });
+    check(Math.abs(end[end.length - 1] - road.total) < 1e-6, 'a pole at the very end when asked');
+  }
+}
 
 // ---- 45° diagonal: rails one block wide, anvils turned to the nearest 90°
 ({ dim, player } = world({ id: 'r2' }));

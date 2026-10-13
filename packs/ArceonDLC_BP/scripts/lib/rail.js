@@ -23,12 +23,11 @@
  */
 import { world } from '@minecraft/server';
 import { isAirId, parseBlock, parsePattern, perm, permToString } from '../core/blocks.js';
-import { POLES } from './pole_data.js';
 
-const POLE_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 import { apply, matrix, turnStates } from '../core/turn.js';
 import { layout } from '../tools/lanes.js';
 import { listAssets, PREFIX } from '../tools/assets.js';
+import { POLES } from './pole_data.js';
 
 /** Compass angle of a direction, clockwise from north (north 0, east 90). */
 export const ang = (x, z) => Math.atan2(x, -z) * 180 / Math.PI;
@@ -43,13 +42,18 @@ const mixed = (pattern) => ({ at: (pos) => pattern.at(pos, null), key: pattern.s
 export const TOP_MIX = '60%andesite_slab,20%normal_stone_slab,15%cobblestone_slab,5%tuff_slab';
 
 /**
- * The built-in track (as in the photos): a gravel bed, on it a layer of
- * mixed stone slabs, mud brick sleepers and two anvil rails per track.
+ * The built-in track (as in the user's own): a gravel bed, on it a layer of
+ * mixed stone slabs, mud brick sleepers ending in stairs (high side towards
+ * the rail) and two anvil rails per track. Sleepers are not part of the
+ * repeating tile: each one is drawn as its own one-block line square to the
+ * track (see sweep), so they stay tidy on diagonals and curves.
  */
 export function builtinTile(v) {
     const ballast = mixed(parsePattern(v.ballast || 'gravel'));
     const top = String(v.top ?? TOP_MIX).trim() ? mixed(parsePattern(v.top ?? TOP_MIX)) : null;
     const sleeper = mixed(parsePattern(v.sleeper || 'mud_bricks'));
+    const endText = String(v.sleeperEnd ?? 'mud_brick_stairs').trim();
+    const end = endText ? parseBlock(endText) : null;
     let railPerm = parseBlock(v.rail || 'anvil');
     // anvils lie along their facing: make the rail run along the tile (south)
     try {
@@ -84,22 +88,29 @@ export function builtinTile(v) {
             cols.push('b');
     }
     const w = cols.length, l = on + off;
-    // the rails are the lines (traced one block wide); under them, the sleeper beside
+    const uOf = (c) => -w / 2 + c + 0.5 + (w % 2 === 0 ? 0.5 : 0); // as lanes.js lays columns
+    // the rails are the lines (traced one block wide); under them, the slabs beside
     const lines = new Map();
     cols.forEach((k, c) => k === 'r' && lines.set('1,' + c, cols[c - 1] === 's' || c + 1 >= w ? c - 1 : c + 1));
+    // each track's sleeper runs from its first to its last sleeper column
+    const spans = [];
+    for (let c = 0; c < w; c++)
+        if (cols[c] !== 'b' && (c === 0 || cols[c - 1] === 'b')) {
+            let e = c;
+            while (e + 1 < w && cols[e + 1] !== 'b')
+                e++;
+            spans.push([uOf(c), uOf(e)]);
+        }
     return {
         w, l, h: 2, anchor: 0, dirAng: 180, lines,
-        // track centres, sideways from the curve (as lanes.js lays columns)
-        centres: mids.map(c => -w / 2 + c + 0.5 + (w % 2 === 0 ? 0.5 : 0)),
-        cell(k, c, j) {
+        centres: mids.map(uOf),
+        rails: cols.map((k, c) => k === 'r' ? uOf(c) : null).filter(u => u !== null),
+        bed: [uOf(0), uOf(w - 1)],
+        sleepers: { spans, on, l, block: sleeper, end: stub > 0 ? end : null },
+        cell(k, c) {
             if (k === 0)
                 return ballast;
-            const kind = cols[c];
-            if (kind === 'r')
-                return rail;
-            if (kind === 's' && j < on)
-                return sleeper;
-            return top;
+            return cols[c] === 'r' ? rail : top;
         },
         describe: `${tracks === 1 ? '단선' : `${tracks}선`}, 폭 ${w}칸`,
     };
@@ -198,6 +209,8 @@ export function* sweep(ctx, v, tile, paint) {
         if (++n % 1500 === 0)
             yield;
     }
+    if (tile.sleepers)
+        yield* sleepers(road, tile, paint);
     // rails, one block wide
     for (const kc of lines.keys()) {
         const [k, col] = kc.split(',').map(Number);
@@ -207,6 +220,84 @@ export function* sweep(ctx, v, tile, paint) {
         yield;
     }
     return road;
+}
+
+/** Cells of a one-block line from (x0, z0) to (x1, z1), both ends included. */
+function line(x0, z0, x1, z1) {
+    const out = [];
+    const dx = Math.abs(x1 - x0), dz = Math.abs(z1 - z0), sx = Math.sign(x1 - x0), sz = Math.sign(z1 - z0);
+    let err = dx - dz, x = x0, z = z0;
+    for (;;) {
+        out.push([x, z]);
+        if (x === x1 && z === z1)
+            return out;
+        const e2 = 2 * err;
+        if (e2 > -dz) {
+            err -= dz;
+            x += sx;
+        }
+        if (e2 < dx) {
+            err += dx;
+            z += sz;
+        }
+    }
+}
+
+/** Stair facing (Bedrock weirdo_direction) climbing towards (dx, dz): east 0, west 1, south 2, north 3. */
+const climb = (dx, dz) => Math.abs(dx) >= Math.abs(dz) ? (dx > 0 ? 0 : 1) : (dz > 0 ? 2 : 3);
+const stairTo = (perm, dx, dz) => {
+    try {
+        if ('weirdo_direction' in perm.getAllStates())
+            return perm.withState('weirdo_direction', climb(dx, dz));
+    }
+    catch (e) { }
+    return perm;
+};
+
+/**
+ * Sleepers: one every `l` blocks along the curve, each a one-block line square
+ * to the track at that point, ending in stairs that climb towards the rails.
+ * The spacing is counted in grid steps (a diagonal step counts as one), so on
+ * a 45° line the sleepers repeat exactly every `l` diagonal steps instead of
+ * bunching up at 1, 2, 1, 2...
+ */
+function* sleepers(road, tile, paint) {
+    const sl = tile.sleepers, S = road.samples;
+    const ends = new Map();
+    const draw = (p) => {
+        const y = Math.floor(p.y) + 1 - tile.anchor;
+        for (const [ua, ub] of sl.spans) {
+            const cells = line(Math.floor(p.x + p.nx * ua), Math.floor(p.z + p.nz * ua), Math.floor(p.x + p.nx * ub), Math.floor(p.z + p.nz * ub));
+            cells.forEach(([x, z], j) => {
+                const key = `${x},${y},${z}`;
+                if (sl.end && (j === 0 || j === cells.length - 1)) {
+                    const k = j === 0 ? 1 : -1; // climbing inwards, towards the rails
+                    const d = climb(p.nx * k, p.nz * k);
+                    let e = ends.get(d);
+                    if (!e)
+                        ends.set(d, e = stairTo(sl.end, p.nx * k, p.nz * k));
+                    paint.set(key, e);
+                }
+                else
+                    paint.set(key, sl.block.at({ x, y, z }));
+            });
+        }
+    };
+    let grid = 0, next = 0, n = 0;
+    for (let i = 0; i < S.length; i++) {
+        const p = S[i];
+        if (i > 0)
+            grid += Math.max(Math.abs(p.tx), Math.abs(p.tz)) * (p.s - S[i - 1].s);
+        // sleeper k covers grid steps [k*l, k*l + on): draw each of its steps once
+        while (grid + 1e-6 >= next) {
+            const step = next;
+            next = Math.floor(step) + 1;
+            if (((Math.floor(step) % sl.l) + sl.l) % sl.l < sl.on)
+                draw(p);
+        }
+        if (++n % 300 === 0)
+            yield;
+    }
 }
 
 // ----------------------------------------------------------------- poles
@@ -239,59 +330,185 @@ export function loadPole(name) {
 }
 
 /**
- * The built-in poles: the user's own gantries for 1, 2 and 3 tracks, block for
- * block (lib/pole_data.js, extracted from their world). More tracks widen the
- * 3-track gantry by repeating its middle 9-block bay. 'post' = the single post
- * (feeder wires only), stood on both sides where the gantry posts would be.
- * Built with the track running east; cells "along,up,sideways".
+ * The built-in poles, rebuilt from the rules of the user's own gantries for 1,
+ * 2 and 3 tracks (lib/pole_data.js holds the originals; the tests check this
+ * rebuilds them block for block):
+ *   - posts 5 blocks outside the outermost rails (further if the bed is wider),
+ *     a hopper foot, andesite wall with a tuff brick band, an anvil cap, a
+ *     heavy core / trapdoor / fence gate / grindstone / skull head;
+ *   - a two-layer truss: slabs with stairs every 6 blocks, counted from the
+ *     left post;
+ *   - over every rail an anvil with a hopper under it (contact wire), iron
+ *     trapdoors between the outer rails;
+ *   - wire ends: under every hopper (hanging) and on the heavy cores (lying).
+ * So any number of tracks, any gauge or spacing, gets a gantry built the same
+ * way. Built with the track running east (+x): cells "along,up,sideways".
+ * kind 'post' = the user's single post (feeder wires only) on both sides.
  */
-export function builtinPole(kind = 'gantry', tracks = 2) {
-    const n = Math.max(1, Math.floor(tracks));
-    const gantry = (k) => {
-        if (k <= 3)
-            return POLES[String(k)];
-        const base = POLES['3'], extra = k - 3, cut = 21, bay = 9;
-        const rows = base.rows.map(r => r.slice(0, cut) + r.slice(cut - bay, cut).repeat(extra) + r.slice(cut));
-        const w = base.w + bay * extra, centre = Math.floor((w - 1) / 2);
-        const anchors = [];
-        for (const [u, y, style] of base.anchors) {
-            const z = u + base.centre;
-            if (z >= cut)
-                anchors.push([z + bay * extra - centre, y, style]);
-            else {
-                anchors.push([z - centre, y, style]);
-                if (z >= cut - bay)
-                    for (let e = 1; e <= extra; e++)
-                        anchors.push([z + bay * e - centre, y, style]);
-            }
-        }
-        return { ...base, w, centre, rows, anchors };
-    };
+const POLE_BLOCKS = {
+    footL: ['hopper', { facing_direction: 3, toggle_bit: false }],
+    footR: ['hopper', { facing_direction: 2, toggle_bit: false }],
+    post: ['andesite_wall', { wall_post_bit: true }],
+    band: ['tuff_brick_wall', { wall_post_bit: true }],
+    cap: ['anvil', { 'minecraft:cardinal_direction': 'east' }],
+    railCap: ['anvil', { 'minecraft:cardinal_direction': 'north' }],
+    hanger: ['hopper', { facing_direction: 0, toggle_bit: false }],
+    deck: ['iron_trapdoor', { direction: 1, open_bit: false, upside_down_bit: true }],
+    slabLow: ['andesite_slab', { 'minecraft:vertical_half': 'bottom' }],
+    slabHigh: ['andesite_slab', { 'minecraft:vertical_half': 'top' }],
+    stairUpL: ['andesite_stairs', { upside_down_bit: false, weirdo_direction: 2 }],
+    stairUpR: ['andesite_stairs', { upside_down_bit: false, weirdo_direction: 3 }],
+    stairDnL: ['andesite_stairs', { upside_down_bit: true, weirdo_direction: 2 }],
+    stairDnR: ['andesite_stairs', { upside_down_bit: true, weirdo_direction: 3 }],
+    armL: ['hopper', { facing_direction: 3, toggle_bit: false }],
+    armR: ['hopper', { facing_direction: 2, toggle_bit: false }],
+    core: ['heavy_core', {}],
+    head: ['diorite_wall', { wall_post_bit: true }],
+    lid: ['iron_trapdoor', { direction: 3, open_bit: false, upside_down_bit: false }],
+    gateL: ['pale_oak_fence_gate', { in_wall_bit: false, 'minecraft:cardinal_direction': 'south', open_bit: true }],
+    gateR: ['pale_oak_fence_gate', { in_wall_bit: false, 'minecraft:cardinal_direction': 'north', open_bit: true }],
+    grind: ['grindstone', { attachment: 'standing', direction: 1 }],
+    skull: ['wither_skeleton_skull', { facing_direction: 1 }],
+};
+const WALL_NONE = { wall_connection_type_east: 'none', wall_connection_type_north: 'none', wall_connection_type_south: 'none', wall_connection_type_west: 'none' };
+const poleBlock = (k) => {
+    const [id, st] = POLE_BLOCKS[k];
+    return perm('minecraft:' + id, id.endsWith('_wall') ? { ...WALL_NONE, ...st } : st);
+};
+
+/**
+ * rails: sideways offsets of every rail (from the built-in track); bed: [left,
+ * right] edge of the track bed.
+ */
+export function builtinPole(kind = 'gantry', rails = [-6, -3, 3, 6], bed = [-8, 8]) {
+    const R = [...rails].sort((a, b) => a - b);
+    const L = Math.min(R[0] - 5, Math.floor(bed[0]) - 3), Rt = Math.max(R[R.length - 1] + 5, Math.ceil(bed[1]) + 3);
     const cells = new Map(), buttons = [], styles = [];
-    const perms = new Map();
-    const add = (data, shift) => {
-        const pal = data.palette.map(q => perm(q.name, q.states));
-        data.rows.forEach((row, y) => {
-            for (let z = 0; z < row.length; z++) {
-                const c = row[z];
-                if (c !== '.')
-                    cells.set(`0,${y},${z - data.centre + shift}`, pal[POLE_CHARS.indexOf(c)]);
-            }
-        });
-        for (const [u, y, style] of data.anchors) {
-            buttons.push([0, y, u + shift]);
-            styles.push(style);
+    const set = (z, y, k) => cells.set(`0,${y},${z}`, poleBlock(k));
+    const wire = (z, y, style) => {
+        buttons.push([0, y, z]);
+        styles.push(style);
+    };
+    const post = (z, right) => {
+        set(z, 0, right ? 'footR' : 'footL');
+        for (let y = 1; y <= 8; y++)
+            set(z, y, y === 3 ? 'band' : 'post');
+        if (kind !== 'post')
+            set(z, 9, 'cap');
+        set(z, 12, 'post');
+        set(z, 13, 'head');
+        set(z, 14, 'grind');
+        set(z, 15, 'skull');
+        for (const [d, side] of [[-1, 'L'], [1, 'R']]) {
+            set(z + d, 12, 'core');
+            set(z + d, 13, 'lid');
+            set(z + d, 14, d < 0 ? 'gateL' : 'gateR');
+            wire(z + d, 12, 'lie');
         }
     };
-    const g = gantry(n);
     if (kind === 'post') {
-        const post = POLES.post, left = 2 - g.centre, right = g.w - 3 - g.centre;
-        add(post, left);
-        add(post, right);
+        // the user's single post (mystructure:야) as built, where the gantry posts would stand
+        const data = POLES.post, chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        const pal = data.palette.map(q => perm(q.name, q.states));
+        for (const at of [L, Rt]) {
+            data.rows.forEach((row, y) => [...row].forEach((c, z) => {
+                if (c !== '.')
+                    cells.set(`0,${y},${at + z - data.centre}`, pal[chars.indexOf(c)]);
+            }));
+            for (const [u, y, style] of data.anchors)
+                wire(at + u, y, style);
+        }
+        return { cells, buttons, styles, dirAng: 90, name: '기둥만' };
     }
-    else
-        add(g, 0);
-    return { cells, buttons, styles, dirAng: 90, name: kind === 'post' ? '기둥만' : '기본 전신주' };
+    post(L, false);
+    post(Rt, true);
+    // the truss: the post ends, then slabs with stairs every 6 blocks from the left post
+    for (const [z, right] of [[L, false], [Rt, true]]) {
+        set(z - 1, 10, 'slabLow');
+        set(z + 1, 10, 'slabLow');
+        set(z, 10, right ? 'stairUpR' : 'stairUpL');
+        set(z - 1, 11, 'armL');
+        set(z, 11, right ? 'stairDnR' : 'stairDnL');
+        set(z + 1, 11, 'armR');
+    }
+    for (let z = L + 2; z <= Rt - 2; z++) {
+        const k = (z - L - 2) % 6;
+        set(z, 11, k === 2 ? 'stairDnR' : k === 4 ? 'stairDnL' : 'slabHigh');
+        set(z, 10, k === 1 ? 'stairUpL' : k === 5 ? 'stairUpR' : 'slabLow');
+    }
+    // the deck: trapdoors between the outer rails, an anvil and a hanger over every rail
+    for (let z = R[0] - 1; z <= R[R.length - 1] + 1; z++)
+        set(z, 9, 'deck');
+    for (const z of R) {
+        set(z, 9, 'railCap');
+        set(z, 8, 'hanger');
+        wire(z, 7, 'hang');
+    }
+    return { cells, buttons, styles, dirAng: 90, name: '기본 전신주' };
+}
+
+/**
+ * Where along the curve the poles stand (distances from the start):
+ *   every  - every `poleEvery` blocks from `poleStart`
+ *   curve  - like every, but closer on curves: each gap shrinks (down to
+ *            `poleMin`) until the straight wire between two poles strays at
+ *            most `poleStray` blocks from the track centre
+ *   count  - `poleCount` poles spread evenly from start to end
+ *   list   - gaps typed in `poleList` ("20, 30" -> 20, 30, 20, 30 ...)
+ * `poleEnd` adds one at the very end if the last gap left it bare.
+ */
+export function poleSpots(road, v) {
+    const S = road.samples, total = road.total;
+    const start = Math.max(0, Math.min(total, Number(v.poleStart ?? 0) || 0));
+    const every = Math.max(2, Math.floor(v.poleEvery ?? 20));
+    const mode = v.poleMode ?? 'every';
+    const out = [];
+    if (mode === 'count') {
+        const n = Math.max(1, Math.floor(v.poleCount ?? 5));
+        for (let k = 0; k < n; k++)
+            out.push(n === 1 ? start : start + (total - start) * k / (n - 1));
+        return out;
+    }
+    const gaps = mode === 'list'
+        ? String(v.poleList ?? '').split(/[,\s]+/).map(Number).filter(g => g >= 2)
+        : [every];
+    if (!gaps.length)
+        throw new Error('전신주 간격을 2 이상 숫자로 적어 주세요 (예: 20, 30)');
+    const at = (s) => {
+        let lo = 0, hi = S.length - 1;
+        while (lo < hi) {
+            const m = (lo + hi) >> 1;
+            if (S[m].s < s)
+                lo = m + 1;
+            else
+                hi = m;
+        }
+        return S[lo];
+    };
+    // how far the curve strays from the straight line between two spots
+    const stray = (a, b) => {
+        const p = at(a), q = at(b);
+        const dx = q.x - p.x, dz = q.z - p.z, L = Math.hypot(dx, dz) || 1;
+        let worst = 0;
+        for (let s = a; s <= b; s += 0.5) {
+            const c = at(s);
+            worst = Math.max(worst, Math.abs((c.x - p.x) * dz - (c.z - p.z) * dx) / L);
+        }
+        return worst;
+    };
+    const min = Math.max(2, Math.floor(v.poleMin ?? 8)), maxStray = Math.max(0.2, Number(v.poleStray ?? 1));
+    let s = start, k = 0;
+    while (s <= total + 1e-6) {
+        out.push(s);
+        let g = gaps[k++ % gaps.length];
+        if (mode === 'curve')
+            while (g > min && s + g <= total && stray(s, s + g) > maxStray)
+                g--;
+        s += g;
+    }
+    if (v.poleEnd && total - out[out.length - 1] > 1)
+        out.push(total);
+    return out;
 }
 
 /**
@@ -300,14 +517,13 @@ export function builtinPole(kind = 'gantry', tracks = 2) {
  */
 export function* standPoles(road, pole, v, paint) {
     const S = road.samples;
-    const interval = Math.max(2, Math.floor(v.poleEvery ?? 20));
     const out = [];
-    let next = Math.max(0, Math.floor(v.poleStart ?? 0)), i = 0;
+    let i = 0, si = 0;
     const turned = new Map();
-    for (const p of S) {
-        if (p.s + 1e-6 < next)
-            continue;
-        next += interval;
+    for (const s of poleSpots(road, v)) {
+        while (si + 1 < S.length && S[si].s + 1e-6 < s)
+            si++;
+        const p = S[si];
         const at = { x: Math.floor(p.x), y: Math.floor(p.y), z: Math.floor(p.z) };
         const delta = ang(p.tx, p.tz) - pole.dirAng;
         const m90 = matrix(snap90(delta), 0, 0).map(r => r.map(Math.round));

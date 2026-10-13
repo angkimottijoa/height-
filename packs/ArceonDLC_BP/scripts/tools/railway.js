@@ -20,6 +20,7 @@ const DETAIL = [
     { key: 'ballast', type: 'block', label: '자갈 (바닥)', default: 'gravel', palette: false },
     { key: 'top', type: 'block', label: '자갈 위 반블록 (비율%블록, 쉼표로)', default: TOP_MIX, palette: false },
     { key: 'sleeper', type: 'block', label: '침목 (비율%블록, 쉼표로 섞기)', default: 'mud_bricks', palette: false },
+    { key: 'sleeperEnd', type: 'block', label: '침목 양 끝 계단 (레일 쪽이 높게, 비우면 침목과 같게)', default: 'mud_brick_stairs', palette: false },
     { key: 'rail', type: 'block', label: '레일', default: 'anvil', palette: false },
 ];
 
@@ -45,8 +46,7 @@ export default {
                 key: 'tracks', type: 'dropdown', label: '선로 수', default: 2, options: [
                     { value: 1, label: '1개 (단선)' },
                     { value: 2, label: '2개 (복선)' },
-                    { value: 3, label: '3개' },
-                    { value: 4, label: '4개' },
+                    ...[3, 4, 5, 6, 7, 8].map(n => ({ value: n, label: n + '개' })),
                 ],
             },
             { key: 'detail', type: 'toggle', label: '기본 선로 고급 설정 (레일 사이 칸 수·블록 비율, 다음 화면)', default: false },
@@ -59,8 +59,21 @@ export default {
                 ],
                 tooltip: '커스텀 전신주는 직접 지어서 에셋으로 저장해 두세요: 선로 가운데 바닥 블록을 바라보고, 선로 방향을 보고 저장',
             },
+            {
+                key: 'poleMode', type: 'dropdown', label: '전신주 간격 정하는 방법', default: 'curve', options: [
+                    { value: 'curve', label: '일정 간격 + 곡선에서는 자동으로 촘촘하게' },
+                    { value: 'every', label: '일정 간격 그대로' },
+                    { value: 'count', label: '개수로 정하기 (처음부터 끝까지 고르게)' },
+                    { value: 'list', label: '간격 직접 적기 (예: 20, 30 → 20·30 반복)' },
+                ],
+            },
             { key: 'poleEvery', type: 'slider', label: '전신주 간격 (칸)', default: 20, min: 4, max: 120 },
+            { key: 'poleMin', type: 'slider', label: '곡선에서 가장 좁은 간격 (칸)', default: 8, min: 2, max: 60 },
+            { key: 'poleStray', type: 'slider', label: '곡선: 전선이 선로 가운데서 벗어나도 되는 칸 수', default: 1, min: 0.5, max: 6, step: 0.5 },
+            { key: 'poleCount', type: 'slider', label: '개수로 정하기: 전신주 개수', default: 5, min: 1, max: 100 },
+            { key: 'poleList', type: 'text', label: '간격 직접 적기: 칸 수를 쉼표로', placeholder: '20, 30', default: '' },
             { key: 'poleStart', type: 'slider', label: '첫 전신주 위치 (시작점에서 몇 칸)', default: 0, min: 0, max: 120 },
+            { key: 'poleEnd', type: 'toggle', label: '끝점에도 전신주 세우기', default: false },
             {
                 key: 'poleAngle', type: 'dropdown', label: '전신주 방향', default: 'exact', options: [
                     { value: 'exact', label: '선로 각도 그대로 (빈틈 없이 돌림)' },
@@ -110,9 +123,11 @@ export default {
         if (tile.describe)
             parts.push(tile.describe);
         if (v.pole) {
-            // the built-in poles come in the width of the chosen number of tracks
-            const pole = v.pole === BUILTIN_POLE ? builtinPole('gantry', v.tracks ?? 2)
-                : v.pole === POST_ONLY ? builtinPole('post', v.tracks ?? 2) : loadPole(v.pole);
+            // the built-in poles are built over the rails of the track (a saved track or
+            // none: the rails a built-in track with this many lines would have)
+            const bed = tile.rails ? tile : builtinTile({ tracks: v.tracks ?? 2 });
+            const pole = v.pole === BUILTIN_POLE || v.pole === POST_ONLY
+                ? builtinPole(v.pole === POST_ONLY ? 'post' : 'gantry', bed.rails, bed.bed) : loadPole(v.pole);
             const poles = yield* standPoles(road, pole, v, paint);
             parts.push(`전신주 ${poles.length}개`);
             if (v.wires) {
