@@ -314,6 +314,17 @@ export function* layout(ctx, v, W) {
         S.push({ x: p.x, y: p.y, z: p.z, tx, tz, nx: -tz, nz: tx, s });
     }
     yield;
+    return yield* roadFrom(S, W, s);
+}
+
+/**
+ * The cells of a road W columns wide around sampled centre points S
+ * ({x, y, z, tx, tz, nx, nz, s}), `total` long: each cell keeps the nearest
+ * sample's sideways offset `uc` and distance along `s`.
+ */
+export function* roadFrom(S, W, total) {
+    const off = W % 2 === 0 ? 0.5 : 0;
+    const uOf = (col) => -W / 2 + col + 0.5 + off;
     const cells = new Map(); // "x,z" -> {y, uc, s, a}
     const lo = uOf(0) - 0.5, hi = uOf(W - 1) + 0.5;
     let n = 0;
@@ -331,7 +342,7 @@ export function* layout(ctx, v, W) {
             yield;
     }
     const trace = (u) => thin(S.map(p => ({ x: Math.floor(p.x + p.nx * u), z: Math.floor(p.z + p.nz * u), y: Math.floor(p.y), s: p.s, tx: p.tx, tz: p.tz })));
-    return { uOf, total: s, cells, trace, samples: S };
+    return { uOf, total, cells, trace, samples: S };
 }
 
 /** Write the painted cells with thickness, fill-down and clearing above. */

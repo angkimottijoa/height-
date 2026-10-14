@@ -160,8 +160,8 @@ function analyse(tile) {
  * Lay a tile along the curve. Returns the road layout (for poles) and
  * writes into `paint` ("x,y,z" -> perm, null = air).
  */
-export function* sweep(ctx, v, tile, paint) {
-    const road = yield* layout(ctx, v, tile.w);
+export function* sweep(ctx, v, tile, paint, given = null) {
+    const road = given ?? (yield* layout(ctx, v, tile.w));
     const { uOf, trace } = road;
     const lines = tile.lines ?? analyse(tile);
     const turned = new Map();
@@ -380,9 +380,11 @@ const poleBlock = (k) => {
  * rails: sideways offsets of every rail (from the built-in track); bed: [left,
  * right] edge of the track bed.
  */
-export function builtinPole(kind = 'gantry', rails = [-6, -3, 3, 6], bed = [-8, 8]) {
+export function builtinPole(kind = 'gantry', rails = [-6, -3, 3, 6], bed = [-8, 8], opts = {}) {
     const R = [...rails].sort((a, b) => a - b);
-    const L = Math.min(R[0] - 5, Math.floor(bed[0]) - 3), Rt = Math.max(R[R.length - 1] + 5, Math.ceil(bed[1]) + 3);
+    // on a truss bridge the beam hangs between the truss planes instead of posts
+    const L = kind === 'truss' ? opts.planes[0] : Math.min(R[0] - 5, Math.floor(bed[0]) - 3);
+    const Rt = kind === 'truss' ? opts.planes[1] : Math.max(R[R.length - 1] + 5, Math.ceil(bed[1]) + 3);
     const cells = new Map(), buttons = [], styles = [];
     const set = (z, y, k) => cells.set(`0,${y},${z}`, poleBlock(k));
     const wire = (z, y, style) => {
@@ -419,6 +421,30 @@ export function builtinPole(kind = 'gantry', rails = [-6, -3, 3, 6], bed = [-8, 
                 wire(at + u, y, style);
         }
         return { cells, buttons, styles, dirAng: 90, name: '기둥만' };
+    }
+    if (kind === 'truss') {
+        // the beam ends against the truss verticals; feeder arms on the inside
+        for (const [z, d] of [[L + 1, 1], [Rt - 1, -1]]) {
+            set(z, 10, 'slabLow');
+            set(z, 11, d > 0 ? 'armR' : 'armL');
+            set(z, 12, 'core');
+            set(z, 13, 'lid');
+            set(z, 14, d > 0 ? 'gateR' : 'gateL');
+            wire(z, 12, 'lie');
+        }
+        for (let z = L + 2; z <= Rt - 2; z++) {
+            const k = (z - L - 2) % 6;
+            set(z, 11, k === 2 ? 'stairDnR' : k === 4 ? 'stairDnL' : 'slabHigh');
+            set(z, 10, k === 1 ? 'stairUpL' : k === 5 ? 'stairUpR' : 'slabLow');
+        }
+        for (let z = R[0] - 1; z <= R[R.length - 1] + 1; z++)
+            set(z, 9, 'deck');
+        for (const z of R) {
+            set(z, 9, 'railCap');
+            set(z, 8, 'hanger');
+            wire(z, 7, 'hang');
+        }
+        return { cells, buttons, styles, dirAng: 90, name: '트러스 전신주' };
     }
     post(L, false);
     post(Rt, true);

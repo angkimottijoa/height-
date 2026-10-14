@@ -8,7 +8,8 @@ import { listAssets } from './assets.js';
 import { builtinPole, builtinTile, freeWires, loadPole, presetTile, standPoles, stringWires, sweep, TOP_MIX } from '../lib/rail.js';
 import { loadTracks, trackNames } from '../lib/track_presets.js';
 import { BRIDGES, bridgeById, bridgeTile, geometry, pierPiece, polish, STEEL } from '../lib/bridges.js';
-import { poleSpots, stamp } from '../lib/rail.js';
+import { stamp } from '../lib/rail.js';
+import { layout, roadFrom } from './lanes.js';
 
 const BUILTIN_POLE = '@기본', POST_ONLY = '@기둥';
 
@@ -133,6 +134,7 @@ export default {
             }
             tile = builtinTile(d);
         }
+        let trussPoles = null; // poles hung on the truss verticals: {samples, spots, planes}
         if (v.bridge) {
             // the bridge first: the track is laid over it
             const d = bridgeById(v.bridge);
@@ -142,30 +144,82 @@ export default {
             const g = geometry(d, bed, { paint: v.steel });
             const bt = bridgeTile(d, g);
             const bp = new Map();
-            const deck = yield* sweep(ctx, { ...v, clearAir: false, down: false }, bt, bp);
-            const span = d.fixed ? d.span : (Math.floor(v.span) || d.span);
-            const S = deck.samples, edit = ctx.edit;
-            let si = 0, piers = 0;
-            const turned = new Map();
-            // a pier every span and one at each end (a short last span is stretched to the end)
-            const spots = poleSpots(deck, { poleMode: 'every', poleEvery: span });
-            const rest = deck.total - spots[spots.length - 1];
-            if (rest > 1) {
-                if (!d.fixed && rest < span / 2 && spots.length > 1)
-                    spots[spots.length - 1] = deck.total;
-                else
-                    spots.push(deck.total);
+            const curveRoad = yield* layout(ctx, v, 1);
+            const total = curveRoad.total, CS = curveRoad.samples;
+            let span = d.fixed ? d.span : (Math.floor(v.span) || d.span);
+            const at = (s) => {
+                let lo = 0, hi = CS.length - 1;
+                while (lo < hi) {
+                    const m = (lo + hi) >> 1;
+                    if (CS[m].s < s)
+                        lo = m + 1;
+                    else
+                        hi = m;
+                }
+                return CS[lo];
+            };
+            // piers: every span, one at each end; a short last span is stretched
+            let spots;
+            if (d.straight) {
+                const n = Math.max(1, Math.round(total / span));
+                spots = Array.from({ length: n + 1 }, (_, k) => total * k / n);
             }
-            for (const s of spots) {
-                while (si + 1 < S.length && S[si].s + 1e-6 < s)
-                    si++;
-                const p = S[si];
+            else {
+                spots = [];
+                for (let s = 0; s <= total + 1e-6; s += span)
+                    spots.push(s);
+                const rest = total - spots[spots.length - 1];
+                if (rest > 1) {
+                    if (rest < span / 2 && spots.length > 1)
+                        spots[spots.length - 1] = total;
+                    else
+                        spots.push(total);
+                }
+            }
+            let deck, pierAt;
+            if (d.straight) {
+                // each span a straight chord between its piers; j runs 0..l along every span
+                const S = [];
+                const ends = spots.map(at);
+                for (let k = 0; k + 1 < ends.length; k++) {
+                    const A = ends[k], B = ends[k + 1];
+                    const L = Math.hypot(B.x - A.x, B.z - A.z) || 1, tx = (B.x - A.x) / L, tz = (B.z - A.z) / L;
+                    const steps = Math.max(1, Math.ceil(L * 3));
+                    for (let i = k ? 1 : 0; i <= steps; i++) {
+                        const t = i / steps;
+                        S.push({ x: A.x + (B.x - A.x) * t, y: A.y + (B.y - A.y) * t, z: A.z + (B.z - A.z) * t, tx, tz, nx: -tz, nz: tx, s: (k + t) * d.l, span: k });
+                    }
+                }
+                deck = yield* roadFrom(S, bt.w, (ends.length - 1) * d.l);
+                // a pier turned halfway between the spans it carries
+                pierAt = ends.map((p, k) => {
+                    const a = S.find(q => q.span === Math.max(0, k - 1)), b = S.find(q => q.span === Math.min(ends.length - 2, k));
+                    const tx = (a.tx + b.tx) / 2, tz = (a.tz + b.tz) / 2, l = Math.hypot(tx, tz) || 1;
+                    return { ...p, tx: tx / l, tz: tz / l };
+                });
+                if (d.poleAt && v.pole === BUILTIN_POLE) {
+                    const ps = [];
+                    for (let k = 0; k + 1 < ends.length; k++)
+                        for (const q of d.poleAt)
+                            ps.push(k * d.l + q);
+                    trussPoles = { samples: S, spots: ps, planes: [g.uL + 1, g.uR - 1] };
+                }
+            }
+            else {
+                deck = yield* roadFrom(CS.map(p => p), bt.w, total);
+                pierAt = spots.map(at);
+            }
+            yield* sweep(ctx, { ...v, clearAir: false, down: false }, bt, bp, deck);
+            const edit = ctx.edit;
+            let piers = 0;
+            const turned = new Map();
+            for (const p of pierAt) {
                 const y = Math.floor(p.y);
                 const ground = edit.highest(Math.floor(p.x), Math.floor(p.z), Math.max(edit.minY, y - 96), y + d.dyMin - 1);
                 const gdy = Math.max(ground - y, d.dyMin - 96);
                 if (gdy >= d.dyMin - 1)
                     continue; // the deck is on the ground here
-                stamp(p, pierPiece(d, g, gdy, bt.perm), v.poleAngle, bp, turned);
+                stamp(p, pierPiece(d, g, gdy, bt, piers + 1), v.poleAngle, bp, turned);
                 if (++piers % 2 === 0)
                     yield;
             }
@@ -173,7 +227,7 @@ export default {
             for (const [k, perm] of bp)
                 if (perm)
                     paint.set(k, perm);
-            parts.push(`${d.name} (교각 ${piers}개, 경간 ${span}칸)`);
+            parts.push(`${d.name} (교각 ${piers}개, 경간 ${d.straight ? Math.round(total / Math.max(1, spots.length - 1)) : span}칸)`);
         }
         const road = yield* sweep(ctx, v.track === '-' ? { ...v, clearAir: false } : v.bridge ? { ...v, down: false } : v, tile, paint);
         if (tile.describe)
@@ -184,7 +238,17 @@ export default {
             const bed = tile.rails ? tile : builtinTile({ tracks: v.tracks ?? 2 });
             const pole = v.pole === BUILTIN_POLE || v.pole === POST_ONLY
                 ? builtinPole(v.pole === POST_ONLY ? 'post' : 'gantry', bed.rails, bed.bed) : loadPole(v.pole);
-            const poles = yield* standPoles(road, pole, v, paint);
+            let poles;
+            if (trussPoles) {
+                // on a truss: a gantry beam between the truss verticals, no posts of its own
+                const tp = builtinPole('truss', bed.rails, bed.bed, { planes: trussPoles.planes });
+                const S2 = trussPoles.samples, turned = new Map();
+                poles = trussPoles.spots.map(s => stamp(S2.reduce((b, q) => Math.abs(q.s - s) < Math.abs(b.s - s) ? q : b), tp, v.poleAngle, paint, turned));
+                pole.buttons = tp.buttons;
+                pole.styles = tp.styles;
+            }
+            else
+                poles = yield* standPoles(road, pole, v, paint);
             parts.push(`전신주 ${poles.length}개`);
             if (v.wires) {
                 if (!pole.buttons.length)

@@ -6,9 +6,9 @@ from PIL import Image, ImageDraw
 COL = [
     ('oxidized', (82, 160, 135)), ('weathered', (98, 150, 110)), ('exposed', (160, 130, 105)), ('copper', (190, 110, 80)),
     ('white_concrete', (225, 228, 230)), ('light_gray_concrete', (150, 150, 145)), ('gray_concrete', (85, 88, 92)),
-    ('smooth_stone', (165, 165, 165)), ('stone_brick', (125, 125, 125)), ('polished_andesite', (135, 138, 136)), ('andesite', (130, 130, 130)),
-    ('diorite', (200, 200, 200)), ('tuff', (110, 112, 100)), ('mossy', (100, 120, 90)), ('mud_brick', (140, 100, 72)), ('gravel', (128, 122, 120)),
-    ('cobblestone', (120, 120, 120)), ('anvil', (68, 68, 72)), ('iron', (170, 172, 175)), ('chain', (55, 60, 72)), ('button', (40, 40, 44)),
+    ('smooth_stone', (165, 165, 165)), ('stone_brick', (122, 122, 124)), ('polished_andesite', (135, 138, 136)), ('andesite', (138, 138, 136)),
+    ('diorite', (200, 200, 200)), ('tuff', (108, 110, 98)), ('mossy', (100, 120, 90)), ('mud_brick', (140, 100, 72)), ('gravel', (128, 122, 120)),
+    ('mossy', (98, 118, 88)), ('cracked', (112, 112, 112)), ('calcite', (222, 222, 216)), ('cobblestone', (120, 120, 120)), ('anvil', (68, 68, 72)), ('iron', (170, 172, 175)), ('chain', (55, 60, 72)), ('button', (40, 40, 44)),
     ('hopper', (70, 70, 75)), ('heavy_core', (90, 95, 100)), ('pale_oak', (225, 215, 210)), ('grindstone', (150, 150, 150)), ('skull', (50, 50, 50)),
     ('grass', (95, 150, 70)), ('stone', (125, 125, 125)), ('barrier', None),
 ]

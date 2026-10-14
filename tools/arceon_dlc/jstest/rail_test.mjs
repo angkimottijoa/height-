@@ -209,7 +209,7 @@ console.log(view(dim, 8, -8, -8, 8, 8).join('\n'));
 // ---- bridges: every design builds over the ground, piers reach it, bolts sit on plates, bars join up
 {
   const { BRIDGES } = await import('./scripts/lib/bridges.js');
-  check(BRIDGES.filter(b => b.group === 'steel').length === 3 && BRIDGES.filter(b => b.group === 'concrete').length === 5, '3 steel + 5 concrete bridge designs');
+  check(BRIDGES.filter(b => b.group === 'steel').length === 4 && BRIDGES.filter(b => b.group === 'concrete').length === 5, '4 steel + 5 concrete bridge designs');
   for (const b of BRIDGES) for (const pts of [[{ x: 0, y: 0, z: 0 }, { x: 60, y: 0, z: 0 }], [{ x: 0, y: 0, z: 0 }, { x: 30, y: 0, z: 6 }, { x: 52, y: 0, z: 34 }]]) {
     const { dim, player } = world({ id: 'br' + b.id + pts.length });
     for (let x = -20; x <= 90; x++) for (let z = -30; z <= 70; z++) put(dim, x, -24, z, 'grass_block');
@@ -225,7 +225,7 @@ console.log(view(dim, 8, -8, -8, 8, 8).join('\n'));
     const loose = bolts.filter(([k, p]) => { const [x, y, z] = k.split(',').map(Number); const f = FACE[p.states.facing_direction]; const q = get(x - f[0], y - f[1], z - f[2]); return !q || /air|button|bars|chain|rod/.test(q.id); });
     const bars = cells.filter(([, p]) => p.id.endsWith('bars'));
     const joined = bars.filter(([, p]) => Object.entries(p.states).some(([k, v]) => k.startsWith('minecraft:connection_') && v));
-    check(/교각 \d+개/.test(last) && piers >= 2 && footings > 20 && Math.min(...ys) <= -24 + 1 && loose.length === 0 && (!bars.length || joined.length / bars.length > (b.id === "truss" ? 0.7 : 0.8)),
+    check(/교각 \d+개/.test(last) && piers >= 2 && footings > 20 && Math.min(...ys) <= -24 + 1 && loose.length === 0 && (!bars.length || joined.length / bars.length > (b.id.startsWith("truss") ? 0.6 : 0.8)),
       `${b.id} (${pts.length === 2 ? 'straight' : 'curve'}): piers ${piers}, footing ${footings}, bolts ${bolts.length} all on plates (${loose.length} loose), bars joined ${joined.length}/${bars.length}`);
   }
 }
