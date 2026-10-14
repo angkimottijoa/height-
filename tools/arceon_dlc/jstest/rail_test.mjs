@@ -268,3 +268,30 @@ console.log(view(dim, 8, -8, -8, 8, 8).join('\n'));
   console.log('beam bridge: parapet tops', edges, 'rail top y 1');
   check(edges.every(y => y >= 2), 'beam bridge: the guard walls stand higher than the rails');
 }
+
+// ---- V1.6: Warren truss as first designed with whole poles on its verticals, box bridges in rough stone,
+// lights on every bridge, the Yamanote parapet, a safety fence on the ground
+{
+  const { BRIDGES } = await import('./scripts/lib/bridges.js');
+  for (const b of BRIDGES) {
+    const { dim, player } = world({ id: 'lt' + b.id });
+    session(player).settings.unlocked = true;
+    for (let x = -10; x <= 70; x++) for (let z = -20; z <= 20; z++) put(dim, x, -24, z, 'grass_block');
+    await runTool(railway, { bridge: b.id, pole: b.id === 'truss' ? '@기본' : '' }, { player, points: [{ x: 0, y: 0, z: 0 }, { x: 60, y: 0, z: 0 }] });
+    const ids = [...dim.map.values()].map(p => p.id);
+    const lights = ids.filter(i => /lantern|light_block/.test(i)).length;
+    check(lights >= 4, `${b.id}: lit (${lights} lanterns / light blocks)`);
+    if (b.id === 'viaduct' || b.id === 'segment') check(!ids.includes('minecraft:smooth_stone'), `${b.id}: no smooth stone (rough andesite)`);
+    if (b.id === 'plate') check(ids.includes('minecraft:hopper') && ids.includes('minecraft:weathered_copper_grate') && ids.includes('minecraft:iron_chain'), 'plate: grating parapet with hopper coping and chains');
+    if (b.id === 'truss') {
+      const vbars = [...dim.map].filter(([k, p]) => p.id.endsWith('copper_bars') && +k.split(',')[1] === 8).length;
+      check(vbars >= 6, 'warren: slender bar verticals as first designed: ' + vbars);
+    }
+  }
+}
+for (const f of ['mesh', 'grate']) {
+  const { dim, player } = world({ id: 'fence' + f });
+  const m = await runTool(railway, { fence: f, pole: '' }, { player, points: [{ x: 0, y: 0, z: 0 }, { x: 30, y: 0, z: 4 }, { x: 50, y: 0, z: 25 }] });
+  const bars = [...dim.map.values()].filter(p => p.id === 'minecraft:iron_bars');
+  check(/안전망 \d+칸/.test(m.slice(-1)[0]) && bars.length > 50 && bars.every(p => Object.entries(p.states).some(([k, v]) => k.startsWith('minecraft:connection_') && v)), `safety fence (${f}): ${bars.length} bars, all joined`);
+}

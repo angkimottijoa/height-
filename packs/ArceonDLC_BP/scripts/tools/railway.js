@@ -81,6 +81,52 @@ function record(ctx, plan, S, tile, paint) {
     return turnouts ? `분기기 ${turnouts}개` : (ends.some(e => !e.open) ? '이어 깔기' : '끝 블록 2개');
 }
 
+/**
+ * A safety fence along both sides of a track on the ground, a block outside
+ * the bed: 'mesh' iron bar panels between stone posts every 4 blocks with a
+ * coping on the posts; 'grate' copper grating with bolt heads and an iron bar
+ * top (as on the Yamanote line). Joined up (bars and walls connect, diagonal
+ * corners closed) by the bridge polish.
+ */
+function* safetyFence(road, w, v, paint) {
+    const S = road.samples, h = Math.max(2, Math.min(4, Math.floor(v.fenceHeight ?? 2)));
+    const off = w / 2 + 0.5;
+    const fp = new Map();
+    let cells = 0;
+    const B = (id, st) => perm('minecraft:' + id, st);
+    for (const side of [-1, 1]) {
+        let last = null;
+        for (const q of S) {
+            const x = Math.floor(q.x + q.nx * off * side), z = Math.floor(q.z + q.nz * off * side), y = Math.floor(q.y);
+            const key = x + ',' + z;
+            if (key === last)
+                continue;
+            last = key;
+            if (fp.has(`${x},${y},${z}`))
+                continue;
+            cells++;
+            const post = Math.round(q.s) % 4 === 0;
+            for (let k = 0; k < h; k++) {
+                let b;
+                if (v.fence === 'grate')
+                    b = k === h - 1 ? B('iron_bars') : B('weathered_copper_grate');
+                else
+                    b = post ? B('andesite_wall') : B('iron_bars');
+                fp.set(`${x},${y + k},${z}`, b);
+            }
+            if (v.fence === 'mesh' && post)
+                fp.set(`${x},${y + h},${z}`, B('andesite_slab', { 'minecraft:vertical_half': 'bottom' }));
+            if (v.fence === 'grate' && post)
+                fp.set(`${x},${y + h - 1},${z}`, B('weathered_copper_bulb', { lit: true, powered_bit: false }));
+        }
+    }
+    yield* polish(fp);
+    for (const [k, p] of fp)
+        if (p)
+            paint.set(k, p);
+    return cells;
+}
+
 export default {
     id: 'railway',
     name: '철도',
@@ -161,6 +207,14 @@ export default {
             { key: 'wireGap', type: 'slider', label: '전선 버튼 간격 (칸)', default: 2, min: 1, max: 8 },
             { key: 'sag', type: 'slider', label: '전선 처짐 (칸)', default: 1, min: 0, max: 6 },
             { key: 'wireAt', type: 'text', label: '전신주 없이 전선만: 위치 "가로:높이" 쉼표로', placeholder: '-4:7, 4:7', default: '' },
+            {
+                key: 'fence', type: 'dropdown', label: '안전망 (땅 위 선로 양옆, 교량일 때는 없음)', default: '', options: [
+                    { value: '', label: '없음' },
+                    { value: 'mesh', label: '철망 (철창 + 돌 기둥)' },
+                    { value: 'grate', label: '격자 (구리 격자 + 철창, 기둥마다 조명)' },
+                ],
+            },
+            { key: 'fenceHeight', type: 'slider', label: '안전망 높이 (칸)', default: 2, min: 2, max: 4 },
             { key: 'clearAir', type: 'toggle', label: '선로 높이의 풀·블록 비우기', default: true },
             { key: 'down', type: 'toggle', label: '선로 아래 땅까지 채우기', default: false },
             { key: 'straight', type: 'toggle', label: '곡선을 덜 휘게 (-p)', default: false },
@@ -271,12 +325,12 @@ export default {
                     const tx = (a.tx + b.tx) / 2, tz = (a.tz + b.tz) / 2, l = Math.hypot(tx, tz) || 1;
                     return { ...p, tx: tx / l, tz: tz / l };
                 });
-                if (d.poleAt && v.pole === BUILTIN_POLE) {
+                if (d.poleAt && (v.pole === BUILTIN_POLE || d.wholePoles && v.pole)) {
                     const ps = [];
                     for (let k = 0; k + 1 < ends.length; k++)
                         for (const q of d.poleAt)
                             ps.push(k * d.l + q);
-                    trussPoles = { samples: S, spots: ps, planes: [g.uL + 1, g.uR - 1] };
+                    trussPoles = { samples: S, spots: ps, planes: [g.uL + 1, g.uR - 1], whole: !!d.wholePoles };
                 }
             }
             else {
@@ -311,6 +365,10 @@ export default {
             C ? yield* roadFrom(C, tile.w, C[C.length - 1].s) : null);
         if (tile.describe)
             parts.push(tile.describe);
+        if (v.fence && !v.bridge) {
+            const n = yield* safetyFence(road, tile.rails ? tile.w : builtinTile({ tracks: v.tracks ?? 2 }).w, v, paint);
+            parts.push(`안전망 ${n}칸`);
+        }
         if (v.pole) {
             // the built-in poles are built over the rails of the track (a saved track or
             // none: the rails a built-in track with this many lines would have)
@@ -319,8 +377,9 @@ export default {
                 ? builtinPole(v.pole === POST_ONLY ? 'post' : 'gantry', bed.rails, bed.bed, { lift: (v.wireHeight ?? 5) - 5 }) : loadPole(v.pole);
             let poles;
             if (trussPoles) {
-                // on a truss: a gantry beam between the truss verticals, no posts of its own
-                const tp = builtinPole('truss', bed.rails, bed.bed, { planes: trussPoles.planes, lift: (v.wireHeight ?? 5) - 5 });
+                // on a truss: whole poles standing at the truss verticals, square to each
+                // straight span, or a gantry beam hung between the verticals
+                const tp = trussPoles.whole ? pole : builtinPole('truss', bed.rails, bed.bed, { planes: trussPoles.planes, lift: (v.wireHeight ?? 5) - 5 });
                 const S2 = trussPoles.samples, turned = new Map();
                 poles = trussPoles.spots.map(s => stamp(S2.reduce((b, q) => Math.abs(q.s - s) < Math.abs(b.s - s) ? q : b), tp, v.poleAngle, paint, turned));
                 pole.buttons = tp.buttons;

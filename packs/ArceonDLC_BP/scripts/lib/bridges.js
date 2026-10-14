@@ -82,6 +82,14 @@ export const CAST = mix([
     [10, 'tuff', 'tuff_slab', 'tuff_stairs'],
 ]);
 
+/** Box girders: rough andesite with stone and tuff, no smooth stone. */
+export const BOXCAST = mix([
+    [55, 'andesite', 'andesite_slab', 'andesite_stairs'],
+    [25, 'stone', 'normal_stone_slab', 'normal_stone_stairs'],
+    [12, 'tuff', 'tuff_slab', 'tuff_stairs'],
+    [8, 'cobblestone', 'cobblestone_slab', 'stone_stairs'],
+]);
+
 // ------------------------------------------------------------ steel paints
 /** Steel colours: the copper ages, or painted grey. */
 export const STEEL = {
@@ -194,6 +202,78 @@ function truss(kind, L, P) {
         return null;
     };
 }
+/**
+ * The Warren truss as first designed (4 panels of 14 per 56-block span):
+ * inclined end posts, top chord over the middle panels, diagonals with stair
+ * fillets, slender bar verticals, gusset plates with bolt groups at every
+ * panel point, portal struts with knee braces and X bracing overhead (above
+ * the catenary), floor beams and stringers under the open steel deck.
+ * Each span is straight; j counts along it (0..56).
+ */
+function warren(u, dy, j, g) {
+    const e = g.e(u), sd = g.sd(u), P = g.paint;
+    const jj = Math.min(56, Math.max(0, j)), k = Math.min(3, Math.floor(jj / 14)), t = jj - k * 14;
+    const node = (n) => Math.abs(jj - n) <= 1;
+    const topNode = node(14) || node(42), lowNode = node(0) || node(28) || node(56);
+    const topChord = jj >= 14 && jj <= 42;
+    if (e < 0) {
+        if (dy === 0 && Math.round(jj) % 2 === 0 || dy === 15 && topChord && Math.round(jj) % 2 === 1)
+            return bolt(OUT_F(sd));
+        if (lowNode && dy >= 1 && dy <= 2 || topNode && dy >= 13 && dy <= 14)
+            return bolt(OUT_F(sd)); // bolt groups on the gussets
+        return null;
+    }
+    if (e === 0) {
+        if (dy === -1)
+            return top(P.slab); // inspection walkway outside the truss
+        if (dy === 0)
+            return Math.round(jj) % 4 === 0 ? P.main : P.bars;
+        return null;
+    }
+    if (e === 1) {
+        if (dy === -1 || dy === 0)
+            return P.main; // bottom chord
+        if (dy === 15)
+            return topChord ? P.main : null;
+        if (dy === 16)
+            return topChord ? P.slab : null;
+        if (dy < 1 || dy > 14)
+            return null;
+        if (lowNode && dy <= 2 || topNode && dy >= 13)
+            return P.chis; // gusset plates
+        const up = k % 2 === 0;
+        if (up ? dy === t + 1 : dy === 14 - t)
+            return P.main;
+        if (up ? (t >= 1 && dy === t) : (t <= 12 && dy === 13 - t))
+            return stair(P.stairs, up ? 2 : 3, true);
+        if (jj === 14 || jj === 28 || jj === 42)
+            return P.bars; // verticals
+        return null;
+    }
+    const inside = u > g.uL + 1 && u < g.uR - 1;
+    if (topChord && inside) {
+        // portal struts with knee braces, X bracing between them
+        if (e === 2 && dy === 15 && (jj === 14 || jj === 42))
+            return stair(P.stairs, IN_W(sd), true);
+        if (dy === 16) {
+            if (jj === 14 || jj === 28 || jj === 42)
+                return P.slab;
+            const f = (u - g.uL - 1) / (g.uR - g.uL - 2), q = ((jj - 14) % 14) / 14;
+            const tol = 1 / (g.uR - g.uL - 2);
+            if (Math.abs(f - q) <= tol || Math.abs(1 - f - q) <= tol)
+                return P.bars;
+        }
+    }
+    if (dy === -1 || dy === 0)
+        return P.main; // deck plate; the sleepers lie on it (open deck)
+    if (dy === -2) {
+        if (jj % 7 === 0)
+            return P.main; // floor beams
+        if (g.rails.includes(u))
+            return top(P.slab); // stringers
+    }
+    return null;
+}
 /** A cutwater pier in masonry under a truss: cap, bearing shoes, rounded noses. */
 function trussPier(g, ground) {
     const out = [], half = Math.ceil(g.Bh) - 1, P = g.paint;
@@ -237,21 +317,33 @@ export const BRIDGES = [
     // and steel bents (columns + cross beam on bearing shoes) as piers.
     {
         id: 'plate', name: '강판형교 (상로 플레이트 거더, 야마노테선 고가 양식)', group: 'steel',
-        l: 12, span: 18, widen: 0, dyMin: -7, dyMax: 3, steel: true, fillFrom: 3, lift: false,
+        l: 12, span: 18, widen: 0, dyMin: -7, dyMax: 5, steel: true, fillFrom: 3, lift: false,
         section(u, dy, j, g) {
             const e = g.e(u), sd = g.sd(u), P = g.paint;
             const OUT = OUT_W(sd), IN = IN_W(sd);
-            if (e < 0)
-                return dy === -1 && j % 2 === 1 ? bolt(OUT_F(sd)) : null; // rivets on the edge channel
+            // the parapet as on the Yamanote line: three courses of grating with
+            // bolt heads, chains hung along the top course, a hopper coping and
+            // an iron bar fence on it
+            if (e < 0) {
+                if (dy === -1)
+                    return j % 2 === 1 ? bolt(OUT_F(sd)) : null; // rivets on the edge channel
+                if (dy === 0 || dy === 1)
+                    return bolt(OUT_F(sd)); // bolt heads on the grating
+                if (dy === 2)
+                    return CHAIN; // chains hung from the coping
+                return null;
+            }
             if (e === 0) {
-                if (dy === -1 || dy === 0)
-                    return P.main; // edge channel, kerb
+                if (dy === -1)
+                    return P.main; // edge channel
                 if (dy === -2)
                     return top(P.slab);
-                if (dy === 1 || dy === 2)
-                    return j % 3 === 0 ? P.main : P.bars; // railing posts and panels
+                if (dy >= 0 && dy <= 2)
+                    return P.grate; // grating panels
                 if (dy === 3)
-                    return P.slab; // handrail
+                    return ST('hopper', { facing_direction: 0, toggle_bit: false }); // coping
+                if (dy === 4)
+                    return 'iron_bars'; // fence
                 return null;
             }
             if (e === 1 || e === 2) {
@@ -349,29 +441,47 @@ export const BRIDGES = [
             for (const u of girders)
                 for (const a of [-2, 2])
                     out.push([u, -8, a, P.stiff(1)]);
-            // columns: 3x3 boxes with stiffener ribs, rivets and knee braces
+            // columns: 3x3 steel boxes with a flared capital under the cross beam,
+            // stiffener ribs and a splice band, on a base plate over a stepped
+            // stone plinth (the ribs stop short of the capital and the plinth)
+            const ribTop = -11, splice = Math.round((-10 + ground) / 2);
             for (const cu of cols) {
-                for (let dy = -10; dy > ground + 1; dy--)
+                for (let dy = -10; dy > ground + 2; dy--)
                     for (let du = -2; du <= 2; du++)
                         for (let a = -2; a <= 2; a++) {
                             const ad = Math.abs(du), aa = Math.abs(a);
+                            const face = ad === 2 && aa === 0 || aa === 2 && ad === 0;
                             if (ad <= 1 && aa <= 1)
-                                out.push([cu + du, dy, a, P.main]);
-                            else if (ad === 2 && aa === 0 || aa === 2 && ad === 0)
-                                out.push([cu + du, dy, a, P.stiff(1)]);
-                            else if ((ad === 2 && aa === 1 || aa === 2 && ad === 1) && dy % 3 === 0)
-                                out.push([cu + du, dy, a, bolt(ad === 2 ? (du < 0 ? 4 : 5) : (a < 0 ? 3 : 2))]);
+                                out.push([cu + du, dy, a, dy === splice ? P.chis : P.main]);
+                            else if (dy === -10 && ad + aa < 4)
+                                // the capital: upside-down stairs flaring out to the cross beam
+                                out.push([cu + du, dy, a, ad === 2 ? stair(P.stairs, du < 0 ? 0 : 1, true) : stair(P.stairs, a > 0 ? 2 : 3, true)]);
+                            else if (face && dy <= ribTop && dy > ground + 3)
+                                out.push([cu + du, dy, a, dy === splice ? P.slab : P.stiff(1)]);
+                            else if ((ad === 2 && aa === 1 || aa === 2 && ad === 1) && (dy === splice + 1 || dy === splice - 1))
+                                out.push([cu + du, dy, a, bolt(ad === 2 ? (du < 0 ? 4 : 5) : (a < 0 ? 3 : 2))]); // splice bolts
                         }
+                // knee braces into the cross beam
                 for (const s of [-1, 1]) {
-                    if (cu + s * 2 > g.uL + 2 && cu + s * 2 < g.uR - 2) {
-                        out.push([cu + s * 2, -10, 0, stair(P.stairs, s < 0 ? 0 : 1, true)]);
+                    if (cu + s * 3 > g.uL + 2 && cu + s * 3 < g.uR - 2) {
                         out.push([cu + s * 3, -10, 0, top(P.slab)]);
+                        out.push([cu + s * 3, -10, 1, top(P.slab)]);
+                        out.push([cu + s * 3, -10, -1, top(P.slab)]);
                     }
                 }
-                // base plate with anchor bolts on a concrete footing
+                // base plate with anchor bolts, stepped plinth, footing
                 for (let du = -2; du <= 2; du++)
-                    for (let a = -2; a <= 2; a++)
-                        out.push([cu + du, ground + 1, a, Math.abs(du) === 2 && Math.abs(a) === 2 ? bolt(1) : P.slab]);
+                    for (let a = -2; a <= 2; a++) {
+                        const corner = Math.abs(du) === 2 && Math.abs(a) === 2;
+                        out.push([cu + du, ground + 2, a, corner ? bolt(1) : P.slab]);
+                        out.push([cu + du, ground + 1, a, MASON.b]);
+                    }
+                for (let k = -2; k <= 2; k++) {
+                    out.push([cu - 3, ground + 1, k, MASON.st(0)]);
+                    out.push([cu + 3, ground + 1, k, MASON.st(1)]);
+                    out.push([cu + k, ground + 1, 3, MASON.st(2)]);
+                    out.push([cu + k, ground + 1, -3, MASON.st(3)]);
+                }
                 for (let du = -3; du <= 3; du++)
                     for (let a = -3; a <= 3; a++)
                         out.push([cu + du, ground, a, FOOT.b]);
@@ -383,8 +493,9 @@ export const BRIDGES = [
     {
         id: 'truss', name: '하로 워렌 트러스교 (삼각형, 경간 56칸, 경간마다 직선)', group: 'steel',
         l: 56, span: 56, fixed: true, straight: true, widen: 2, dyMin: -2, dyMax: 17, steel: true, openDeck: true,
-        poleAt: [14, 42], trussPlanes: true,
-        section: truss('warren', 56, 14),
+        poleAt: [14, 42], wholePoles: true,
+        section: warren,
+        lamps: (u, dy, j, g, e) => e === 2 && dy === 14 && (j === 14 || j === 42) ? 'lantern[hanging=true]' : e === 0 && dy === 1 && j % 14 === 7 ? 'lantern' : e === 0 && dy >= 1 ? null : undefined,
         pier: trussPier,
     },
     // ---------------------------------------------------------- steel 3
@@ -392,6 +503,7 @@ export const BRIDGES = [
         id: 'truss3', name: '하로 사각 트러스교 (정사각형 3칸, 경간 45칸, 경간마다 직선)', group: 'steel',
         l: 45, span: 45, fixed: true, straight: true, widen: 2, dyMin: -2, dyMax: 17, steel: true, openDeck: true,
         poleAt: [0, 15, 30], trussPlanes: true,
+        lamps: (u, dy, j, g, e) => e === 2 && dy === 14 && j % 15 === 0 ? 'lantern[hanging=true]' : e === 0 && dy === 1 && j % 15 === 7 ? 'lantern' : e === 0 && dy >= 1 ? null : undefined,
         section: truss('square', 45, 15),
         pier: trussPier,
     },
@@ -569,7 +681,7 @@ export const BRIDGES = [
                 return null;
             }
             if (dy === -1)
-                return CAST.b;
+                return BOXCAST.b;
             if (dy === -7)
                 return e === 1 ? MASON.slab(true) : MASON.b;
             if (dy === -6 && e === 1)
@@ -715,7 +827,7 @@ export const BRIDGES = [
         id: 'segment', name: 'PSC 세그먼트 박스교 (마디마다 체인 이음)', group: 'concrete',
         l: 3, span: 30, widen: 0, dyMin: -8, dyMax: 1,
         section(u, dy, j, g) {
-            const e = g.e(u), sd = g.sd(u), M = CAST;
+            const e = g.e(u), sd = g.sd(u), M = BOXCAST;
             const we = (d) => 4 + Math.floor((-2 - d) / 3);
             if (e < 0)
                 return dy === -2 && j % 9 === 4 ? rod('lightning_rod', 0) : null; // drain spouts
@@ -851,6 +963,36 @@ function material(cache, t) {
     return m;
 }
 
+// ------------------------------------------------------------ lights
+const PROP = /button|chain|lightning_rod|lantern|light_block|torch/;
+/**
+ * Lighting, in cells the design leaves empty: a lantern standing on the
+ * parapet (or the walkway railing) every 12 blocks, a lantern hanging under
+ * the deck on the centre line between them, and invisible light blocks
+ * (빛 블록) under the deck soffit and along the walkway so the bridge glows
+ * at night without visible clutter. A design can add its own spots (d.lamps).
+ */
+function lamp(d, g, u, e, dy, j, at) {
+    const own = d.lamps?.(u, dy, j, g, e);
+    if (own !== undefined)
+        return own;
+    const below = at(dy - 1), above = at(dy + 1);
+    // standing on the parapet top
+    if (e === 0 && dy >= 0 && j % 12 === 0 && below && !PROP.test(below) && !above)
+        return 'lantern';
+    // hanging under the deck on the centre line
+    if (u === g.c0r && dy <= -2 && above && !PROP.test(above) && !/bars/.test(above)) {
+        if (j % 12 === 6 && !at(dy - 1))
+            return 'lantern[hanging=true]';
+        if (j % 12 === 0 && !at(dy - 1))
+            return 'light_block_12';
+    }
+    // along the walkway / parapet foot, invisible
+    if (e === 1 && dy === (d.openDeck ? 1 : 2) && j % 12 === 6 && below && !PROP.test(below))
+        return 'light_block_10';
+    return null;
+}
+
 /** How much higher the parapets stand than in the drawn sections. */
 const RAISE = 2;
 
@@ -861,7 +1003,7 @@ export function bridgeTile(d, g) {
     const h = d.dyMax - d.dyMin + 1, anchor = -d.dyMin;
     const cache = new Map();
     return {
-        w, l: d.l, h: h + RAISE, anchor, dirAng: 0, lines: new Map(),
+        w, l: d.l, h: h + RAISE + 1, anchor, dirAng: 0, lines: new Map(), // a row over the parapets for lamps
         cell(k, c, j) {
             const u = uOf(c), dy = k - anchor, f = g.fill, e = g.e(u);
             // between the track bed and the parapet / walkway: the bed's ballast and top
@@ -871,8 +1013,11 @@ export function bridgeTile(d, g) {
             }
             // parapets stand a block higher than the track bed (the rails sit lower
             // than the guard walls): the edge zone is drawn one up on its deck edge
-            const lifted = d.lift !== false && !d.openDeck && e < f.from && dy >= 0;
-            const t = d.section(u, lifted ? Math.max(-1, dy - RAISE) : dy, j, g);
+            const at = (y) => {
+                const lifted = d.lift !== false && !d.openDeck && e < f.from && y >= 0;
+                return d.section(u, lifted ? Math.max(-1, y - RAISE) : y, j, g);
+            };
+            const t = at(dy) ?? lamp(d, g, u, e, dy, j, at);
             return t ? material(cache, t) : null;
         },
         describe: d.name,
