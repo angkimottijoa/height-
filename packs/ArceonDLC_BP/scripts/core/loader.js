@@ -10,6 +10,8 @@
 import { system, world } from '@minecraft/server';
 
 const PER_TICK = 3000;
+const TILE_MAX = 4; // chunks per tile side: small tiles always fit
+const WAIT_LOAD = 20 * 60; // ticks to wait for a tile to finish loading
 let seq = 0;
 
 function manager() {
@@ -21,28 +23,26 @@ function manager() {
     }
 }
 
-/** Chunks per tile side that fit in the free ticking allowance (0 = none free). */
+/** Chunks per tile side that fit in the free ticking allowance (never 0: the command fallback takes over). */
 function tileSide() {
     const m = manager();
-    if (!m)
-        return 0;
-    let free = 0;
-    try {
-        free = m.maxChunkCount - m.chunkCount;
-    }
-    catch (e) {
-        return 0;
-    }
-    return Math.max(0, Math.min(16, Math.floor(Math.sqrt(free))));
+    let free = 16;
+    if (m)
+        try {
+            free = m.maxChunkCount - m.chunkCount;
+        }
+        catch (e) { }
+    return Math.max(1, Math.min(TILE_MAX, Math.floor(Math.sqrt(Math.max(1, free)))));
 }
 
 const wait = (ticks) => new Promise(r => system.runTimeout(r, ticks));
 
 function loaded(dim, from, to) {
-    for (let x = from.x; x <= to.x + 15; x += 16)
-        for (let z = from.z; z <= to.z + 15; z += 16)
+    for (let x = Math.floor(from.x / 16) * 16; x <= to.x; x += 16)
+        for (let z = Math.floor(from.z / 16) * 16; z <= to.z; z += 16)
             try {
-                if (!dim.getBlock({ x: Math.min(x, to.x), y: from.y, z: Math.min(z, to.z) }))
+                const b = dim.getBlock({ x: Math.max(x, from.x), y: from.y, z: Math.max(z, from.z) });
+                if (!b || (b.isValid !== undefined && !(typeof b.isValid === 'function' ? b.isValid() : b.isValid)))
                     return false;
             }
             catch (e) {
@@ -52,58 +52,101 @@ function loaded(dim, from, to) {
 }
 
 /**
+ * Load a box and keep it loaded until the returned release() is called.
+ * Tries the ticking area manager (waiting for free capacity), then the
+ * /tickingarea command, and waits until every chunk really is loaded.
+ * Resolves to release (a no-op when nothing had to be loaded); never throws.
+ */
+export async function ensureLoaded(dim, from, to) {
+    if (loaded(dim, from, to))
+        return () => { };
+    const lowY = dim.heightRange?.min ?? -64;
+    from = { x: from.x, y: lowY, z: from.z };
+    to = { x: to.x, y: lowY, z: to.z };
+    const m = manager();
+    const id = `arc_load_${system.currentTick}_${seq++}`;
+    let release = () => { };
+    if (m) {
+        const opts = { dimension: dim, from, to };
+        for (let tries = 0; tries < 40; tries++) {
+            let ok = false;
+            try {
+                ok = m.hasCapacity(opts);
+            }
+            catch (e) { }
+            if (ok)
+                break;
+            await wait(10); // our own earlier areas are being released
+        }
+        try {
+            await Promise.race([m.createTickingArea(id, opts), wait(20 * 30)]);
+            release = () => {
+                try {
+                    m.removeTickingArea(id);
+                }
+                catch (e) { }
+            };
+        }
+        catch (e) { }
+    }
+    if (!loaded(dim, from, to)) {
+        // fall back on the command (its own allowance: 10 areas, 100 chunks each)
+        try {
+            dim.runCommand(`tickingarea add ${from.x} ${lowY} ${from.z} ${to.x} ${lowY} ${to.z} ${id}c true`);
+            const before = release;
+            release = () => {
+                before();
+                try {
+                    dim.runCommand(`tickingarea remove ${id}c`);
+                }
+                catch (e) { }
+            };
+        }
+        catch (e) { }
+    }
+    for (let t = 0; t < WAIT_LOAD && !loaded(dim, from, to); t += 5)
+        await wait(5);
+    return release;
+}
+
+/**
  * Keep a box loaded while `fn` runs. Returns fn's result. Falls back to
  * just running fn when the area cannot be loaded.
  */
 export async function withLoaded(dim, from, to, fn) {
-    const m = manager();
-    if (!m || loaded(dim, from, to))
-        return fn();
-    const id = `arc_load_${system.currentTick}_${seq++}`;
-    const opts = { dimension: dim, from, to };
-    let made = false;
-    try {
-        if (m.hasCapacity(opts)) {
-            await Promise.race([m.createTickingArea(id, opts), wait(20 * 30)]);
-            made = true;
-        }
-    }
-    catch (e) { }
+    const release = await ensureLoaded(dim, from, to);
     try {
         return await fn();
     }
     finally {
-        if (made)
-            try {
-                m.removeTickingArea(id);
-            }
-            catch (e) { }
+        release();
     }
 }
 
-function writeJob(dim, list, out) {
+function writeJob(dim, list, out, failed) {
     return new Promise(resolve => {
         function* job() {
             let n = 0;
-            for (const [x, y, z, perm] of list) {
+            for (const e of list) {
+                const [x, y, z, perm] = e;
                 let b;
                 try {
                     b = dim.getBlock({ x, y, z });
                 }
-                catch (e) { }
+                catch (err) { }
                 if (!b)
-                    out.skipped++;
+                    failed.push(e);
                 else {
                     try {
                         const old = b.permutation;
                         if (old !== perm) {
-                            out.before.push([x, y, z, old]);
                             b.setPermutation(perm);
+                            out.before.push([x, y, z, old]);
                             out.done++;
                         }
                     }
-                    catch (e) {
-                        out.skipped++;
+                    catch (err) {
+                        failed.push(e);
                     }
                 }
                 if (++n % PER_TICK === 0)
@@ -115,18 +158,8 @@ function writeJob(dim, list, out) {
     });
 }
 
-/**
- * Write [x, y, z, perm] entries. Returns {before, done, skipped}; `before`
- * holds what was there (for undo).
- */
-export async function placeAll(dim, list, { load = true } = {}) {
-    const out = { before: [], done: 0, skipped: 0 };
-    const side = load ? tileSide() : 0;
-    if (!side) {
-        await writeJob(dim, list, out);
-        return out;
-    }
-    const size = side * 16;
+/** Group entries into square tiles of `size` blocks. */
+function tilesOf(list, size) {
     const tiles = new Map();
     for (const e of list) {
         const k = Math.floor(e[0] / size) + ',' + Math.floor(e[2] / size);
@@ -135,17 +168,45 @@ export async function placeAll(dim, list, { load = true } = {}) {
             tiles.set(k, t = []);
         t.push(e);
     }
-    const lowY = dim.heightRange?.min ?? -64;
-    for (const t of tiles.values()) {
-        let x0 = Infinity, z0 = Infinity, x1 = -Infinity, z1 = -Infinity;
-        for (const [x, , z] of t) {
-            x0 = Math.min(x0, x);
-            z0 = Math.min(z0, z);
-            x1 = Math.max(x1, x);
-            z1 = Math.max(z1, z);
-        }
-        await withLoaded(dim, { x: x0, y: lowY, z: z0 }, { x: x1, y: lowY, z: z1 }, () => writeJob(dim, t, out));
+    return [...tiles.values()];
+}
+
+/**
+ * Write [x, y, z, perm] entries. Returns {before, done, skipped}; `before`
+ * holds what was there (for undo). With `load`, every tile is loaded and
+ * waited for before it is written; whatever still failed is tried again
+ * chunk by chunk (up to 4 more rounds), so far-away parts are not left out.
+ */
+export async function placeAll(dim, list, { load = true } = {}) {
+    const out = { before: [], done: 0, skipped: 0 };
+    let failed = [];
+    if (!load) {
+        await writeJob(dim, list, out, failed);
+        out.skipped = failed.length;
+        return out;
     }
+    const minY = dim.heightRange?.min ?? -64, maxY = dim.heightRange?.max ?? 320;
+    let todo = list.filter(e => e[1] >= minY && e[1] < maxY);
+    out.skipped += list.length - todo.length;
+    let size = tileSide() * 16;
+    for (let round = 0; round < 5 && todo.length; round++) {
+        failed = [];
+        for (const t of tilesOf(todo, size)) {
+            let x0 = Infinity, z0 = Infinity, x1 = -Infinity, z1 = -Infinity;
+            for (const [x, , z] of t) {
+                x0 = Math.min(x0, x);
+                z0 = Math.min(z0, z);
+                x1 = Math.max(x1, x);
+                z1 = Math.max(z1, z);
+            }
+            await withLoaded(dim, { x: x0, y: minY, z: z0 }, { x: x1, y: minY, z: z1 }, () => writeJob(dim, t, out, failed));
+        }
+        todo = failed;
+        size = 16; // retry the stragglers one chunk at a time
+        if (todo.length)
+            await wait(20);
+    }
+    out.skipped += todo.length;
     return out;
 }
 

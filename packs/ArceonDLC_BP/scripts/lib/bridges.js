@@ -237,27 +237,29 @@ export const BRIDGES = [
     // and steel bents (columns + cross beam on bearing shoes) as piers.
     {
         id: 'plate', name: '강판형교 (상로 플레이트 거더, 야마노테선 고가 양식)', group: 'steel',
-        l: 12, span: 18, widen: 0, dyMin: -7, dyMax: 1, steel: true, fillFrom: 3,
+        l: 12, span: 18, widen: 0, dyMin: -7, dyMax: 3, steel: true, fillFrom: 3, lift: false,
         section(u, dy, j, g) {
             const e = g.e(u), sd = g.sd(u), P = g.paint;
             const OUT = OUT_W(sd), IN = IN_W(sd);
             if (e < 0)
                 return dy === -1 && j % 2 === 1 ? bolt(OUT_F(sd)) : null; // rivets on the edge channel
             if (e === 0) {
-                if (dy === -1)
-                    return P.main; // edge channel
+                if (dy === -1 || dy === 0)
+                    return P.main; // edge channel, kerb
                 if (dy === -2)
                     return top(P.slab);
-                if (dy === 0)
+                if (dy === 1 || dy === 2)
                     return j % 3 === 0 ? P.main : P.bars; // railing posts and panels
-                if (dy === 1)
+                if (dy === 3)
                     return P.slab; // handrail
                 return null;
             }
             if (e === 1 || e === 2) {
                 if (dy === -1)
-                    return P.grate; // walkway grating
-                if (dy === 0 && e === 2)
+                    return P.main;
+                if (dy === 0)
+                    return e === 1 ? P.grate : P.main; // walkway grating level with the ballast, cable trough
+                if (dy === 1 && e === 2)
                     return ST(P.trap, { direction: 0, open_bit: false, upside_down_bit: false }); // cable trough lid
                 // triangular walkway brackets on the girder, every 6
                 if (j % 6 === 0) {
@@ -409,9 +411,7 @@ export const BRIDGES = [
             if (e < 0)
                 return dy === 0 && j % 2 === 0 ? bolt(OUT_F(sd)) : null;
             if (e === 0) {
-                if (dy === -1)
-                    return top(P.slab);
-                if (dy === 0)
+                if (dy === -1 || dy === 0)
                     return P.main; // parapet
                 if (dy === 1)
                     return j % 3 === 0 ? P.slab : P.bars;
@@ -688,7 +688,7 @@ export const BRIDGES = [
         },
         pier(g, ground) {
             const out = [], half = Math.floor(g.Bh) - 3;
-            const n = Math.max(2, Math.round(half * 2 / 6) + 1);
+            const n = Math.max(2, Math.round(half * 2 / Math.max(3, g.colGap ?? 6)) + 1);
             for (let i = 0; i < n; i++) {
                 const cu = g.c0r + Math.round(-half + i * (2 * half) / (n - 1));
                 for (let du = -2; du <= 2; du++)
@@ -820,6 +820,7 @@ export function geometry(d, track, opts = {}) {
         sd: (u) => u < c0 ? -1 : 1,
         a: (u) => Math.abs(u - c0),
         paint: steelPaint(opts.paint ?? d.paint ?? 'weathered'),
+        colGap: opts.colGap,
         // the track bed's own ballast and slab top, to carry it out to the parapets
         fill: { ballast: opts.ballast || 'gravel', top: opts.top ?? '', from: d.fillFrom ?? 1, bedE: Math.floor(track.bed[0]) - uL },
         girders(step) {
@@ -850,6 +851,9 @@ function material(cache, t) {
     return m;
 }
 
+/** How much higher the parapets stand than in the drawn sections. */
+const RAISE = 2;
+
 /** The deck as a tile for rail.js sweep (no traced lines: every column is laid by area). */
 export function bridgeTile(d, g) {
     const w = g.uR - g.uL + 3; // with the detail column each side
@@ -857,7 +861,7 @@ export function bridgeTile(d, g) {
     const h = d.dyMax - d.dyMin + 1, anchor = -d.dyMin;
     const cache = new Map();
     return {
-        w, l: d.l, h, anchor, dirAng: 0, lines: new Map(),
+        w, l: d.l, h: h + RAISE, anchor, dirAng: 0, lines: new Map(),
         cell(k, c, j) {
             const u = uOf(c), dy = k - anchor, f = g.fill, e = g.e(u);
             // between the track bed and the parapet / walkway: the bed's ballast and top
@@ -865,7 +869,10 @@ export function bridgeTile(d, g) {
                 const t = dy === 0 ? f.ballast : f.top;
                 return t ? material(cache, t) : null;
             }
-            const t = d.section(u, dy, j, g);
+            // parapets stand a block higher than the track bed (the rails sit lower
+            // than the guard walls): the edge zone is drawn one up on its deck edge
+            const lifted = d.lift !== false && !d.openDeck && e < f.from && dy >= 0;
+            const t = d.section(u, lifted ? Math.max(-1, dy - RAISE) : dy, j, g);
             return t ? material(cache, t) : null;
         },
         describe: d.name,

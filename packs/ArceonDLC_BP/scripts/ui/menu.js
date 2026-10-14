@@ -8,7 +8,7 @@ import { isBusy, redo, say, undo } from '../core/edit.js';
 import { parseMask } from '../core/blocks.js';
 import { clearClip, getClip } from '../core/clipboard.js';
 import { runTool } from '../core/runner.js';
-import { bindBrush, clearFrames, clearPoints, frameCount, region, removeFramePoint, removePoint, save, saveFrame, session, setCorner, unbindBrush, volume } from '../core/session.js';
+import { bindBrush, clearFrames, clearPoints, frameCount, region, removeFramePoint, removePoint, save, saveFrame, session, setCorner, unbindBrush, UNLOCK_CODE, volume } from '../core/session.js';
 import { BRUSHES, GROUPS, TOOLS } from '../tools/index.js';
 import { ask, menu } from './form.js';
 
@@ -157,7 +157,7 @@ export async function toolForm(player, tool) {
     if (isBusy(player))
         return say(player, '§c이전 작업이 아직 진행 중입니다.');
     const intro = [tool.desc, needsText(player, tool)].filter(Boolean).join('\n');
-    const values = await ask(player, 'tool:' + tool.id, tool.name, tool.fields ?? [], { intro });
+    const values = await ask(player, 'tool:' + tool.id, tool.name, (tool.fieldsFor ? tool.fieldsFor(player) : tool.fields) ?? [], { intro });
     if (!values)
         return;
     // tools may ask follow-up questions that depend on the first answers
@@ -500,6 +500,7 @@ async function settingsMenu(player) {
         { key: 'loadAll', type: 'toggle', label: '로드 안 된 먼 곳도 불러와서 설치 (권장)', default: s.settings.loadAll !== false, tooltip: '틱킹 영역으로 잠깐 불러와서 설치하고 다시 놓아줍니다. 끄면 로드 안 된 곳은 건너뜁니다' },
         { key: 'particles', type: 'toggle', label: '도구를 들면 점·곡선·영역·붙여넣을 자리를 입자로 보기', default: s.settings.particles },
         { key: 'clearPalettes', type: 'toggle', label: `저장한 팔레트 모두 지우기 (${(s.settings.palettes ?? []).length}개)`, default: false },
+        { key: 'code', type: 'text', label: '코드', default: '', placeholder: '' },
     ], { submit: '저장' });
     if (!r)
         return;
@@ -516,6 +517,10 @@ async function settingsMenu(player) {
     s.settings.loadAll = r.loadAll;
     if (r.clearPalettes)
         s.settings.palettes = [];
+    // a quiet switch: the right code opens the hidden features, nothing is said either way
+    const code = String(r.code ?? '').trim();
+    if (code === UNLOCK_CODE)
+        s.settings.unlocked = true;
     s.forms.settings = {};
     save(player);
     say(player, '§a설정을 저장했습니다.');

@@ -206,6 +206,16 @@ const beam = st6.filter(([, y]) => y === 8);
 const zs = new Set(beam.map(a => a[0] + ',' + a[2]));
 console.log(view(dim, 8, -8, -8, 8, 8).join('\n'));
 
+// ---- bridges are locked until the settings code is given
+{
+  const { dim, player } = world({ id: 'lock' });
+  check(!railway.fieldsFor(player).some(f => f.key === 'bridge') && railway.fieldsFor({ ...player, id: player.id }).length > 5, 'locked: no bridge options in the form');
+  const m = await runTool(railway, { bridge: 'plate' }, { player, points: [{ x: 0, y: 0, z: 0 }, { x: 30, y: 0, z: 0 }] });
+  check(!m.some(t => /교량|고급/.test(t)) && ![...dim.map.values()].some(p => /copper/.test(p.id)), 'locked: the bridge is quietly skipped, the track is laid');
+  session(player).settings.unlocked = true;
+  check(railway.fieldsFor(player).some(f => f.key === 'bridge'), 'unlocked: bridge options shown');
+}
+
 // ---- bridges: every design builds over the ground, piers reach it, bolts sit on plates, bars join up
 {
   const { BRIDGES } = await import('./scripts/lib/bridges.js');
@@ -213,6 +223,7 @@ console.log(view(dim, 8, -8, -8, 8, 8).join('\n'));
   for (const b of BRIDGES) for (const pts of [[{ x: 0, y: 0, z: 0 }, { x: 60, y: 0, z: 0 }], [{ x: 0, y: 0, z: 0 }, { x: 30, y: 0, z: 6 }, { x: 52, y: 0, z: 34 }]]) {
     const { dim, player } = world({ id: 'br' + b.id + pts.length });
     for (let x = -20; x <= 90; x++) for (let z = -30; z <= 70; z++) put(dim, x, -24, z, 'grass_block');
+    session(player).settings.unlocked = true;
     const m = await runTool(railway, { bridge: b.id, steel: 'weathered' }, { player, points: pts });
     const last = m.slice(-1)[0];
     const piers = +(/교각 (\d+)개/.exec(last)?.[1] ?? 0);
@@ -228,4 +239,32 @@ console.log(view(dim, 8, -8, -8, 8, 8).join('\n'));
     check(/교각 \d+개/.test(last) && piers >= 2 && footings > 20 && Math.min(...ys) <= -24 + 1 && loose.length === 0 && (!bars.length || joined.length / bars.length > (b.id.startsWith("truss") ? 0.6 : 0.8)),
       `${b.id} (${pts.length === 2 ? 'straight' : 'curve'}): piers ${piers}, footing ${footings}, bolts ${bolts.length} all on plates (${loose.length} loose), bars joined ${joined.length}/${bars.length}`);
   }
+}
+
+// ---- contact wire height, slab bridge column spacing, parapets above the rails
+{
+  for (const h of [5, 8]) {
+    const { dim, player } = world({ id: 'wh' + h });
+    const m = await runTool(railway, { wireHeight: h, poleEvery: 20 }, { player, points: [{ x: 0, y: 0, z: 0 }, { x: 40, y: 0, z: 0 }] });
+    const hang = [...dim.map].filter(([k, p]) => p.id === 'minecraft:hopper' && p.states.facing_direction === 0).map(([k]) => +k.split(',')[1]);
+    const btn = [...dim.map].filter(([k, p]) => p.id.endsWith('button') && p.states.facing_direction === 0).map(([k]) => +k.split(',')[1]);
+    check(hang.length && hang.every(y => y === 3 + h) && Math.max(...btn) === 2 + h, `wire height ${h}: hangers at y ${3 + h}, contact wire ${h} above the rail tops (y 2): ${[...new Set(hang)]} / ${Math.max(...btn)}`);
+  }
+  const cols = {};
+  for (const gap of [4, 12]) {
+    const { dim, player } = world({ id: 'cg' + gap });
+    session(player).settings.unlocked = true;
+    for (let x = -10; x <= 40; x++) for (let z = -20; z <= 20; z++) put(dim, x, -20, z, 'grass_block');
+    await runTool(railway, { bridge: 'slab', colGap: gap, pole: '' }, { player, points: [{ x: 0, y: 0, z: 0 }, { x: 28, y: 0, z: 0 }] });
+    cols[gap] = new Set([...dim.map].filter(([k, p]) => k.split(',')[1] === '-10' && k.split(',')[0] === '0' && !p.id.endsWith('air')).map(([k]) => Math.round(+k.split(',')[2] / 3))).size;
+  }
+  check(cols[4] > cols[12], `slab bridge: closer columns with a smaller gap (${cols[4]} vs ${cols[12]} column groups)`);
+  const { dim, player } = world({ id: 'par' });
+  session(player).settings.unlocked = true;
+  for (let x = -10; x <= 40; x++) for (let z = -20; z <= 20; z++) put(dim, x, -20, z, 'grass_block');
+  await runTool(railway, { bridge: 'psci', pole: '' }, { player, points: [{ x: 0, y: 0, z: 0 }, { x: 30, y: 0, z: 0 }] });
+  const col = (z) => Math.max(...[...dim.map].filter(([k, p]) => k.split(',')[0] === '10' && +k.split(',')[2] === z && !p.id.endsWith('air')).map(([k]) => +k.split(',')[1]));
+  const edges = [-13, 13].map(col);
+  console.log('beam bridge: parapet tops', edges, 'rail top y 1');
+  check(edges.every(y => y >= 2), 'beam bridge: the guard walls stand higher than the rails');
 }

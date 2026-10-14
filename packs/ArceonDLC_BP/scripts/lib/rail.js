@@ -381,6 +381,37 @@ const poleBlock = (k) => {
  * right] edge of the track bed.
  */
 export function builtinPole(kind = 'gantry', rails = [-6, -3, 3, 6], bed = [-8, 8], opts = {}) {
+    const pole = buildPole(kind, rails, bed, opts);
+    // contact wire height: everything above the post band moves, the posts grow or shrink
+    let lift = Math.round(opts.lift ?? 0);
+    if (kind === 'truss')
+        lift = Math.max(-4, Math.min(1, lift)); // stay under the truss top
+    if (!lift)
+        return pole;
+    const cells = new Map();
+    const postZ = new Set();
+    for (const [k, p] of pole.cells) {
+        const [x, y, z] = k.split(',').map(Number);
+        if (y === 3 && /wall/.test(p.type.id))
+            postZ.add(z);
+        if (y < 4)
+            cells.set(k, p);
+    }
+    for (const [k, p] of pole.cells) {
+        const [x, y, z] = k.split(',').map(Number);
+        if (y >= 4 && y + lift >= 1)
+            cells.set(`${x},${y + lift},${z}`, p);
+    }
+    const post = perm('minecraft:andesite_wall', { wall_post_bit: true, wall_connection_type_east: 'none', wall_connection_type_north: 'none', wall_connection_type_south: 'none', wall_connection_type_west: 'none' });
+    for (const z of postZ)
+        for (let y = 4; y < 4 + lift; y++)
+            cells.set(`0,${y},${z}`, post);
+    pole.cells = cells;
+    pole.buttons = pole.buttons.map(([x, y, z]) => [x, y + lift, z]);
+    return pole;
+}
+
+function buildPole(kind, rails, bed, opts) {
     const R = [...rails].sort((a, b) => a - b);
     // on a truss bridge the beam hangs between the truss planes instead of posts
     const L = kind === 'truss' ? opts.planes[0] : Math.min(R[0] - 5, Math.floor(bed[0]) - 3);

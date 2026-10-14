@@ -233,3 +233,7 @@ export function unbindBrush(player, itemType) {
     delete s.brushes[itemType];
     save(player);
 }
+
+/** Advanced features (bridges...) are unlocked with a code in the settings. */
+export const UNLOCK_CODE = '4917';
+export const unlocked = (player) => session(player).settings.unlocked === true;

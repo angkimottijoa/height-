@@ -11,6 +11,7 @@ const xs = pts.map(p => p.x), zs = pts.map(p => p.z);
 for (let x = Math.min(...xs) - 30; x <= Math.max(...xs) + 30; x++)
   for (let z = Math.min(...zs) - 30; z <= Math.max(...zs) + 30; z++) put(dim, x, Number(process.env.GROUND ?? -16), z, 'grass_block');
 const ground = new Set(dim.map.keys());
+(await import('./scripts/core/session.js')).session(player).settings.unlocked = true;
 const m = await runTool(railway, { bridge: id, poleEvery: 20, ...extra }, { player, points: pts });
 console.log(m.slice(-1)[0]);
 const blocks = [];

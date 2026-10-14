@@ -223,23 +223,36 @@ export async function redo(player) {
 
 /** Run a generator over several ticks. Resolves with its return value. */
 export function runAsync(gen) {
+    // a generator may yield a promise (e.g. "load these chunks first"): the
+    // job pauses until it settles and gets its value back from yield
     return new Promise((resolve, reject) => {
-        function* wrap() {
-            let r;
-            try {
-                while (true) {
-                    r = gen.next();
-                    if (r.done)
-                        break;
-                    yield;
+        let input;
+        const step = () => {
+            function* wrap() {
+                try {
+                    while (true) {
+                        const r = gen.next(input);
+                        input = undefined;
+                        if (r.done) {
+                            resolve(r.value);
+                            return;
+                        }
+                        if (r.value && typeof r.value.then === 'function') {
+                            r.value.then(v => {
+                                input = v;
+                                step();
+                            }, reject);
+                            return;
+                        }
+                        yield;
+                    }
+                }
+                catch (e) {
+                    reject(e);
                 }
             }
-            catch (e) {
-                reject(e);
-                return;
-            }
-            resolve(r.value);
-        }
-        system.runJob(wrap());
+            system.runJob(wrap());
+        };
+        step();
     });
 }

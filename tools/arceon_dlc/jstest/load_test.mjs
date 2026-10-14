@@ -19,3 +19,30 @@ dim.unloaded = (x, z) => x >= 64;
 session(player).settings.loadAll = false;
 m = await runTool(fill, { block: 'stone' }, { player, region: [{ x: 0, y: 0, z: 0 }, { x: 300, y: 0, z: 2 }] });
 check(dim.count() === 64 * 3 && player.msgs.some(t => /건너뛰었습니다/.test(t)), 'setting off: only loaded part placed, skip reported');
+
+// ---- slow loading, a full allowance and the command fallback: everything still gets placed
+{
+  mc.system.autoTimers = true;
+  const tam = mc.world.tickingAreaManager;
+  // chunks take 30 ms to load after an area is made; the allowance is tiny and taken by someone else for a while
+  ({ dim, player } = world({ id: 'ld3' }));
+  dim.unloaded = (x, z) => x >= 64;
+  dim.loadDelayMs = 30;
+  const max = tam.maxChunkCount;
+  tam.maxChunkCount = 4;
+  await tam.createTickingArea('someone_else', { dimension: dim, from: { x: -512, y: 0, z: -512 }, to: { x: -481, y: 0, z: -481 } });
+  setTimeout(() => tam.removeTickingArea('someone_else'), 60);
+  m = await runTool(fill, { block: 'stone' }, { player, region: [{ x: 0, y: 0, z: 0 }, { x: 300, y: 0, z: 40 }] });
+  console.log(m.slice(-1)[0]);
+  check(dim.count() === 301 * 41, 'slow loading + full allowance: all ' + 301 * 41 + ' blocks placed: ' + dim.count());
+  // no ticking area manager capacity at all: the /tickingarea command takes over
+  ({ dim, player } = world({ id: 'ld4' }));
+  dim.unloaded = (x, z) => x >= 64;
+  dim.loadDelayMs = 10;
+  tam.maxChunkCount = 0;
+  const before = mc.commandAreas.made;
+  m = await runTool(fill, { block: 'stone' }, { player, region: [{ x: 0, y: 0, z: 0 }, { x: 200, y: 0, z: 2 }] });
+  check(dim.count() === 201 * 3 && mc.commandAreas.made > before && mc.commandAreas.open === 0, 'no allowance: placed through /tickingarea, all removed again: ' + dim.count());
+  tam.maxChunkCount = max;
+  mc.system.autoTimers = false;
+}

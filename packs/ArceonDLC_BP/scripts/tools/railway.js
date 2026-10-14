@@ -9,9 +9,13 @@ import { builtinPole, builtinTile, freeWires, loadPole, presetTile, standPoles, 
 import { loadTracks, trackNames } from '../lib/track_presets.js';
 import { BRIDGES, bridgeById, bridgeTile, geometry, pierPiece, polish, STEEL } from '../lib/bridges.js';
 import { stamp } from '../lib/rail.js';
+import { loadAll } from '../core/edit.js';
+import { unlocked } from '../core/session.js';
+import { ensureLoaded } from '../core/loader.js';
 import { layout, roadFrom } from './lanes.js';
 
 const BUILTIN_POLE = '@기본', POST_ONLY = '@기둥';
+const BRIDGE_KEYS = ['bridge', 'steel', 'span', 'colGap'];
 
 const DETAIL = [
     { key: 'gauge', type: 'slider', label: '레일(모루) 사이 칸 수', default: 2, min: 1, max: 8 },
@@ -24,6 +28,7 @@ const DETAIL = [
     { key: 'top', type: 'block', label: '자갈 위 반블록 (비율%블록, 쉼표로)', default: TOP_MIX, palette: false },
     { key: 'sleeper', type: 'block', label: '침목 (비율%블록, 쉼표로 섞기)', default: 'mud_bricks', palette: false },
     { key: 'sleeperEnd', type: 'block', label: '침목 양 끝 계단 (레일 쪽이 높게, 비우면 침목과 같게)', default: 'mud_brick_stairs', palette: false },
+    { key: 'colGap', type: 'slider', label: '슬래브교: 기둥 사이 간격 (칸)', default: 6, min: 3, max: 20 },
     { key: 'rail', type: 'block', label: '레일', default: 'anvil', palette: false },
 ];
 
@@ -34,6 +39,11 @@ export default {
     icon: 'textures/blocks/rail_normal',
     needs: 'points',
     useMask: true,
+    fieldsFor(player) {
+        // the bridge options only once the advanced features are unlocked (settings code)
+        const f = this.fields;
+        return unlocked(player) ? f : f.filter(x => !BRIDGE_KEYS.includes(x.key));
+    },
     get fields() {
         const tracks = trackNames();
         const assets = listAssets().map(a => a.name);
@@ -95,6 +105,7 @@ export default {
                     { value: '90', label: '90° 단위로만 (모양 100% 그대로)' },
                 ],
             },
+            { key: 'wireHeight', type: 'slider', label: '전차선 높이 (레일 위 칸 수, 기본 전신주)', default: 5, min: 2, max: 12 },
             { key: 'wires', type: 'toggle', label: '전선 걸기 (전신주 안의 버튼끼리 이음)', default: true },
             { key: 'wireBlock', type: 'block', label: '전선 블록 (버튼)', default: 'polished_blackstone_button', palette: false },
             { key: 'wireSupport', type: 'toggle', label: '전선 버튼에 보이지 않는 방벽 받치기 (안 떨어지게)', default: true },
@@ -109,9 +120,11 @@ export default {
     async more(player, v) {
         if (!v.detail || v.track)
             return {};
-        return ask(player, 'tool:railway:detail', '철도 - 기본 선로 세부 설정', DETAIL, { submit: '깔기' });
+        return ask(player, 'tool:railway:detail', '철도 - 기본 선로 세부 설정', unlocked(player) ? DETAIL : DETAIL.filter(x => !BRIDGE_KEYS.includes(x.key)), { submit: '깔기' });
     },
     *run(ctx, v) {
+        if (v.bridge && !unlocked(ctx.player))
+            v = { ...v, bridge: '' }; // hidden until the settings code is given
         const paint = new Map();
         const parts = [];
         let tile;
@@ -147,7 +160,7 @@ export default {
             if (!d)
                 throw new Error('없는 교량 종류: ' + v.bridge);
             const bed = tile.rails ? tile : builtinTile({ tracks: v.tracks ?? 2 });
-            const g = geometry(d, bed, { paint: v.steel, ballast: tile.fill?.ballast, top: tile.fill ? tile.fill.top : TOP_MIX });
+            const g = geometry(d, bed, { paint: v.steel, colGap: tile.fill?.colGap ?? v.colGap, ballast: tile.fill?.ballast, top: tile.fill ? tile.fill.top : TOP_MIX });
             const bt = bridgeTile(d, g);
             const bp = new Map();
             const curveRoad = yield* layout(ctx, v, 1);
@@ -219,10 +232,14 @@ export default {
             const edit = ctx.edit;
             let piers = 0;
             const turned = new Map();
+            const far = loadAll(ctx.player);
             for (const p of pierAt) {
                 const y = Math.floor(p.y);
+                // the ground under a far pier must be loaded before it can be read
+                const release = far ? yield ensureLoaded(ctx.dim, { x: Math.floor(p.x) - 2, y, z: Math.floor(p.z) - 2 }, { x: Math.floor(p.x) + 2, y, z: Math.floor(p.z) + 2 }) : null;
                 const ground = edit.highest(Math.floor(p.x), Math.floor(p.z), Math.max(edit.minY, y - 96), y + d.dyMin - 1);
                 const gdy = Math.max(ground - y, d.dyMin - 96);
+                release?.();
                 if (gdy >= d.dyMin - 1)
                     continue; // the deck is on the ground here
                 stamp(p, pierPiece(d, g, gdy, bt, piers + 1), v.poleAngle, bp, turned);
@@ -243,11 +260,11 @@ export default {
             // none: the rails a built-in track with this many lines would have)
             const bed = tile.rails ? tile : builtinTile({ tracks: v.tracks ?? 2 });
             const pole = v.pole === BUILTIN_POLE || v.pole === POST_ONLY
-                ? builtinPole(v.pole === POST_ONLY ? 'post' : 'gantry', bed.rails, bed.bed) : loadPole(v.pole);
+                ? builtinPole(v.pole === POST_ONLY ? 'post' : 'gantry', bed.rails, bed.bed, { lift: (v.wireHeight ?? 5) - 5 }) : loadPole(v.pole);
             let poles;
             if (trussPoles) {
                 // on a truss: a gantry beam between the truss verticals, no posts of its own
-                const tp = builtinPole('truss', bed.rails, bed.bed, { planes: trussPoles.planes });
+                const tp = builtinPole('truss', bed.rails, bed.bed, { planes: trussPoles.planes, lift: (v.wireHeight ?? 5) - 5 });
                 const S2 = trussPoles.samples, turned = new Map();
                 poles = trussPoles.spots.map(s => stamp(S2.reduce((b, q) => Math.abs(q.s - s) < Math.abs(b.s - s) ? q : b), tp, v.poleAngle, paint, turned));
                 pole.buttons = tp.buttons;
