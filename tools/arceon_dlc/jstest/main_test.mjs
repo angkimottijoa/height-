@@ -159,3 +159,17 @@ check(player.inv.filter(Boolean).length >= 7, 'arc:tools gives the 6 items');
 console.log('commands', Object.keys(cmds).join(' '));
 const errs = player.msgs.filter(m => m.startsWith('§c'));
 check(errs.length === 0, 'no error messages ' + JSON.stringify(errs));
+
+// ---- the hidden layout tool: does nothing until the settings code is in; then taps add points
+{
+  s.yard = undefined; s.settings.unlocked = false;
+  await tap('arc:yard_tool', { x: 1, y: 0, z: 1 });
+  check(!s.yard?.pts?.length, 'layout tool: locked, a tap does nothing');
+  s.settings.unlocked = true;
+  await tap('arc:yard_tool', { x: 1, y: 0, z: 1 });
+  await tap('arc:yard_tool', { x: 20, y: 0, z: 1 });
+  check(s.yard?.pts?.length === 2, 'layout tool: unlocked, taps add points: ' + s.yard?.pts?.length);
+  tick(40);
+  await brk('arc:yard_tool', { x: 30, y: 0, z: 30 });
+  check(s.yard.pts.length === 1, 'layout tool: break takes the last point back');
+}

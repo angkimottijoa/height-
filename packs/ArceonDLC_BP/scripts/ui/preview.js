@@ -10,7 +10,7 @@
 import { BezierPath, LinePath, resample } from '../core/spline.js';
 import { anchorFor, getClip, placedBounds } from '../core/clipboard.js';
 import { region, session } from '../core/session.js';
-import { CLIPBOARD, FRAME_PICKER, WAND } from '../core/access.js';
+import { CLIPBOARD, FRAME_PICKER, WAND, YARD } from '../core/access.js';
 
 const MAX = 240;
 
@@ -118,6 +118,15 @@ export function preview(player, item) {
         const at = anchorFor(hit.block.location, hit.face);
         box(player, placedBounds(clip, at), 'minecraft:basic_flame_particle');
         spawn(player, 'minecraft:villager_happy', c(at));
+        return;
+    }
+    if (item === YARD) {
+        // the layout tool: its points and the line through them (ends are real blocks)
+        const pts = s.yard?.pts ?? [];
+        for (const p of pts.slice(0, 64))
+            spawn(player, 'minecraft:villager_happy', c(p));
+        if (pts.length >= 2)
+            curve(player, pts, 'minecraft:basic_flame_particle');
         return;
     }
     if (item === WAND && s.wandMode === 'points') {

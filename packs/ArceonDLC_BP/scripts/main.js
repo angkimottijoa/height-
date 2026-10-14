@@ -27,7 +27,8 @@ import { permToString } from './core/blocks.js';
 import { BRUSHES, TOOLS } from './tools/index.js';
 import { assetSaveForm, assetsMenu, blockPickerMenu, clipboardMenu, frameMenu, giveTools, openMenu, terrainMenu, wandMenu } from './ui/menu.js';
 import { preview } from './ui/preview.js';
-import { allowed, BLOCK_PICKER, CLIPBOARD, FRAME_PICKER, ITEMS, PLACER, TERRAIN, WAND } from './core/access.js';
+import { allowed, ALL_ITEMS, BLOCK_PICKER, CLIPBOARD, FRAME_PICKER, PLACER, TERRAIN, WAND, YARD } from './core/access.js';
+import { yardBreak, yardTap } from './ui/yard.js';
 
 const SELECTION_TOOL = 'andexdb:selection_tool';
 const fl = (p) => ({ x: Math.floor(p.x), y: Math.floor(p.y), z: Math.floor(p.z) });
@@ -135,6 +136,9 @@ const TAP = {
     [TERRAIN](player) {
         terrainMenu(player);
     },
+    [YARD](player, hit, sneaking) {
+        return yardTap(player, hit, sneaking);
+    },
 };
 
 const BREAK = {
@@ -183,6 +187,9 @@ const BREAK = {
         assetSaveForm(player);
     },
     [TERRAIN]() { },
+    [YARD](player) {
+        yardBreak(player);
+    },
 };
 
 async function copy(player) {
@@ -231,7 +238,7 @@ function deny(player) {
 // events
 // --------------------------------------------------------------------------
 function heldBrush(player, id) {
-    if (ITEMS.includes(id))
+    if (ALL_ITEMS.includes(id))
         return null;
     const bound = session(player).brushes[id];
     return bound ? { bound, brush: BRUSHES.find(b => b.id === bound.id) } : null;
@@ -366,7 +373,7 @@ system.runInterval(() => {
     for (const player of world.getAllPlayers()) {
         try {
             const item = player.getComponent('minecraft:inventory')?.container?.getItem(player.selectedSlotIndex);
-            if (item && ITEMS.includes(item.typeId) && session(player).settings.particles)
+            if (item && ALL_ITEMS.includes(item.typeId) && session(player).settings.particles)
                 preview(player, item.typeId);
         }
         catch (e) { }

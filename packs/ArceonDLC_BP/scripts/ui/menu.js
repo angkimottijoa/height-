@@ -3,18 +3,18 @@
  * opens everything.
  */
 import { ItemStack } from '@minecraft/server';
-import { BLOCK_PICKER, CLIPBOARD, FRAME_PICKER, ITEMS, PLACER, TERRAIN, WAND } from '../core/access.js';
+import { BLOCK_PICKER, CLIPBOARD, FRAME_PICKER, ITEMS, PLACER, TERRAIN, WAND, YARD } from '../core/access.js';
 import { isBusy, redo, say, undo } from '../core/edit.js';
 import { parseMask } from '../core/blocks.js';
 import { clearClip, getClip } from '../core/clipboard.js';
 import { runTool } from '../core/runner.js';
-import { bindBrush, clearFrames, clearPoints, frameCount, region, removeFramePoint, removePoint, save, saveFrame, session, setCorner, unbindBrush, UNLOCK_CODE, volume } from '../core/session.js';
+import { bindBrush, clearFrames, clearPoints, frameCount, region, removeFramePoint, removePoint, save, saveFrame, session, setCorner, unbindBrush, UNLOCK_CODE, unlocked, volume } from '../core/session.js';
 import { BRUSHES, GROUPS, TOOLS } from '../tools/index.js';
 import { ask, menu } from './form.js';
 
 const ITEM_NAMES = {
     [WAND]: '선택 지팡이', [FRAME_PICKER]: '프레임 피커', [BLOCK_PICKER]: '블록 피커',
-    [CLIPBOARD]: '클립보드 도구', [PLACER]: '에셋 도구', [TERRAIN]: '지형 도구',
+    [CLIPBOARD]: '클립보드 도구', [PLACER]: '에셋 도구', [TERRAIN]: '지형 도구', [YARD]: '배선 도구',
 };
 const fmt = (p) => p ? `${p.x} ${p.y} ${p.z}` : '§7없음§r';
 const back = { text: '§8← 뒤로', value: '<' };
@@ -33,7 +33,8 @@ function status(player) {
 }
 
 /** Give tool items (all six by default). */
-export function giveTools(player, ids = ITEMS) {
+export function giveTools(player, ids = null) {
+    ids = ids ?? (unlocked(player) ? [...ITEMS, YARD] : ITEMS);
     const inv = player.getComponent('minecraft:inventory')?.container;
     for (const id of ids) {
         try {
