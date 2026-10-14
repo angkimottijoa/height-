@@ -53,7 +53,7 @@ export const trackById = (id) => tracks().find(t => t.id === id);
 export function saveTrack(t) {
     const json = JSON.stringify(t);
     if (json.length > 32000)
-        throw new Error('선로 하나가 너무 깁니다 (약 1300칸까지). 나눠서 까세요');
+        throw new Error('선로 하나가 너무 깁니다 (약 1200칸까지). 나눠서 까세요');
     world.setDynamicProperty(TRACK(t.id), json);
     const ids = index();
     if (!ids.includes(t.id)) {
@@ -76,7 +76,7 @@ export function newId() {
 }
 
 // ------------------------------------------------------------ samples
-const r1 = (v) => Math.round(v * 10) / 10;
+const r1 = (v) => Math.round(v * 10) / 10, r2 = (v) => Math.round(v * 100) / 100;
 /** Samples with tangents, normals and distance from a list of points. */
 export function withFrames(P) {
     const S = [];
@@ -116,8 +116,20 @@ export function sampleCurve(ctrl) {
         P.push(path.frac(i / steps));
     return withFrames(P);
 }
-/** Keep every SUB-th sample: the centre line a block apart, for the record. */
-export const thinPts = (S) => S.filter((_, i) => i % SUB === 0 || i === S.length - 1).map(p => [r1(p.x), r1(p.y), r1(p.z)]);
+/** The centre line a block apart (by distance along it), for the record. */
+export function thinPts(S) {
+    const out = [], end = S[S.length - 1].s;
+    let i = 0;
+    for (let s = 0; s < end - 0.5; s++) {
+        while (i + 1 < S.length && S[i + 1].s < s)
+            i++;
+        const a = S[i], b = S[Math.min(S.length - 1, i + 1)], t = b.s > a.s ? Math.min(1, Math.max(0, (s - a.s) / (b.s - a.s))) : 0;
+        out.push([r2(a.x + (b.x - a.x) * t), r2(a.y + (b.y - a.y) * t), r2(a.z + (b.z - a.z) * t)]);
+    }
+    const z = S[S.length - 1];
+    out.push([r2(z.x), r2(z.y), r2(z.z)]);
+    return out;
+}
 /** Sample at distance s (nearest). */
 export function at(S, s) {
     let lo = 0, hi = S.length - 1;
@@ -129,6 +141,15 @@ export function at(S, s) {
             hi = m;
     }
     return S[lo];
+}
+/** The point at distance s, interpolated between samples (with its frame). */
+export function along(S, s) {
+    const b = at(S, s);
+    const i = S.indexOf(b), a = S[Math.max(0, i - 1)];
+    if (a === b || b.s <= a.s || s >= b.s)
+        return b;
+    const t = Math.max(0, (s - a.s) / (b.s - a.s)), l = (u, v) => u + (v - u) * t;
+    return { x: l(a.x, b.x), y: l(a.y, b.y), z: l(a.z, b.z), tx: l(a.tx, b.tx), tz: l(a.tz, b.tz), nx: l(a.nx, b.nx), nz: l(a.nz, b.nz), s };
 }
 export const reversed = (S) => withFrames([...S].reverse());
 /** Nearest sample to a point (2D) and its distance. */
@@ -147,27 +168,56 @@ export function nearest(S, p) {
 // ------------------------------------------------------------ finding things
 /**
  * What a tap at block `pos` points at: an end of a track (within 3 blocks of
- * it or its buffer stop), else a track's body (within 3 blocks of its centre
- * line), else nothing.
+ * it or its end block), else a track's body (within its bed), with the lane
+ * (which of its tracks) nearest the tap; else nothing. `extra` adds planned
+ * lines that are not laid yet (same shape as recorded tracks).
  */
-export function hitTest(pos) {
+export function hitTest(pos, extra = []) {
     const c = { x: pos.x + 0.5, y: pos.y, z: pos.z + 0.5 };
+    const all = [...extra, ...tracks()];
     let best = null;
-    for (const t of tracks())
+    for (const t of all)
         t.ends.forEach((e, i) => {
-            const d = Math.hypot(e.at[0] - c.x, e.at[2] - c.z);
-            if (d <= 3.5 && Math.abs(e.at[1] - c.y) <= 4 && (!best || d < best.d))
-                best = { type: 'end', track: t, end: i, d };
+            const d = Math.min(Math.hypot(e.at[0] - c.x, e.at[2] - c.z), Math.hypot(e.at[0] + e.dir[0] * 1.2 - c.x, e.at[2] + e.dir[1] * 1.2 - c.z));
+            if (d <= 3 && Math.abs(e.at[1] - c.y) <= 4 && (!best || d < best.d))
+                best = { type: 'end', track: t, end: i, d, lane: laneNear(t, endOffset(e, i, c)) };
         });
     if (best)
         return best;
-    for (const t of tracks()) {
+    for (const t of all) {
         const S = trackSamples(t);
         const { sample, d } = nearest(S, c);
-        if (sample && d <= 3 && Math.abs(sample.y - c.y) <= 4 && (!best || d < best.d))
-            best = { type: 'track', track: t, s: sample.s, d };
+        if (!sample || d > (t.w ?? 8) / 2 + 0.5 || Math.abs(sample.y - c.y) > 4 || (best && d >= best.d))
+            continue;
+        const off = (c.x - sample.x) * sample.nx + (c.z - sample.z) * sample.nz;
+        best = { type: 'track', track: t, s: sample.s, lane: laneNear(t, off), d };
     }
     return best;
+}
+
+/** Which lane of a track is nearest a sideways offset. */
+function laneNear(t, off) {
+    const centres = t.centres ?? [0];
+    let lane = 0;
+    centres.forEach((u, i) => {
+        if (Math.abs(u - off) < Math.abs(centres[lane] - off))
+            lane = i;
+    });
+    return lane;
+}
+/** The right of travel at an end (travel runs from end 0 to end 1; dir points out). */
+const endNormal = (e, i) => i === 1 ? [-e.dir[1], e.dir[0]] : [e.dir[1], -e.dir[0]];
+const endOffset = (e, i, c) => {
+    const [nx, nz] = endNormal(e, i);
+    return (c.x - e.at[0]) * nx + (c.z - e.at[2]) * nz;
+};
+/** Where a track end is, on one lane (a single track carrying on from a double one). */
+function endAt(ref, single) {
+    const e = ref.track.ends[ref.end];
+    const centres = ref.track.centres ?? [0];
+    const off = single && centres.length > 1 ? centres[ref.lane ?? 0] ?? 0 : 0;
+    const [nx, nz] = endNormal(e, ref.end);
+    return { e, E: { x: e.at[0] + nx * off, y: e.at[1], z: e.at[2] + nz * off } };
 }
 
 // ------------------------------------------------------------ turnouts
@@ -182,7 +232,7 @@ export function lead(S, s0, dir, side, N) {
     const R = 2 * N * N, Lt = R / N;
     const P = [];
     for (let x = 0; x <= Lt + 1e-9; x += 1 / SUB) {
-        const b = at(S, s0 + dir * x);
+        const b = along(S, s0 + dir * x);
         const off = side * x * x / (2 * R);
         // right of travel = dir · (right of the track)
         P.push({ x: b.x + dir * b.nx * off, y: b.y, z: b.z + dir * b.nz * off });
@@ -225,18 +275,11 @@ export function* layPath(ctx, S, tile, paint) {
     yield* sweep(ctx, { clearAir: true }, tile, paint, road);
 }
 
-/** Buffer stop cells just past an end (at = end centre, dir = outward). */
+/** The end marker: one block on the track's centre just past a loose end (tap it to carry on). */
+export const END_BLOCK = 'red_concrete';
 export function bufferStop(end) {
     const [x, y, z] = end.at, [dx, dz] = end.dir;
-    const nx = -dz, nz = dx, out = [];
-    const bx = x + dx * 1.2, bz = z + dz * 1.2, by = Math.floor(y);
-    for (let u = -2; u <= 2; u++) {
-        const px = Math.floor(bx + nx * u), pz = Math.floor(bz + nz * u);
-        out.push([px, by, pz, 'gravel']);
-        out.push([px, by + 1, pz, Math.abs(u) === 2 ? 'polished_blackstone' : 'red_concrete']);
-        out.push([px, by + 2, pz, Math.abs(u) === 2 ? 'polished_blackstone_slab' : 'white_concrete_slab']);
-    }
-    return out;
+    return [[Math.floor(x + dx * 1.2), Math.floor(y) + 1, Math.floor(z + dz * 1.2), END_BLOCK]];
 }
 
 /**
@@ -270,7 +313,7 @@ export function turnoutFurniture(parent, child, railSouth, paint) {
     if (!frog)
         return { side };
     const guard = (S, s, off) => {
-        for (let k = -3; k <= 3; k++) {
+        for (let k = -2; k <= 2; k++) {
             const b = at(S, s + k);
             const x = Math.floor(b.x + b.nx * off), z = Math.floor(b.z + b.nz * off), y = Math.floor(b.y) + 1;
             paint.set(`${x},${y},${z}`, railFacing(railSouth, b.tx, b.tz));
@@ -287,7 +330,7 @@ export function turnoutFurniture(parent, child, railSouth, paint) {
  * start/finish: {type: 'end', track, end} | {type: 'track', track, s} | {type: 'point', pos}.
  * Returns {S, branchFrom, joinTo, startEnd, finishEnd}.
  */
-export function planDrawn(start, points, finish, N = 8) {
+export function planDrawn(start, points, finish, N = 8, single = false) {
     const centre = (p) => ({ x: p.x + 0.5, y: p.y, z: p.z + 0.5 });
     const mids = points.map(centre);
     const ctrl = [];
@@ -295,12 +338,11 @@ export function planDrawn(start, points, finish, N = 8) {
     const firstTarget = mids[0] ?? (finish && anchorOf(finish));
     // the start
     if (start.type === 'end') {
-        const e = start.track.ends[start.end];
-        const E = { x: e.at[0], y: e.at[1], z: e.at[2] };
+        const { e, E } = endAt(start, single);
         ctrl.push(E, { x: E.x + e.dir[0] * 4, y: E.y, z: E.z + e.dir[1] * 4 });
     }
     else if (start.type === 'track') {
-        const S = trackSamples(start.track);
+        const S = laneOf(start);
         const b = at(S, start.s);
         const to = firstTarget ?? { x: b.x + b.tx * 10, z: b.z + b.tz * 10 };
         const dir = (to.x - b.x) * b.tx + (to.z - b.z) * b.tz >= 0 ? 1 : -1;
@@ -308,7 +350,7 @@ export function planDrawn(start, points, finish, N = 8) {
         headS = lead(S, start.s, dir, side, N);
         const L = headS[headS.length - 1];
         ctrl.push({ x: L.x, y: L.y, z: L.z }, { x: L.x + L.tx * 4, y: L.y, z: L.z + L.tz * 4 });
-        branchFrom = { track: start.track, s: start.s, dir };
+        branchFrom = { track: start.track, s: start.s, dir, lane: start.lane ?? 0 };
     }
     else
         ctrl.push(centre(start.pos));
@@ -321,12 +363,11 @@ export function planDrawn(start, points, finish, N = 8) {
     ctrl.push(...mids);
     // the finish
     if (finish?.type === 'end') {
-        const e = finish.track.ends[finish.end];
-        const E = { x: e.at[0], y: e.at[1], z: e.at[2] };
+        const { e, E } = endAt(finish, single);
         ctrl.push({ x: E.x + e.dir[0] * 4, y: E.y, z: E.z + e.dir[1] * 4 }, E);
     }
     else if (finish?.type === 'track') {
-        const S = trackSamples(finish.track);
+        const S = laneOf(finish);
         const b = at(S, finish.s);
         const from = ctrl[ctrl.length - 1];
         const dir = (from.x - b.x) * b.tx + (from.z - b.z) * b.tz >= 0 ? 1 : -1;
@@ -335,7 +376,7 @@ export function planDrawn(start, points, finish, N = 8) {
         const L = m[m.length - 1];
         tailS = reversed(m);
         ctrl.push({ x: L.x + L.tx * 4, y: L.y, z: L.z + L.tz * 4 }, { x: L.x, y: L.y, z: L.z });
-        joinTo = { track: finish.track, s: finish.s, dir };
+        joinTo = { track: finish.track, s: finish.s, dir, lane: finish.lane ?? 0 };
     }
     else if (finish?.type === 'point')
         ctrl.push(centre(finish.pos));
@@ -348,57 +389,18 @@ export function planDrawn(start, points, finish, N = 8) {
     const P = [...(headS ?? []), ...mid.slice(headS ? 1 : 0), ...(tailS ? tailS.slice(1) : [])];
     return { S: withFrames(P), branchFrom, joinTo };
 }
+/** The centre line of the tapped lane of a track (a double track has two). */
+function laneOf(ref) {
+    const S = trackSamples(ref.track);
+    const off = (ref.track.centres ?? [0])[ref.lane ?? 0] ?? 0;
+    return off ? withFrames(S.map(p => ({ x: p.x + p.nx * off, y: p.y, z: p.z + p.nz * off }))) : S;
+}
 function anchorOf(x) {
-    if (x.type === 'end') {
-        const a = x.track.ends[x.end].at;
-        return { x: a[0], y: a[1], z: a[2] };
-    }
+    if (x.type === 'end')
+        return endAt(x, true).E;
     if (x.type === 'track')
-        return at(trackSamples(x.track), x.s);
+        return at(laneOf(x), x.s);
     return { x: x.pos.x + 0.5, y: x.pos.y, z: x.pos.z + 0.5 };
-}
-
-/**
- * Plan a yard automatically along a main line: `n` tracks beside it at
- * `gap`, each leaving the previous one through a turnout and an S-curve (the
- * throat, 1:N), running parallel, and (with `both`) rejoining at the far end;
- * otherwise ending at buffer stops. Returns [{S, parent, from, to}] with the
- * main line first.
- */
-export function planYard(main, { n = 6, gap = 6, N = 6, side = -1, both = true, startAt = 10 } = {}) {
-    const total = main[main.length - 1].s;
-    const T = Math.max(8, Math.round(N * gap * 1.2));
-    const smooth = (t) => t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t);
-    const offs = [() => 0];
-    const out = [{ S: main, name: '본선' }];
-    for (let i = 1; i <= n; i++) {
-        const a = startAt + (i - 1) * T, b = both ? total - startAt - (i - 1) * T : total;
-        if (b - a < 2 * T + 4)
-            break;
-        const prev = offs[i - 1];
-        const off = (s) => prev(s) + side * gap * smooth((s - a) / T) * (both ? smooth((b - s) / T) : 1);
-        offs.push(off);
-        const P = [];
-        for (const p of main)
-            if (p.s >= a - 1e-6 && p.s <= b + 1e-6) {
-                const o = off(p.s);
-                P.push({ x: p.x + p.nx * o, y: p.y, z: p.z + p.nz * o });
-            }
-        out.push({ S: withFrames(P), name: `${i}번선`, parent: i - 1, a, b, both });
-    }
-    return out;
-}
-
-/** Turnout and furniture for a yard track against its parent, at its start (and end). */
-export function yardFurniture(plan, i, railSouth, paint) {
-    const t = plan[i], par = plan[t.parent].S;
-    const sliceFrom = (S, s) => S.filter(p => p.s >= s - 1e-6).map((p, k, arr) => p);
-    const parentFrom = withFrames(sliceFrom(par, t.a));
-    turnoutFurniture(parentFrom, t.S, railSouth, paint);
-    if (t.both) {
-        const parentBack = reversed(par.filter(p => p.s <= t.b + 1e-6));
-        turnoutFurniture(parentBack, reversed(t.S), railSouth, paint);
-    }
 }
 
 /** The ends of a centre line: start and finish, outward directions. */
@@ -422,95 +424,98 @@ export function yardTile(opts = {}) {
     return { tile, railSouth };
 }
 
-// ------------------------------------------------------------ whole jobs
-function writePaint(ctx, paint) {
+// ------------------------------------------------------------ from tapped points
+/**
+ * A centre line for points tapped with the wand: when the first point is on
+ * a recorded track's end it carries on from it, on its side it branches off
+ * through a turnout; the last point likewise finishes into an end or joins a
+ * side. Returns null when neither end touches a recorded track.
+ */
+export function planFromPoints(points, N = 8, extra = [], single = false) {
+    if (points.length < 2)
+        return null;
+    const first = hitTest(points[0], extra), last = hitTest(points[points.length - 1], extra);
+    if (!first && !last)
+        return null;
+    const start = first ?? { type: 'point', pos: points[0] };
+    const finish = last ?? { type: 'point', pos: points[points.length - 1] };
+    const plan = planDrawn(start, points.slice(1, -1), finish, N, single);
+    return { ...plan, start, finish };
+}
+
+/** Travel samples along `S` at sideways offset `off`, from s = a to s = b (either way). */
+export function laneLine(S, off, a, b) {
+    const dir = b >= a ? 1 : -1, P = [];
+    for (let t = 0; t <= Math.abs(b - a) + 1e-9; t += 1 / SUB) {
+        const p = along(S, a + dir * t);
+        P.push({ x: p.x + p.nx * off, y: p.y, z: p.z + p.nz * off });
+    }
+    return withFrames(P);
+}
+
+/**
+ * A crossover between two lanes (on one double track, or two tracks side by
+ * side): it leaves lane A at the tapped spot, crosses over on a smooth
+ * reverse curve (1:N at its steepest, tangent to both lanes at its ends) and
+ * runs into lane B where B was tapped (or further on, if that would be too
+ * steep). kind 'scissors' adds the
+ * mirror crossover over the same length (an X with a diamond in the middle).
+ * Returns {paths: [samples...], turnouts: [[parent, child]...]}.
+ */
+export function crossoverPlan(a, b, kind = 'single', N = 8) {
+    const S = trackSamples(a.track);
+    const uA = (a.track.centres ?? [0])[a.lane ?? 0];
+    // lane B as an offset from A's centre line, where B was tapped
+    const SB = trackSamples(b.track);
+    const pb = at(SB, b.s);
+    const uB0 = (b.track.centres ?? [0])[b.lane ?? 0];
+    const pB = { x: pb.x + pb.nx * uB0, z: pb.z + pb.nz * uB0 };
+    const onA = nearest(S, pB).sample;
+    const uB = (pB.x - onA.x) * onA.nx + (pB.z - onA.z) * onA.nz;
+    const delta = uB - uA;
+    if (Math.abs(delta) < 2)
+        throw new Error('두 선로가 너무 가깝습니다 (같은 선로가 아닌지 확인하세요)');
+    const dir = onA.s >= a.s ? 1 : -1;
+    // from tap A to tap B, but never steeper than the turnouts allow
+    const L = Math.max(12, Math.abs(delta) * N, Math.abs(onA.s - a.s));
+    const s0 = a.s, s1 = a.s + dir * L;
+    if (s1 < 0 || s1 > S[S.length - 1].s)
+        throw new Error(`건넘선이 선로 끝을 넘습니다 (약 ${Math.round(L)}칸 필요). 더 안쪽을 터치하거나 번수를 줄이세요`);
+    const smooth = (t) => t * t * (3 - 2 * t);
+    const cross = (from, to) => {
+        const P = [];
+        for (let t = 0; t <= L + 1e-9; t += 1 / SUB) {
+            const p = along(S, s0 + dir * t);
+            const o = from + (to - from) * smooth(t / L);
+            P.push({ x: p.x + p.nx * o, y: p.y, z: p.z + p.nz * o });
+        }
+        return withFrames(P);
+    };
+    const reach = L + 30;
+    const paths = [cross(uA, uB)];
+    const turnouts = [
+        [laneLine(S, uA, s0, s0 + dir * reach), paths[0]],
+        [laneLine(S, uB, s1, s1 - dir * reach), reversed(paths[0])],
+    ];
+    if (kind === 'scissors') {
+        const back = cross(uB, uA);
+        paths.push(back);
+        turnouts.push([laneLine(S, uB, s0, s0 + dir * reach), back], [laneLine(S, uA, s1, s1 - dir * reach), reversed(back)]);
+    }
+    return { paths, turnouts, length: Math.round(L) };
+}
+
+/** Lay crossovers (single tracks) with their turnouts' furniture. */
+export function* buildCrossover(ctx, plan, opts = {}) {
+    const { tile, railSouth } = yardTile(opts);
+    const paint = new TrackPaint(ctx.edit);
+    for (const S of plan.paths)
+        yield* layPath(ctx, S, tile, paint);
+    for (const [parent, child] of plan.turnouts)
+        turnoutFurniture(parent, child, railSouth, paint);
     const air = perm('minecraft:air');
     for (const [key, p] of paint) {
         const [x, y, z] = key.split(',').map(Number);
         ctx.edit.set({ x, y, z }, p ?? air);
     }
-}
-function stops(paint, ends) {
-    for (const e of ends)
-        if (e.open)
-            for (const [x, y, z, t] of bufferStop(e))
-                paint.set(`${x},${y},${z}`, parseBlock(t));
-}
-function clearStop(paint, end) {
-    for (const [x, y, z, t] of bufferStop(end))
-        if (t !== 'gravel')
-            paint.set(`${x},${y},${z}`, null);
-}
-
-/**
- * Lay a drawn track (see planDrawn) and record it. Ends it starts or finishes
- * on are closed (their buffer stops go); its own loose ends get stops.
- */
-export function* buildDrawn(ctx, start, points, finish, opts = {}) {
-    const N = opts.N ?? 8;
-    const plan = planDrawn(start, points, finish, N);
-    if (plan.S.length < 4)
-        throw new Error('선로가 너무 짧습니다');
-    const { tile, railSouth } = yardTile(opts);
-    const paint = new TrackPaint(ctx.edit);
-    const touched = new Map(); // track id -> track (ends closed)
-    for (const x of [start, finish])
-        if (x?.type === 'end') {
-            const t = touched.get(x.track.id) ?? JSON.parse(JSON.stringify(x.track));
-            clearStop(paint, t.ends[x.end]);
-            t.ends[x.end].open = false;
-            touched.set(t.id, t);
-        }
-    yield* layPath(ctx, plan.S, tile, paint);
-    if (plan.branchFrom) {
-        const S = trackSamples(plan.branchFrom.track);
-        const par = plan.branchFrom.dir > 0 ? S.filter(p => p.s >= plan.branchFrom.s - 1e-6) : reversed(S.filter(p => p.s <= plan.branchFrom.s + 1e-6));
-        turnoutFurniture(withFrames(par), plan.S, railSouth, paint);
-    }
-    if (plan.joinTo) {
-        const S = trackSamples(plan.joinTo.track);
-        const par = plan.joinTo.dir > 0 ? S.filter(p => p.s >= plan.joinTo.s - 1e-6) : reversed(S.filter(p => p.s <= plan.joinTo.s + 1e-6));
-        turnoutFurniture(withFrames(par), reversed(plan.S), railSouth, paint);
-    }
-    const ends = endsOf(plan.S);
-    if (start.type !== 'point')
-        ends[0].open = false;
-    if (finish && finish.type !== 'point')
-        ends[1].open = false;
-    stops(paint, ends);
-    writePaint(ctx, paint);
-    const track = { id: newId(), name: opts.name || '', pts: thinPts(plan.S), ends };
-    return { track, touched: [...touched.values()], length: Math.round(plan.S[plan.S.length - 1].s), turnouts: (plan.branchFrom ? 1 : 0) + (plan.joinTo ? 1 : 0) };
-}
-
-/** Lay an automatic yard along a main line through `points` and record every track. */
-export function* buildAuto(ctx, points, opts = {}) {
-    const ctrl = points.map(p => ({ x: p.x + 0.5, y: p.y, z: p.z + 0.5 }));
-    if (ctrl.length < 2)
-        throw new Error('본선이 될 점을 2개 이상 찍으세요');
-    const main = sampleCurve(ctrl);
-    const plan = planYard(main, opts);
-    if (plan.length < 2)
-        throw new Error('본선이 짧아 선로군이 들어가지 않습니다 (목 길이 × 2 + 여유가 필요합니다). 점을 더 멀리 찍거나 선로 간격·번수를 줄이세요');
-    const { tile, railSouth } = yardTile(opts);
-    const paint = new TrackPaint(ctx.edit);
-    for (const p of plan)
-        yield* layPath(ctx, p.S, tile, paint);
-    for (let i = 1; i < plan.length; i++)
-        yardFurniture(plan, i, railSouth, paint);
-    const made = [];
-    const base = opts.name || '조차장';
-    let id = newId();
-    plan.forEach((p, i) => {
-        const ends = endsOf(p.S);
-        if (i > 0) {
-            ends[0].open = false; // the throat
-            if (p.both)
-                ends[1].open = false;
-        }
-        stops(paint, ends);
-        made.push({ id: i === 0 ? id : `${id}_${i}`, name: `${base} ${p.name}`, pts: thinPts(p.S), ends });
-    });
-    writePaint(ctx, paint);
-    return { made, count: plan.length - 1, length: Math.round(main[main.length - 1].s) };
 }

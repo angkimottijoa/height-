@@ -187,8 +187,8 @@ const BREAK = {
         assetSaveForm(player);
     },
     [TERRAIN]() { },
-    [YARD](player) {
-        yardBreak(player);
+    [YARD](player, pos, sneaking) {
+        yardBreak(player, pos, sneaking);
     },
 };
 

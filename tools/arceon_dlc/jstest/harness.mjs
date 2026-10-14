@@ -21,7 +21,10 @@ export const blocks = await import('./scripts/core/blocks.js');
 export async function load(rel) {
   return (await import('./scripts/' + rel)).default;
 }
+const yardLib = await import('./scripts/lib/yard.js');
 export function world(opts = {}) {
+  // a new world: no tracks recorded (unless kept on purpose)
+  if (!opts.keep) for (const t of yardLib.tracks()) yardLib.deleteTrack(t.id);
   const dim = new mc.Dimension();
   const player = mc.mockPlayer(dim, opts);
   return { dim, player };

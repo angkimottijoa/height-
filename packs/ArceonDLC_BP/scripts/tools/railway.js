@@ -2,7 +2,7 @@
  * Railway (철도): track, catenary poles and wires along the curve points.
  * See lib/rail.js for how each part is laid.
  */
-import { AIR } from '../core/blocks.js';
+import { AIR, perm } from '../core/blocks.js';
 import { ask } from '../ui/form.js';
 import { listAssets } from './assets.js';
 import { builtinPole, builtinTile, freeWires, loadPole, presetTile, standPoles, stringWires, sweep, TOP_MIX } from '../lib/rail.js';
@@ -10,7 +10,8 @@ import { loadTracks, trackNames } from '../lib/track_presets.js';
 import { BRIDGES, bridgeById, bridgeTile, geometry, pierPiece, polish, STEEL } from '../lib/bridges.js';
 import { stamp } from '../lib/rail.js';
 import { loadAll } from '../core/edit.js';
-import { unlocked } from '../core/session.js';
+import { session, unlocked } from '../core/session.js';
+import { bufferStop, endsOf, laneLine, newId, planFromPoints, reversed, saveTrack, thinPts, TrackPaint, trackSamples, turnoutFurniture, yardTile } from '../lib/yard.js';
 import { ensureLoaded } from '../core/loader.js';
 import { layout, roadFrom } from './lanes.js';
 
@@ -31,6 +32,54 @@ const DETAIL = [
     { key: 'colGap', type: 'slider', label: '슬래브교: 기둥 사이 간격 (칸)', default: 6, min: 3, max: 20 },
     { key: 'rail', type: 'block', label: '레일', default: 'anvil', palette: false },
 ];
+
+/**
+ * Record a laid track (hidden features): its centre line and ends; loose ends
+ * get an end block, ends it carried on from lose theirs, a branch / join on a
+ * single track gets its turnout furniture.
+ */
+function record(ctx, plan, S, tile, paint) {
+    const ends = endsOf(S);
+    const touched = new Map();
+    const single = (tile.rails?.length ?? 0) === 2;
+    let turnouts = 0;
+    [plan?.start, plan?.finish].forEach((ref, k) => {
+        if (!ref || ref.type === 'point')
+            return;
+        ends[k].open = false;
+        if (ref.type === 'end') {
+            const t = touched.get(ref.track.id) ?? JSON.parse(JSON.stringify(ref.track));
+            for (const [x, y, z] of bufferStop(t.ends[ref.end]))
+                if (!paint.has(`${x},${y},${z}`))
+                    paint.set(`${x},${y},${z}`, null);
+            t.ends[ref.end].open = false;
+            touched.set(t.id, t);
+        }
+        else
+            turnouts++;
+    });
+    if (single) {
+        const railSouth = yardTile().railSouth;
+        for (const [j, rev] of [[plan?.branchFrom, false], [plan?.joinTo, true]]) {
+            if (!j)
+                continue;
+            const TS = trackSamples(j.track);
+            const off = (j.track.centres ?? [0])[j.lane ?? 0] ?? 0;
+            const par = j.dir > 0 ? laneLine(TS, off, j.s, TS[TS.length - 1].s) : laneLine(TS, off, j.s, 0);
+            turnoutFurniture(par, rev ? reversed(S) : S, railSouth, paint);
+        }
+    }
+    for (const e of ends)
+        if (e.open)
+            for (const [x, y, z, t] of bufferStop(e))
+                paint.set(`${x},${y},${z}`, perm('minecraft:' + t));
+    const track = { id: newId(), name: '', pts: thinPts(S), ends, w: tile.w, centres: tile.centres ?? [0] };
+    saveTrack(track);
+    ctx.lastTrack = track;
+    for (const t of touched.values())
+        saveTrack(t);
+    return turnouts ? `분기기 ${turnouts}개` : (ends.some(e => !e.open) ? '이어 깔기' : '끝 블록 2개');
+}
 
 export default {
     id: 'railway',
@@ -125,7 +174,6 @@ export default {
     *run(ctx, v) {
         if (v.bridge && !unlocked(ctx.player))
             v = { ...v, bridge: '' }; // hidden until the settings code is given
-        const paint = new Map();
         const parts = [];
         let tile;
         if (v.track === '-')
@@ -153,6 +201,13 @@ export default {
             tile = builtinTile(d);
             tile.fill = d;
         }
+        // hidden features: the track is recorded (ends get an end block), and
+        // points on a recorded track's end or side carry on from it / branch off it
+        const rec = unlocked(ctx.player) && v.track !== '-';
+        const N = session(ctx.player).settings.yard?.N ?? 8;
+        const plan = ctx.plan ?? (rec ? planFromPoints(ctx.points, N, [], (tile.rails?.length ?? 0) === 2) : null);
+        const C = plan?.S ?? null; // the centre line, when it is not just the curve through the points
+        const paint = rec ? new TrackPaint(ctx.edit) : new Map();
         let trussPoles = null; // poles hung on the truss verticals: {samples, spots, planes}
         if (v.bridge) {
             // the bridge first: the track is laid over it
@@ -163,7 +218,7 @@ export default {
             const g = geometry(d, bed, { paint: v.steel, colGap: tile.fill?.colGap ?? v.colGap, ballast: tile.fill?.ballast, top: tile.fill ? tile.fill.top : TOP_MIX });
             const bt = bridgeTile(d, g);
             const bp = new Map();
-            const curveRoad = yield* layout(ctx, v, 1);
+            const curveRoad = C ? { total: C[C.length - 1].s, samples: C } : yield* layout(ctx, v, 1);
             const total = curveRoad.total, CS = curveRoad.samples;
             let span = d.fixed ? d.span : (Math.floor(v.span) || d.span);
             const at = (s) => {
@@ -252,7 +307,8 @@ export default {
                     paint.set(k, perm);
             parts.push(`${d.name} (교각 ${piers}개, 경간 ${d.straight ? Math.round(total / Math.max(1, spots.length - 1)) : span}칸)`);
         }
-        const road = yield* sweep(ctx, v.track === '-' ? { ...v, clearAir: false } : v.bridge ? { ...v, down: false } : v, tile, paint);
+        const road = yield* sweep(ctx, v.track === '-' ? { ...v, clearAir: false } : v.bridge ? { ...v, down: false } : v, tile, paint,
+            C ? yield* roadFrom(C, tile.w, C[C.length - 1].s) : null);
         if (tile.describe)
             parts.push(tile.describe);
         if (v.pole) {
@@ -282,6 +338,8 @@ export default {
         }
         else if (v.wires && String(v.wireAt ?? '').trim())
             parts.push(`전선 ${yield* freeWires(road, v, paint)}가닥`);
+        if (rec)
+            parts.push(record(ctx, plan, road.samples, tile, paint));
         const edit = ctx.edit;
         const air = AIR();
         let n = 0;

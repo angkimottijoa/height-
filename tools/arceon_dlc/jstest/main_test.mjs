@@ -164,14 +164,14 @@ check(errs.length === 0, 'no error messages ' + JSON.stringify(errs));
 {
   s.yard = undefined; s.settings.unlocked = false;
   await tap('arc:yard_tool', { x: 1, y: 0, z: 1 });
-  check(!s.yard?.pts?.length, 'layout tool: locked, a tap does nothing');
+  check(!s.yard?.cur?.pts?.length, 'layout tool: locked, a tap does nothing');
   s.settings.unlocked = true;
   await tap('arc:yard_tool', { x: 1, y: 0, z: 1 });
   await tap('arc:yard_tool', { x: 20, y: 0, z: 1 });
-  check(s.yard?.pts?.length === 2, 'layout tool: unlocked, taps add points: ' + s.yard?.pts?.length);
+  check(s.yard?.cur?.pts?.length === 2, 'layout tool: unlocked, taps add points: ' + s.yard?.cur?.pts?.length);
   tick(40);
   await brk('arc:yard_tool', { x: 30, y: 0, z: 30 });
-  check(s.yard.pts.length === 1, 'layout tool: break takes the last point back');
+  check(s.yard.cur.pts.length === 1, 'layout tool: break takes the last point back');
 }
 
 // ---- the settings code, typed in the settings form, unlocks the hidden tool for that player only

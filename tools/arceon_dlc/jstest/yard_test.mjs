@@ -1,64 +1,128 @@
-// Layout tool: tracks that remember their ends (buffer stops), carrying on from an end,
-// branching off / joining a track's side through turnouts, and the automatic yard.
-import { world, mc } from './harness.mjs';
+// Hidden track features: the railway tool records its tracks (one end block at
+// each loose end), carries on from an end, branches off / joins a side through a
+// turnout; the layout tool saves lines like frames and lays them with the
+// railway settings; connect mode lays crossovers and scissors crossovers.
+import { load, world, runTool, mc, ui, topView } from './harness.mjs';
+const { session } = await import('./scripts/core/session.js');
 const Y = await import('./scripts/lib/yard.js');
-const { makeContext, finish } = await import('./scripts/core/runner.js');
-const { runAsync } = await import('./scripts/core/edit.js');
+const UY = await import('./scripts/ui/yard.js');
+const railway = await load('tools/railway.js');
 const check = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); if (!c) process.exitCode = 1; };
-const { dim, player } = world({ id: 'yard' });
-const ids = (pred) => [...dim.map].filter(([k, p]) => pred(p, k)).map(([k]) => k.split(',').map(Number));
-async function run(gen, label) { const ctx = makeContext(player, {}); const r = await runAsync(gen(ctx)); await finish(player, label, ctx.edit); mc.system.flush(); return r; }
-const P = (x, z) => ({ type: 'point', pos: { x, y: 0, z } });
+const settle = async () => { mc.system.flush(); await new Promise(r => setTimeout(r, 30)); mc.system.flush(); };
+const one = { tracks: 1, pole: '' };
 
-// 1. a straight track from point to point: rails, buffer stops at both ends, recorded
-let r = await run(ctx => Y.buildDrawn(ctx, P(0, 0), [], P(40, 0)), '배선');
-Y.saveTrack(r.track);
-const anv = ids(p => p.id === 'minecraft:anvil');
-check(anv.length >= 2 * 40, 'rails laid: ' + anv.length);
-const stops = ids(p => p.id === 'minecraft:red_concrete');
-check(stops.some(([x]) => x < 0) && stops.some(([x]) => x > 40), 'buffer stops of real blocks at both ends');
+let { dim, player } = world({ id: 'y1' });
+const ids = (pred) => [...dim.map].filter(([k, p]) => pred(p, k)).map(([k]) => k.split(',').map(Number));
+const ends = () => ids(p => p.id === 'minecraft:red_concrete');
+const rails = () => new Set(ids(p => p.id === 'minecraft:anvil').map(([x, , z]) => x + ',' + z));
+
+// locked: nothing is recorded
+await runTool(railway, one, { player, points: [{ x: 0, y: 0, z: -60 }, { x: 30, y: 0, z: -60 }] });
+check(Y.tracks().length === 0 && ends().length === 0, 'locked: no record, no end blocks');
+({ dim, player } = world({ id: 'y1' }));
+session(player).settings.unlocked = true;
+
+// 1. a straight single track: one end block at each end, recorded
+let m = await runTool(railway, one, { player, points: [{ x: 0, y: 0, z: 0 }, { x: 40, y: 0, z: 0 }] });
+console.log(m.slice(-1)[0]);
+check(ends().length === 2 && ends().some(([x]) => x < 0) && ends().some(([x]) => x > 40), 'one end block (1 block) past each end: ' + JSON.stringify(ends()));
 check(Y.tracks().length === 1 && Y.tracks()[0].ends.every(e => e.open), 'recorded with two open ends');
 
-// 2. tapping the buffer stop finds the end; tapping the side finds the track
-const hEnd = Y.hitTest({ x: 41, y: 1, z: 0 }), hSide = Y.hitTest({ x: 20, y: 0, z: 1 });
-check(hEnd?.type === 'end' && hEnd.end === 1, 'tap on the end buffer stop -> that end');
-check(hSide?.type === 'track' && Math.abs(hSide.s - 20) < 2, 'tap beside the track -> the track at that spot: ' + hSide?.s);
+// 2. the end block and the side are found again
+const [ex, ey, ez] = ends().find(([x]) => x > 40);
+const hEnd = Y.hitTest({ x: ex, y: ey, z: ez }), hSide = Y.hitTest({ x: 20, y: 0, z: 1 });
+check(hEnd?.type === 'end' && hEnd.end === 1, 'tap on the end block -> that end');
+check(hSide?.type === 'track' && Math.abs(hSide.s - 20) < 2, 'tap beside the track -> that spot: ' + hSide?.s);
 
-// 3. carry on from the end: the stop goes, the rails run on
-r = await run(ctx => Y.buildDrawn(ctx, { type: 'end', track: hEnd.track, end: 1 }, [], P(80, 10)), '배선');
-Y.saveTrack(r.track); for (const t of r.touched) Y.saveTrack(t);
-check(!ids(p => p.id === 'minecraft:red_concrete').some(([x, , z]) => x > 39 && x < 44 && Math.abs(z) < 3), 'the old end\'s buffer stop is gone');
-check(Y.trackById('t1').ends[1].open === false && Y.tracks().length === 2, 'old end closed, new track recorded');
-const gap = [41, 42, 43].every(x => ids(p => p.id === 'minecraft:anvil').some(([ax, , az]) => ax === x && Math.abs(az) <= 2));
-check(gap, 'rails continue across the old end');
+// 3. carry on from the end (first point on the end block): the block goes, the rails run on
+m = await runTool(railway, one, { player, points: [{ x: ex, y: ey, z: ez }, { x: 70, y: 0, z: 0 }, { x: 90, y: 0, z: 12 }] });
+console.log(m.slice(-1)[0]);
+check(!ends().some(([x, , z]) => x > 38 && x < 45 && Math.abs(z) < 3), 'the old end block is gone');
+check(Y.tracks()[0].ends[1].open === false && Y.tracks().length === 2, 'old end closed, new track recorded');
+check([39, 40, 41, 42, 43].every(x => rails().has(x + ',-1') || rails().has(x + ',-2')) && [39, 40, 41, 42, 43].every(x => rails().has(x + ',1') || rails().has(x + ',2')), 'both rails run on across the old end');
 
-// 4. branch off the first track's side at 10, out to the north-east
-const t1 = Y.trackById('t1');
-const before = ids(p => p.id === 'minecraft:anvil').length;
-r = await run(ctx => Y.buildDrawn(ctx, { type: 'track', track: t1, s: 8 }, [{ x: 30, y: 0, z: -14 }], P(46, -24)), '배선');
-Y.saveTrack(r.track);
-check(r.turnouts === 1, 'branch: one turnout');
-check(ids(p => p.id === 'minecraft:polished_blackstone_bricks').length >= 1, 'switch machine beside the points');
-// main rails still continuous at z = -1 / 1 lines (x 0..40)
-const rails = new Set(ids(p => p.id === 'minecraft:anvil').map(([x, , z]) => x + ',' + z));
-const mainOk = [...Array(38).keys()].map(i => i + 1).every(x => rails.has(x + ',-1') || rails.has(x + ',-2')) && [...Array(38).keys()].map(i => i + 1).every(x => rails.has(x + ',1') || rails.has(x + ',2'));
-check(mainOk, 'the through track keeps both rails through the turnout');
-const guards = ids(p => p.id === 'minecraft:anvil').filter(([x, , z]) => z === 0 || z === 0);
-check(ids(p => p.id === 'minecraft:anvil').length > before + 40, 'branch rails laid (and guard rails): ' + (ids(p => p.id === 'minecraft:anvil').length - before));
+// 4. branch: first point on the side, then where the branch goes
+const machines = () => ids(p => p.id === 'minecraft:polished_blackstone_bricks').length;
+m = await runTool(railway, one, { player, points: [{ x: 8, y: 0, z: -1 }, { x: 30, y: 0, z: -14 }, { x: 46, y: 0, z: -26 }] });
+console.log(m.slice(-1)[0]);
+check(/분기기 1개/.test(m.slice(-1)[0]) && machines() >= 1, 'branch off the side: a turnout with a switch machine');
+const R = rails();
+const through = [...Array(36).keys()].map(i => i + 2).every(x => (R.has(x + ',-1') || R.has(x + ',-2')) && (R.has(x + ',1') || R.has(x + ',2')));
+check(through, 'the through track keeps both rails through the turnout');
+console.log(topView(dim, -4, -30, 60, 6));
 
-// 5. a track from a point that joins the first track's side (merge turnout)
-r = await run(ctx => Y.buildDrawn(ctx, P(-10, 30), [{ x: 10, y: 0, z: 20 }], { type: 'track', track: Y.trackById('t1'), s: 30 }), '배선');
-check(r.turnouts === 1 && r.track.ends[1].open === false && r.track.ends[0].open === true, 'join into the side: turnout, joined end closed, loose start gets a stop');
+// 5. join: last point on the side of the first track
+m = await runTool(railway, one, { player, points: [{ x: -10, y: 0, z: 30 }, { x: 10, y: 0, z: 18 }, { x: 30, y: 0, z: 1 }] });
+const t5 = Y.tracks().slice(-1)[0];
+check(/분기기 1개/.test(m.slice(-1)[0]) && t5.ends[1].open === false && t5.ends[0].open === true, 'join into the side: turnout, joined end closed, the loose start gets its end block');
 
-// 6. automatic yard: main line + 4 tracks, both throats
-const { dim: d2, player: p2 } = world({ id: 'yard2' });
-const ctx2 = makeContext(p2, {});
-const out = await runAsync(Y.buildAuto(ctx2, [{ x: 0, y: 0, z: 300 }, { x: 500, y: 0, z: 300 }], { n: 4, gap: 6, N: 6, side: -1, both: true, startAt: 10 }));
-await finish(p2, '자동 배선', ctx2.edit); mc.system.flush();
-console.log('yard:', out.count, 'tracks, main', out.length);
-const mid = [...d2.map].filter(([k, p]) => p.id === 'minecraft:anvil' && +k.split(',')[0] === 250).map(([k]) => +k.split(',')[2]).sort((a, b) => a - b);
-console.log('rails across x=250:', mid.join(' '));
-check(out.count === 4 && mid.length === 10, 'yard: 5 parallel tracks (10 rails) in the middle');
-check(Math.min(...mid) < 295, 'the yard lies to the left (north) of an eastbound main');
-const turnouts = [...d2.map.values()].filter(p => p.id === 'minecraft:polished_blackstone_bricks').length;
-check(turnouts === 8, 'a switch machine at every throat turnout (4 tracks x 2): ' + turnouts);
+// 6. a double track is recorded with its two lanes
+({ dim, player } = world({ id: 'y2' }));
+session(player).settings.unlocked = true;
+await runTool(railway, { tracks: 2, pole: '' }, { player, points: [{ x: 0, y: 0, z: 0 }, { x: 120, y: 0, z: 0 }] });
+const dbl = Y.tracks()[0];
+check(dbl.centres.length === 2 && Math.abs(dbl.centres[0] - dbl.centres[1]) >= 6, 'double track: two lanes recorded ' + JSON.stringify(dbl.centres));
+
+// 7. connect mode: a crossover and a scissors crossover between the two lanes
+for (const kind of ['single', 'scissors']) {
+  const a = { type: 'track', track: dbl, s: kind === 'single' ? 10 : 60, lane: 0 }, b = { type: 'track', track: dbl, s: kind === 'single' ? 40 : 90, lane: 1 };
+  const plan = Y.crossoverPlan(a, b, kind, 6);
+  const C = plan.paths[0];
+  let maxBend = 0;
+  for (let i = 3; i < C.length; i += 3) maxBend = Math.max(maxBend, Math.abs(Math.atan2(C[i].tz, C[i].tx) - Math.atan2(C[i - 3].tz, C[i - 3].tx)));
+  check(plan.paths.length === (kind === 'single' ? 1 : 2) && plan.turnouts.length === (kind === 'single' ? 2 : 4), `${kind}: ${plan.paths.length} paths, ${plan.turnouts.length} turnouts, ${plan.length} long`);
+  check(Math.abs(C[0].tz) < 0.02 && Math.abs(C[C.length - 1].tz) < 0.02 && maxBend < 0.08, `${kind}: tangent to both tracks at its ends, smooth (max bend per block ${maxBend.toFixed(3)} rad)`);
+}
+
+// 8. the layout tool: taps draw lines, sneak+break saves one, the menu lays them all
+({ dim, player } = world({ id: 'y3' }));
+const s = session(player);
+s.settings.unlocked = true;
+await runTool(railway, one, { player, points: [{ x: 0, y: 0, z: 0 }, { x: 40, y: 0, z: 0 }] });
+const main = Y.tracks()[0];
+const tap = (x, z) => UY.yardTap(player, { pos: { x, y: 0, z } }, false);
+// line 1: from the main track's end, on to a point, saved with sneak+break
+const e1 = main.ends[1];
+tap(Math.floor(e1.at[0] + e1.dir[0] * 1.2), Math.floor(e1.at[2]));
+tap(70, 6); tap(100, 20);
+UY.yardBreak(player, { x: 0, y: 0, z: 0 }, true);
+check(s.yard.lines.length === 1 && s.yard.lines[0].start?.type === 'end', 'line 1 saved, starting at the main track end');
+// line 2: branches off the saved line 1 (not laid yet) and finishes on its own
+tap(80, 10); tap(95, -10); tap(110, -20);
+UY.yardBreak(player, { x: 0, y: 0, z: 0 }, true);
+check(s.yard.lines.length === 2 && s.yard.lines[1].start?.src === 'line', 'line 2 saved, branching off saved line 1');
+// lay: menu > lay > the railway form (one track, no poles) > the detail form is skipped
+const btn = (label) => (form) => ({ canceled: false, selection: form.items.filter(i => i[0] === 'button').findIndex(b => b[1].includes(label)) });
+const before = machines;
+ui.answers.push(btn('깔기'), f => {
+  const v = f.defaults({ '선로 수': 0 });
+  const i = f.items.findIndex(it => it[1] === '전신주'); v.formValues[i] = 2; // no poles
+  return v;
+});
+await UY.yardMenu(player); await settle(); await settle();
+console.log(player.msgs.slice(-2).join(' | '));
+check(Y.tracks().length === 3 && s.yard.lines.length === 0, 'laid: two more tracks recorded, the saved lines cleared: ' + Y.tracks().length);
+const t2 = Y.tracks()[1], t3 = Y.tracks()[2];
+check(Y.tracks()[0].ends[1].open === false && t3.ends[0].open === false && t3.ends[1].open === true, 'line 1 carried on from the main end, line 2 branched off line 1 as laid');
+check(ids(p => p.id === 'minecraft:polished_blackstone_bricks').length >= 1, 'the branch off the laid line 1 has its switch machine');
+console.log(topView(dim, -4, -30, 120, 30));
+
+// 9. connect mode through the tool: two taps on two lanes, then the form
+({ dim, player } = world({ id: 'y4' }));
+const s4 = session(player);
+s4.settings.unlocked = true;
+await runTool(railway, { tracks: 2, pole: '' }, { player, points: [{ x: 0, y: 0, z: 0 }, { x: 120, y: 0, z: 0 }] });
+const t = Y.tracks()[0];
+const lane = (k) => Math.round(t.centres[k]);
+ui.answers.push(btn('선로 연결'));
+await UY.yardMenu(player);
+check(s4.yard.mode === 'connect', 'menu > 선로 연결 starts connect mode');
+UY.yardTap(player, { pos: { x: 20, y: 0, z: lane(0) } }, false);
+ui.answers.push(f => f.defaults({ '종류': 1, '번수': 6 }));
+UY.yardTap(player, { pos: { x: 60, y: 0, z: lane(1) } }, false);
+await settle(); await settle();
+console.log(player.msgs.slice(-1)[0]);
+check(/선로 연결/.test(player.msgs.slice(-1)[0]) && /시서스/.test(player.msgs.slice(-1)[0]), 'scissors crossover laid');
+console.log(topView(dim, 0, -12, 110, 12));
+const machines4 = [...dim.map].filter(([, p]) => p.id === 'minecraft:polished_blackstone_bricks').length;
+check(machines4 === 4, 'four switch machines for a scissors crossover: ' + machines4);

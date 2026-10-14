@@ -1,19 +1,26 @@
 /*
  * The layout tool (배선 도구), a hidden tool (settings code).
  *
- *   tap a track end (its buffer stop) or a track     start there / finish there
- *   tap anywhere else                                 add a point on the way
- *   break                                             take back the last point
- *   sneak + tap                                       menu: lay, automatic yard, list, settings
+ * Draw lines like frames, then lay them all with the railway tool's settings
+ * (track, bridge, poles, wires):
+ *   tap anywhere                     add a point to the line being drawn
+ *   tap a track end / a track's side  the line starts there (carries on / branches off),
+ *                                     or, when it already has points, finishes there and is saved
+ *   break                            take back the last point
+ *   sneak + break                    save the line (it ends at its last point)
+ *   sneak + tap                      menu: lay the saved lines, connect two tracks, ...
+ * Saved lines that are not laid yet can be tapped too: a new line can carry on
+ * from their ends or branch off them.
  *
- * A drawn track may start or finish on a track end (carries on from it) or
- * on a track's side (a turnout is put in). Loose ends get buffer stops of
- * real blocks, which can be tapped later to carry on from them.
+ * Connect mode (선로 연결): tap one track (or one side of a double track),
+ * then the other; a crossover or a scissors crossover is laid between them
+ * on a smooth reverse curve with turnouts at both ends.
  */
 import { isBusy, runAsync, say } from '../core/edit.js';
 import { finish, makeContext } from '../core/runner.js';
 import { save, session, unlocked } from '../core/session.js';
-import { buildAuto, buildDrawn, deleteTrack, hitTest, saveTrack, trackById, tracks } from '../lib/yard.js';
+import { buildCrossover, crossoverPlan, deleteTrack, endsOf, hitTest, planDrawn, saveTrack, thinPts, trackById, tracks } from '../lib/yard.js';
+import railway from '../tools/railway.js';
 import { ask, menu } from './form.js';
 
 const fmt = (p) => `${p.x} ${p.y} ${p.z}`;
@@ -25,26 +32,65 @@ function bar(player, msg) {
         say(player, msg);
     }
 }
-function state(player) {
+const fresh = () => ({ start: null, pts: [], finish: null });
+export function yardState(player) {
     const s = session(player);
-    if (!s.yard)
-        s.yard = { start: null, pts: [] };
+    if (!s.yard || !Array.isArray(s.yard.lines))
+        s.yard = { lines: [], cur: fresh(), mode: null, pick: [] };
     return s;
 }
-const opts = (s) => ({ N: 8, gap: 6, n: 6, side: -1, both: true, startAt: 10, ...(s.settings.yard ?? {}) });
-const nameOf = (t) => t.name || `선로 ${t.id}`;
+const N = (s) => s.settings.yard?.N ?? 8;
+const nameOf = (t) => t.name || (t.line !== undefined ? `저장한 선 ${t.line + 1}` : `선로 ${t.id}`);
 const describe = (h) => h.type === 'end'
     ? `${nameOf(h.track)}의 ${h.end === 0 ? '시작' : '끝'} 끝`
-    : `${nameOf(h.track)} (시작에서 ${Math.round(h.s)}칸)`;
-/** What is kept in the session (ids, not whole tracks). */
-const keep = (h) => h.type === 'end' ? { type: 'end', id: h.track.id, end: h.end } : { type: 'track', id: h.track.id, s: h.s };
-function resolve(x) {
-    if (!x || x.type === 'point')
-        return x;
-    const track = trackById(x.id);
-    if (!track)
+    : `${nameOf(h.track)}${(h.track.centres?.length ?? 1) > 1 ? ` ${h.lane + 1}번 선` : ''} (시작에서 ${Math.round(h.s)}칸)`;
+
+/** Saved lines as track-like records (for tapping and planning). */
+const pseudo = (s) => s.yard.lines.map((l, i) => ({ ...l.shape, line: i }));
+/** A hit as kept in the session: which recorded track or saved line. */
+function keep(h) {
+    const src = h.track.line !== undefined ? { src: 'line', idx: h.track.line } : { src: 'track', id: h.track.id };
+    return h.type === 'end' ? { type: 'end', ...src, end: h.end } : { type: 'track', ...src, s: h.s, lane: h.lane };
+}
+/** Back to a ref with its track: a recorded track, a saved line's shape, or (laying) the track it became. */
+function resolve(ref, lines, laid = []) {
+    if (!ref)
         return null;
-    return { ...x, track };
+    const track = ref.src === 'line' ? (laid[ref.idx] ?? (lines[ref.idx] && { ...lines[ref.idx].shape, line: ref.idx })) : trackById(ref.id);
+    return track ? { ...ref, track } : null;
+}
+/** Plan one line: its start (ref or first point), its points, its finish (ref or last point). */
+function planLine(l, lines, laid, n, single = false) {
+    const pts = l.pts.map(p => ({ ...p }));
+    let start = resolve(l.start, lines, laid), fin = resolve(l.finish, lines, laid);
+    if (!start) {
+        if (!pts.length)
+            throw new Error('시작이 없습니다');
+        start = { type: 'point', pos: pts.shift() };
+    }
+    if (!fin && pts.length)
+        fin = { type: 'point', pos: pts.pop() };
+    if (!fin)
+        throw new Error('점이 더 필요합니다');
+    return { ...planDrawn(start, pts, fin, n, single), start, finish: fin };
+}
+
+function saveLine(player, s) {
+    const c = s.yard.cur;
+    const anchors = (c.start ? 1 : 0) + c.pts.length + (c.finish ? 1 : 0);
+    if (anchors < 2)
+        return bar(player, '§c[배선] 선을 저장하려면 점이 2개 이상(또는 시작 선로 + 점 1개) 필요합니다');
+    let plan;
+    try {
+        plan = planLine(c, s.yard.lines, [], N(s));
+    }
+    catch (e) {
+        return bar(player, `§c[배선] ${e?.message ?? e}`);
+    }
+    s.yard.lines.push({ ...c, shape: { id: 'L' + s.yard.lines.length, pts: thinPts(plan.S), ends: endsOf(plan.S), w: 8, centres: [0] } });
+    s.yard.cur = fresh();
+    save(player);
+    bar(player, `§a[배선] 선 ${s.yard.lines.length}개 저장§r (약 ${Math.round(plan.S[plan.S.length - 1].s)}칸)  §7다음 선을 그리거나, 웅크리고 터치 → 깔기`);
 }
 
 export function yardTap(player, hit, sneaking) {
@@ -54,130 +100,102 @@ export function yardTap(player, hit, sneaking) {
         return void yardMenu(player);
     if (!hit)
         return bar(player, '§c블록을 바라보세요 (최대 300칸)');
-    const s = state(player);
-    const h = hitTest(hit.pos);
-    if (h)
-        return void onTrack(player, s, h);
-    s.yard.pts.push({ ...hit.pos });
+    const s = yardState(player);
+    const y = s.yard;
+    if (y.mode === 'connect') {
+        const h = hitTest(hit.pos);
+        if (!h || h.type !== 'track')
+            return bar(player, '§c[선로 연결] 깔려 있는(기록된) 선로 위를 터치하세요');
+        y.pick.push(keep(h));
+        save(player);
+        if (y.pick.length < 2)
+            return bar(player, `§b[선로 연결] 첫 선로: ${describe(h)}§r  §7이제 건너갈 선로를 터치 (진행 방향 쪽으로 조금 떨어진 곳)`);
+        return void connect(player);
+    }
+    const h = hitTest(hit.pos, pseudo(s));
+    const c = y.cur;
+    if (h) {
+        if (!c.start && !c.pts.length) {
+            c.start = keep(h);
+            save(player);
+            return bar(player, `§a[배선] 시작: ${describe(h)}§r  §7${h.type === 'end' ? '이 끝에서 이어집니다' : '분기기로 갈라집니다'} · 지나갈 곳을 터치`);
+        }
+        c.finish = keep(h);
+        bar(player, `§a[배선] 끝: ${describe(h)}`);
+        return void saveLine(player, s);
+    }
+    c.pts.push({ ...hit.pos });
     save(player);
-    const from = s.yard.start ? '시작 지정됨, ' : '';
-    bar(player, `§a[배선] ${from}점 ${s.yard.pts.length}개§r ${fmt(hit.pos)}  §7선로 끝·선로를 터치하면 거기까지 깔기 · 웅크리고 터치 = 메뉴`);
+    bar(player, `§a[배선] 선 ${y.lines.length + 1} · 점 ${c.pts.length}개§r ${fmt(hit.pos)}  §7웅크리고 부수기 = 선 저장`);
     return () => {
-        s.yard.pts.pop();
+        c.pts.pop();
         save(player);
     };
 }
 
-export function yardBreak(player) {
+export function yardBreak(player, pos, sneaking) {
     if (!unlocked(player))
         return;
-    const s = state(player);
-    if (s.yard.pts.length) {
-        s.yard.pts.pop();
-        bar(player, `§e[배선] 마지막 점 취소§r (남은 점 ${s.yard.pts.length}개)`);
-    }
-    else if (s.yard.start) {
-        s.yard.start = null;
-        bar(player, '§e[배선] 시작 지정 취소');
-    }
-    else
-        bar(player, '§7[배선] 지울 점이 없습니다');
-    save(player);
-}
-
-async function onTrack(player, s, h) {
-    const drawing = s.yard.start || s.yard.pts.length;
-    const buttons = drawing
-        ? [
-            { text: `§2여기까지 깔기§r\n§8${h.type === 'end' ? '이 끝에서 이어집니다' : '분기기로 합류합니다'}`, value: 'finish' },
-            { text: '여기서 새로 시작 (찍은 점 지우기)', value: 'start' },
-        ]
-        : [
-            { text: h.type === 'end' ? '§2여기서 이어 깔기 시작§r\n§8다음은 점을 찍고, 끝낼 곳을 터치' : '§2여기서 분기 시작§r\n§8분기기가 들어갑니다', value: 'start' },
-            { text: '이 선로 이름 바꾸기', value: 'rename' },
-            { text: '§c이 선로 기록 지우기§r\n§8블록은 그대로 (되돌리기는 /arc:undo)', value: 'forget' },
-        ];
-    const v = await menu(player, '배선', describe(h), [...buttons, { text: '§8취소', value: '' }]);
-    if (v === 'start') {
-        s.yard.start = keep(h);
-        s.yard.pts = [];
+    const s = yardState(player);
+    const y = s.yard;
+    if (sneaking)
+        return void saveLine(player, s);
+    if (y.mode === 'connect') {
+        y.pick.pop();
         save(player);
-        bar(player, `§a[배선] 시작: ${describe(h)}§r  §7점을 찍고 끝낼 곳(선로 끝·선로·마지막 점)을 정하세요`);
+        return bar(player, '§e[선로 연결] 마지막 선택 취소');
     }
-    else if (v === 'finish')
-        await lay(player, h);
-    else if (v === 'rename') {
-        const r = await ask(player, 'yard:rename', '선로 이름', [{ key: 'name', type: 'text', label: '이름', default: h.track.name ?? '' }], { submit: '저장' });
-        if (r) {
-            h.track.name = r.name.trim();
-            saveTrack(h.track);
-        }
+    if (y.cur.pts.length)
+        y.cur.pts.pop();
+    else if (y.cur.start)
+        y.cur.start = null;
+    else if (y.lines.length) {
+        y.lines.pop();
+        save(player);
+        return bar(player, `§e[배선] 마지막으로 저장한 선을 지웠습니다 (남은 선 ${y.lines.length}개)`);
     }
-    else if (v === 'forget') {
-        deleteTrack(h.track.id);
-        say(player, `§e${nameOf(h.track)} 기록을 지웠습니다 (블록은 그대로).`);
-    }
-}
-
-/** Lay what has been drawn, finishing at `target` (a hit) or at the last point. */
-async function lay(player, target = null) {
-    if (isBusy(player))
-        return say(player, '§c이전 작업이 아직 진행 중입니다.');
-    const s = state(player);
-    let start = resolve(s.yard.start);
-    let pts = s.yard.pts.map(p => ({ ...p }));
-    if (!start) {
-        if (!pts.length)
-            return say(player, '§c시작할 곳이 없습니다: 선로 끝·선로를 터치하거나 점을 찍으세요.');
-        start = { type: 'point', pos: pts.shift() };
-    }
-    let fin = target ? (target.type ? (target.track ? target : resolve(target)) : null) : null;
-    if (!fin && pts.length)
-        fin = { type: 'point', pos: pts.pop() };
-    if (!fin && start.type === 'point')
-        return say(player, '§c점이 하나뿐입니다. 점을 더 찍거나 끝낼 선로를 터치하세요.');
-    const ctx = makeContext(player, {});
-    let r;
-    try {
-        r = await runAsync(buildDrawn(ctx, start, pts, fin, { N: opts(s).N }));
-    }
-    catch (e) {
-        return say(player, `§c배선: ${e?.message ?? e}`);
-    }
-    await finish(player, '배선', ctx.edit, `길이 약 ${r.length}칸${r.turnouts ? `, 분기기 ${r.turnouts}개` : ''}`);
-    saveTrack(r.track);
-    for (const t of r.touched)
-        saveTrack(t);
-    s.yard = { start: null, pts: [] };
     save(player);
+    bar(player, `§e[배선] 마지막 점 취소§r (점 ${y.cur.pts.length}개)`);
 }
 
 export async function yardMenu(player) {
     if (!unlocked(player))
         return;
-    const s = state(player);
-    const o = opts(s);
-    const start = resolve(s.yard.start);
-    const head = `시작: ${start ? describe(start) : '§7없음 (첫 점부터)§r'}\n찍은 점: ${s.yard.pts.length}개 · 기록된 선로: ${tracks().length}개\n분기기 번수: #${o.N}`;
+    const s = yardState(player);
+    const y = s.yard;
+    const head = `저장한 선: ${y.lines.length}개 · 그리는 중: 점 ${y.cur.pts.length}개${y.cur.start ? ' (시작 지정)' : ''}\n기록된 선로: ${tracks().length}개 · 분기기 번수 #${N(s)}`;
     const v = await menu(player, '배선 도구', head, [
-        { text: '§2지금까지 찍은 대로 깔기§r\n§8마지막 점에서 끝 (차막이)', value: 'lay' },
-        { text: '자동 배선: 선로군\n§8찍은 점 = 본선, 옆으로 선로 여러 개 + 양쪽 목', value: 'auto' },
+        { text: `§2저장한 선 ${y.lines.length + (y.cur.pts.length ? 1 : 0)}개 깔기§r\n§8철도 설정(선로·교량·전신주·전선)을 고른 뒤`, value: 'lay' },
+        { text: '지금 그리는 선 저장', value: 'save' },
+        { text: '선로 연결 (건넘선 · 시서스)\n§8선로 두 개를 차례로 터치', value: 'connect' },
         { text: '기록된 선로 목록', value: 'list' },
-        { text: '분기기 번수 등 설정', value: 'settings' },
-        { text: '§c시작·점 모두 지우기', value: 'clear' },
+        { text: '분기기 번수', value: 'settings' },
+        { text: '§c저장한 선·점 모두 지우기', value: 'clear' },
     ]);
     if (v === 'lay')
         await lay(player);
-    else if (v === 'auto')
-        await auto(player);
+    else if (v === 'save')
+        saveLine(player, s);
+    else if (v === 'connect') {
+        y.mode = 'connect';
+        y.pick = [];
+        save(player);
+        bar(player, '§b[선로 연결]§r 갈라질 선로(복선이면 그 선)를 터치하세요  §7부수기 = 선택 취소');
+    }
     else if (v === 'list') {
-        const list = tracks();
-        const lines = list.slice(0, 40).map(t => `${nameOf(t)}: ${t.pts.length}칸, 끝 ${t.ends.map(e => e.open ? '차막이' : '연결').join(' / ')}`);
-        await menu(player, '기록된 선로', lines.length ? lines.join('\n') : '아직 없습니다', [{ text: '닫기', value: '' }]);
+        const lines = tracks().slice(0, 40).map(t => `${nameOf(t)}: ${t.pts.length}칸, 끝 ${t.ends.map(e => e.open ? '열림' : '연결').join(' / ')}`);
+        const pick = await menu(player, '기록된 선로', lines.length ? lines.join('\n') : '아직 없습니다', [
+            ...tracks().slice(0, 40).map(t => ({ text: `${nameOf(t)} 기록 지우기`, value: t.id })),
+            { text: '닫기', value: '' },
+        ]);
+        if (pick) {
+            deleteTrack(pick);
+            say(player, '§e기록을 지웠습니다 (블록은 그대로).');
+        }
     }
     else if (v === 'settings') {
         const r = await ask(player, 'yard:settings', '배선 설정', [
-            { key: 'N', type: 'slider', label: '분기기 번수 (1:N, 클수록 완만하고 김)', default: o.N, min: 4, max: 16 },
+            { key: 'N', type: 'slider', label: '분기기 번수 (1:N, 클수록 완만하고 김)', default: N(s), min: 4, max: 16 },
         ], { submit: '저장' });
         if (r) {
             s.settings.yard = { ...(s.settings.yard ?? {}), N: r.N };
@@ -185,47 +203,87 @@ export async function yardMenu(player) {
         }
     }
     else if (v === 'clear') {
-        s.yard = { start: null, pts: [] };
+        s.yard = { lines: [], cur: fresh(), mode: null, pick: [] };
         save(player);
-        bar(player, '§e[배선] 시작·점을 지웠습니다');
+        bar(player, '§e[배선] 모두 지웠습니다');
     }
 }
 
-async function auto(player) {
-    const s = state(player);
-    const o = opts(s);
-    if (s.yard.pts.length < 2)
-        return say(player, '§c본선이 될 곳에 점을 2개 이상 찍고 다시 고르세요.');
-    const r = await ask(player, 'yard:auto', '자동 배선 - 선로군', [
-        { key: 'name', type: 'text', label: '이름', default: '조차장' },
-        { key: 'n', type: 'slider', label: '옆 선로 수', default: o.n, min: 1, max: 16 },
-        { key: 'gap', type: 'slider', label: '선로 간격 (선로 가운데 사이 칸 수)', default: o.gap, min: 4, max: 12 },
-        { key: 'N', type: 'slider', label: '분기기 번수 (목의 기울기 1:N)', default: o.N, min: 4, max: 16 },
+/** Lay every saved line (and the one being drawn) with the railway tool's settings. */
+async function lay(player) {
+    const s = yardState(player);
+    const y = s.yard;
+    if (y.cur.pts.length || y.cur.start)
+        saveLine(player, s);
+    if (!y.lines.length)
+        return say(player, '§c저장한 선이 없습니다: 점을 찍고 웅크리고 부수기로 선을 저장하세요.');
+    const fields = railway.fieldsFor(player);
+    const values = await ask(player, 'tool:railway', `배선 - 선 ${y.lines.length}개 깔기`, fields, { submit: '다음' });
+    if (!values)
+        return;
+    const extra = await railway.more(player, values);
+    if (extra === undefined)
+        return;
+    const v = { ...values, ...extra };
+    if (isBusy(player))
+        return say(player, '§c이전 작업이 아직 진행 중입니다.');
+    const ctx = makeContext(player, values);
+    const laid = [];
+    const lines = y.lines;
+    const single = !v.track && Number(v.tracks) === 1;
+    try {
+        await runAsync((function* () {
+            for (let i = 0; i < lines.length; i++) {
+                ctx.plan = planLine(lines[i], lines, laid, N(s), single);
+                yield* railway.run(ctx, v);
+                laid[i] = ctx.lastTrack;
+            }
+        })());
+    }
+    catch (e) {
+        return say(player, `§c배선: ${e?.message ?? e}`);
+    }
+    await finish(player, '배선', ctx.edit, `선 ${lines.length}개`);
+    s.yard = { lines: [], cur: fresh(), mode: null, pick: [] };
+    save(player);
+}
+
+/** Connect mode: the two picked tracks get a crossover (or a scissors crossover). */
+async function connect(player) {
+    const s = yardState(player);
+    const y = s.yard;
+    const [a, b] = y.pick.map(r => resolve(r, []));
+    y.pick = [];
+    y.mode = null;
+    save(player);
+    if (!a || !b)
+        return say(player, '§c선로 기록을 찾지 못했습니다.');
+    const r = await ask(player, 'yard:connect', '선로 연결', [
         {
-            key: 'side', type: 'dropdown', label: '어느 쪽으로', default: o.side, options: [
-                { value: -1, label: '본선 진행 방향의 왼쪽' }, { value: 1, label: '오른쪽' },
+            key: 'kind', type: 'dropdown', label: '종류', default: 'single', options: [
+                { value: 'single', label: '건넘선 (한 방향)' },
+                { value: 'scissors', label: '시서스 건넘선 (X자, 양방향)' },
             ],
         },
-        { key: 'both', type: 'toggle', label: '양쪽 목 (끄면 반대쪽 끝은 차막이)', default: o.both },
-        { key: 'startAt', type: 'slider', label: '첫 분기까지 본선 길이 (칸)', default: o.startAt, min: 2, max: 80 },
+        { key: 'N', type: 'slider', label: '분기기 번수 (1:N)', default: N(s), min: 4, max: 16 },
     ], { submit: '깔기' });
     if (!r)
         return;
-    s.settings.yard = { ...(s.settings.yard ?? {}), n: r.n, gap: r.gap, N: r.N, side: r.side, both: r.both, startAt: r.startAt };
-    save(player);
+    let plan;
+    try {
+        plan = crossoverPlan(a, b, r.kind, r.N);
+    }
+    catch (e) {
+        return say(player, `§c선로 연결: ${e?.message ?? e}`);
+    }
     if (isBusy(player))
         return say(player, '§c이전 작업이 아직 진행 중입니다.');
     const ctx = makeContext(player, {});
-    let out;
     try {
-        out = await runAsync(buildAuto(ctx, s.yard.pts, { ...r, name: r.name.trim() || '조차장' }));
+        await runAsync(buildCrossover(ctx, plan));
     }
     catch (e) {
-        return say(player, `§c자동 배선: ${e?.message ?? e}`);
+        return say(player, `§c선로 연결: ${e?.message ?? e}`);
     }
-    await finish(player, '자동 배선', ctx.edit, `본선 약 ${out.length}칸 + 선로 ${out.count}개`);
-    for (const t of out.made)
-        saveTrack(t);
-    s.yard = { start: null, pts: [] };
-    save(player);
+    await finish(player, '선로 연결', ctx.edit, `${r.kind === 'scissors' ? '시서스' : '건넘선'}, 길이 약 ${plan.length}칸`);
 }
