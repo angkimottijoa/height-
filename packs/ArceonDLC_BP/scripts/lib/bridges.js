@@ -183,8 +183,8 @@ function truss(kind, L, P) {
                     return Pt.bars; // X bracing overhead
             }
         }
-        if (dy === -1)
-            return Pt.main;
+        if (dy === -1 || dy === 0)
+            return Pt.main; // deck plate; at ballast level too, the sleepers lie on it
         if (dy === -2) {
             if (jj % Math.max(3, Math.round(P / 2)) === 0)
                 return Pt.main; // floor beams
@@ -237,7 +237,7 @@ export const BRIDGES = [
     // and steel bents (columns + cross beam on bearing shoes) as piers.
     {
         id: 'plate', name: '강판형교 (상로 플레이트 거더, 야마노테선 고가 양식)', group: 'steel',
-        l: 12, span: 18, widen: 0, dyMin: -7, dyMax: 1, steel: true,
+        l: 12, span: 18, widen: 0, dyMin: -7, dyMax: 1, steel: true, fillFrom: 3,
         section(u, dy, j, g) {
             const e = g.e(u), sd = g.sd(u), P = g.paint;
             const OUT = OUT_W(sd), IN = IN_W(sd);
@@ -380,7 +380,7 @@ export const BRIDGES = [
     // ---------------------------------------------------------- steel 2
     {
         id: 'truss', name: '하로 워렌 트러스교 (삼각형, 경간 56칸, 경간마다 직선)', group: 'steel',
-        l: 56, span: 56, fixed: true, straight: true, widen: 2, dyMin: -2, dyMax: 17, steel: true,
+        l: 56, span: 56, fixed: true, straight: true, widen: 2, dyMin: -2, dyMax: 17, steel: true, openDeck: true,
         poleAt: [14, 42], trussPlanes: true,
         section: truss('warren', 56, 14),
         pier: trussPier,
@@ -388,7 +388,7 @@ export const BRIDGES = [
     // ---------------------------------------------------------- steel 3
     {
         id: 'truss3', name: '하로 사각 트러스교 (정사각형 3칸, 경간 45칸, 경간마다 직선)', group: 'steel',
-        l: 45, span: 45, fixed: true, straight: true, widen: 2, dyMin: -2, dyMax: 17, steel: true,
+        l: 45, span: 45, fixed: true, straight: true, widen: 2, dyMin: -2, dyMax: 17, steel: true, openDeck: true,
         poleAt: [0, 15, 30], trussPlanes: true,
         section: truss('square', 45, 15),
         pier: trussPier,
@@ -491,7 +491,7 @@ export const BRIDGES = [
     // diaphragms, New Jersey barriers, drip edges, deck joints; a hammerhead
     // pier with a stepped (stair) taper and bearing pads.
     {
-        id: 'psci', name: 'PSC I형 빔교 (돌·거친 안산암)', group: 'concrete',
+        id: 'psci', name: 'PSC I형 빔교 (돌·거친 안산암)', group: 'concrete', fillFrom: 2,
         l: 10, span: 22, widen: 0, dyMin: -6, dyMax: 1,
         section(u, dy, j, g) {
             const e = g.e(u), sd = g.sd(u), M = ROUGH;
@@ -820,6 +820,8 @@ export function geometry(d, track, opts = {}) {
         sd: (u) => u < c0 ? -1 : 1,
         a: (u) => Math.abs(u - c0),
         paint: steelPaint(opts.paint ?? d.paint ?? 'weathered'),
+        // the track bed's own ballast and slab top, to carry it out to the parapets
+        fill: { ballast: opts.ballast || 'gravel', top: opts.top ?? '', from: d.fillFrom ?? 1, bedE: Math.floor(track.bed[0]) - uL },
         girders(step) {
             const n = Math.max(2, Math.floor((uR - uL - 4) / step) + 1);
             return Array.from({ length: n }, (_, i) => Math.round(uL + 2 + i * (uR - uL - 4) / (n - 1)));
@@ -857,7 +859,13 @@ export function bridgeTile(d, g) {
     return {
         w, l: d.l, h, anchor, dirAng: 0, lines: new Map(),
         cell(k, c, j) {
-            const t = d.section(uOf(c), k - anchor, j, g);
+            const u = uOf(c), dy = k - anchor, f = g.fill, e = g.e(u);
+            // between the track bed and the parapet / walkway: the bed's ballast and top
+            if (!d.openDeck && e >= f.from && e < f.bedE && (dy === 0 || dy === 1)) {
+                const t = dy === 0 ? f.ballast : f.top;
+                return t ? material(cache, t) : null;
+            }
+            const t = d.section(u, dy, j, g);
             return t ? material(cache, t) : null;
         },
         describe: d.name,
@@ -915,8 +923,20 @@ export function* polish(paint) {
         const [x, y, z] = k.split(',').map(Number);
         for (const [dx, dz] of [[1, 1], [1, -1]]) {
             const q = get(x + dx, y, z + dz);
-            if (q && q.type.id === p.type.id && !get(x + dx, y, z) && !get(x, y, z + dz))
+            if (!q || q.type.id !== p.type.id)
+                continue;
+            const a = get(x + dx, y, z), b = get(x, y, z + dz);
+            if (a?.type.id === p.type.id || b?.type.id === p.type.id)
+                continue;
+            if (!a && !b)
                 paint.set(`${x + dx},${y},${z}`, p);
+            else if (isBars(p) || isWall(p)) {
+                // a railing running past the bed's slabs: the railing wins the corner
+                if (!a || /_slab$/.test(a.type.id))
+                    paint.set(`${x + dx},${y},${z}`, p);
+                else if (!b || /_slab$/.test(b.type.id))
+                    paint.set(`${x},${y},${z + dz}`, p);
+            }
         }
         if (++n % 4000 === 0)
             yield;

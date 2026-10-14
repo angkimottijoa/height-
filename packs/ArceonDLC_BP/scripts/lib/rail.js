@@ -109,7 +109,7 @@ export function builtinTile(v) {
         sleepers: { spans, on, l, block: sleeper, end: stub > 0 ? end : null },
         cell(k, c) {
             if (k === 0)
-                return ballast;
+                return v.noBallast ? null : ballast;
             return cols[c] === 'r' ? rail : top;
         },
         describe: `${tracks === 1 ? '단선' : `${tracks}선`}, 폭 ${w}칸`,

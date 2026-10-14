@@ -132,7 +132,13 @@ export default {
                 else if (d[f.key] === undefined)
                     d[f.key] = f.default;
             }
+            // an open-deck (truss) bridge: no ballast, the sleepers lie on the steel deck
+            if (bridgeById(v.bridge)?.openDeck) {
+                d.noBallast = true;
+                d.top = '';
+            }
             tile = builtinTile(d);
+            tile.fill = d;
         }
         let trussPoles = null; // poles hung on the truss verticals: {samples, spots, planes}
         if (v.bridge) {
@@ -141,7 +147,7 @@ export default {
             if (!d)
                 throw new Error('없는 교량 종류: ' + v.bridge);
             const bed = tile.rails ? tile : builtinTile({ tracks: v.tracks ?? 2 });
-            const g = geometry(d, bed, { paint: v.steel });
+            const g = geometry(d, bed, { paint: v.steel, ballast: tile.fill?.ballast, top: tile.fill ? tile.fill.top : TOP_MIX });
             const bt = bridgeTile(d, g);
             const bp = new Map();
             const curveRoad = yield* layout(ctx, v, 1);
