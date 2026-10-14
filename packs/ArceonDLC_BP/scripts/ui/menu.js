@@ -114,13 +114,14 @@ async function route(player, v, from) {
 }
 
 async function giveMenu(player) {
+    const all = unlocked(player) ? [...ITEMS, YARD] : ITEMS;
     const v = await menu(player, '도구 아이템 받기', '§7터치 = 기본 동작, 부수기 = 두 번째 동작, 웅크리고 터치 = 메뉴', [
         { text: '전부 받기', value: 'all' },
-        ...ITEMS.map(id => ({ text: ITEM_NAMES[id], value: id })),
+        ...all.map(id => ({ text: ITEM_NAMES[id], value: id })),
     ]);
     if (!v)
         return;
-    giveTools(player, v === 'all' ? ITEMS : [v]);
+    giveTools(player, v === 'all' ? all : [v]);
 }
 
 async function groupMenu(player, group, from = openMenu) {
@@ -501,7 +502,7 @@ async function settingsMenu(player) {
         { key: 'loadAll', type: 'toggle', label: '로드 안 된 먼 곳도 불러와서 설치 (권장)', default: s.settings.loadAll !== false, tooltip: '틱킹 영역으로 잠깐 불러와서 설치하고 다시 놓아줍니다. 끄면 로드 안 된 곳은 건너뜁니다' },
         { key: 'particles', type: 'toggle', label: '도구를 들면 점·곡선·영역·붙여넣을 자리를 입자로 보기', default: s.settings.particles },
         { key: 'clearPalettes', type: 'toggle', label: `저장한 팔레트 모두 지우기 (${(s.settings.palettes ?? []).length}개)`, default: false },
-        { key: 'code', type: 'text', label: '코드', default: '', placeholder: '' },
+        { key: 'code', type: 'text', label: s.settings.unlocked ? '코드 §8·' : '코드', default: '', placeholder: '' },
     ], { submit: '저장' });
     if (!r)
         return;

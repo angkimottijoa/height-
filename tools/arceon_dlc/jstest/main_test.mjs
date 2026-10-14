@@ -173,3 +173,19 @@ check(errs.length === 0, 'no error messages ' + JSON.stringify(errs));
   await brk('arc:yard_tool', { x: 30, y: 0, z: 30 });
   check(s.yard.pts.length === 1, 'layout tool: break takes the last point back');
 }
+
+// ---- the settings code, typed in the settings form, unlocks the hidden tool for that player only
+{
+  s.settings.unlocked = false;
+  ui.answers.push(btn('설정'), f => f.defaults({ '코드': '1234' }));
+  await cmds['arc:menu'](({ sourceEntity: player })); await settle(); await settle();
+  check(!s.settings.unlocked, 'settings: a wrong code changes nothing');
+  ui.answers.push(btn('설정'), f => f.defaults({ '코드': '4917' }));
+  await cmds['arc:menu'](({ sourceEntity: player })); await settle(); await settle();
+  check(s.settings.unlocked === true, 'settings: the code unlocks');
+  const inv = () => player.getComponent('minecraft:inventory').container;
+  ui.answers.push(btn('도구 아이템 받기'), btn('전부 받기'));
+  await cmds['arc:menu'](({ sourceEntity: player })); await settle(); await settle();
+  const got = [...Array(36).keys()].map(i => inv().getItem(i)?.typeId).filter(Boolean);
+  check(got.includes('arc:yard_tool'), 'menu > 도구 아이템 받기 > 전부 받기 includes the layout tool once unlocked: ' + got.join(','));
+}
