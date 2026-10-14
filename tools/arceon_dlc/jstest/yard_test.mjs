@@ -126,3 +126,34 @@ check(/선로 연결/.test(player.msgs.slice(-1)[0]) && /시서스/.test(player.
 console.log(topView(dim, 0, -12, 110, 12));
 const machines4 = [...dim.map].filter(([, p]) => p.id === 'minecraft:polished_blackstone_bricks').length;
 check(machines4 === 4, 'four switch machines for a scissors crossover: ' + machines4);
+
+// 10. the user's way to carry on: tap the track's middle, then its end block, then where to go;
+// on a diagonal, double and four-track: no turnout, no overlap, the same direction at the joint, smooth
+for (const n of [1, 2, 4]) {
+  ({ dim, player } = world({ id: 'c' + n }));
+  session(player).settings.unlocked = true;
+  const v = { tracks: n, pole: '' };
+  await runTool(railway, v, { player, points: [{ x: 0, y: 0, z: 0 }, { x: 30, y: 0, z: 10 }, { x: 60, y: 0, z: 40 }] });
+  const t0 = Y.tracks()[0];
+  const before = new Set([...dim.map].filter(([, p]) => p.id === 'minecraft:anvil').map(([k]) => k));
+  const e = t0.ends[1];
+
+  const eb = { x: Math.floor(e.at[0] + e.dir[0] * 1.2), y: 0, z: Math.floor(e.at[2] + e.dir[1] * 1.2) };
+  const mid = Y.trackSamples(t0)[90];
+  const m = await runTool(railway, v, { player, points: [{ x: Math.floor(mid.x), y: 0, z: Math.floor(mid.z) }, eb, { x: 85, y: 0, z: 50 }, { x: 110, y: 0, z: 48 }] });
+  const last = m.slice(-1)[0];
+  const t1 = Y.tracks()[1];
+  const S = Y.trackSamples(t1), T = Y.trackSamples(t0);
+  const a0 = Math.atan2(S[0].tz, S[0].tx), a1 = Math.atan2(T[T.length - 1].tz, T[T.length - 1].tx);
+  let bend = 0; for (let i = 3; i < S.length; i += 3) bend = Math.max(bend, Math.abs(Math.atan2(S[i].tz, S[i].tx) - Math.atan2(S[i - 3].tz, S[i - 3].tx)));
+  const back = S.filter(p => (p.x - e.at[0]) * e.dir[0] + (p.z - e.at[2]) * e.dir[1] < -0.6).length;
+  check(/이어 깔기/.test(last) && !/분기기/.test(last) && Y.trackById(t0.id).ends[1].open === false, `${n} track(s): middle tap + end block tap carries on from the end (no turnout): ${last}`);
+  check(Math.abs(a0 - a1) < 0.03 && back === 0, `${n} track(s): leaves the end along the track (angle diff ${(a0 - a1).toFixed(3)} rad), nothing laid back over the old track (${back} samples behind)`);
+  check(bend < 0.12, `${n} track(s): smooth (max bend per block ${bend.toFixed(3)} rad)`);
+  const anv = new Set([...dim.map].filter(([, p]) => p.id === 'minecraft:anvil').map(([k]) => k.split(',').map(Number)).map(([x, , z]) => x + ',' + z));
+  // across the joint the rail lines keep their count (no doubled rails)
+  const nx = -e.dir[1], nz = e.dir[0];
+  const count = (d) => { const s = new Set(); for (let o = -12; o <= 12; o += 0.5) { const x = Math.floor(e.at[0] + e.dir[0] * d + nx * o), z = Math.floor(e.at[2] + e.dir[1] * d + nz * o); if (anv.has(x + ',' + z)) s.add(x + ',' + z); } return s.size; };
+  console.log(`  rails across: before the joint ${count(-3)}, at ${count(0)}, after ${count(3)}`);
+  check(Math.abs(count(3) - count(-3)) <= n && count(0) <= count(-3) + n, `${n} track(s): no doubled rails at the joint`);
+}

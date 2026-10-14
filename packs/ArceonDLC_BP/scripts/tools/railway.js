@@ -16,7 +16,7 @@ import { ensureLoaded } from '../core/loader.js';
 import { layout, roadFrom } from './lanes.js';
 
 const BUILTIN_POLE = '@기본', POST_ONLY = '@기둥';
-const BRIDGE_KEYS = ['bridge', 'steel', 'span', 'colGap'];
+const BRIDGE_KEYS = ['bridge', 'steel', 'span', 'colGap', 'trussPoles'];
 
 const DETAIL = [
     { key: 'gauge', type: 'slider', label: '레일(모루) 사이 칸 수', default: 2, min: 1, max: 8 },
@@ -85,7 +85,7 @@ function record(ctx, plan, S, tile, paint) {
  * A safety fence along both sides of a track on the ground, a block outside
  * the bed: 'mesh' iron bar panels between stone posts every 4 blocks with a
  * coping on the posts; 'grate' copper grating with bolt heads and an iron bar
- * top (as on the Yamanote line). Joined up (bars and walls connect, diagonal
+ * top (as on the Yamanote line); an invisible light block over every post. Joined up (bars and walls connect, diagonal
  * corners closed) by the bridge polish.
  */
 function* safetyFence(road, w, v, paint) {
@@ -116,8 +116,8 @@ function* safetyFence(road, w, v, paint) {
             }
             if (v.fence === 'mesh' && post)
                 fp.set(`${x},${y + h},${z}`, B('andesite_slab', { 'minecraft:vertical_half': 'bottom' }));
-            if (v.fence === 'grate' && post)
-                fp.set(`${x},${y + h - 1},${z}`, B('weathered_copper_bulb', { lit: true, powered_bit: false }));
+            if (post)
+                fp.set(`${x},${y + h + (v.fence === 'mesh' ? 1 : 0)},${z}`, B('light_block_12')); // invisible light over the posts
         }
     }
     yield* polish(fp);
@@ -169,6 +169,7 @@ export default {
                 options: Object.entries(STEEL).map(([value, s]) => ({ value, label: s.name })),
             },
             { key: 'span', type: 'slider', label: '교량 경간 (교각 사이 칸 수, 트러스·아치는 고정)', default: 0, min: 0, max: 60 },
+            { key: 'trussPoles', type: 'toggle', label: '트러스교: 전신주를 트러스 수직재 자리에 세우기 (끄면 보통 간격대로)', default: true },
             { key: 'detail', type: 'toggle', label: '기본 선로 고급 설정 (레일 사이 칸 수·블록 비율, 다음 화면)', default: false },
             {
                 key: 'pole', type: 'dropdown', label: '전신주', default: BUILTIN_POLE, options: [
@@ -211,7 +212,7 @@ export default {
                 key: 'fence', type: 'dropdown', label: '안전망 (땅 위 선로 양옆, 교량일 때는 없음)', default: '', options: [
                     { value: '', label: '없음' },
                     { value: 'mesh', label: '철망 (철창 + 돌 기둥)' },
-                    { value: 'grate', label: '격자 (구리 격자 + 철창, 기둥마다 조명)' },
+                    { value: 'grate', label: '격자 (구리 격자 + 철창)' },
                 ],
             },
             { key: 'fenceHeight', type: 'slider', label: '안전망 높이 (칸)', default: 2, min: 2, max: 4 },
@@ -325,7 +326,7 @@ export default {
                     const tx = (a.tx + b.tx) / 2, tz = (a.tz + b.tz) / 2, l = Math.hypot(tx, tz) || 1;
                     return { ...p, tx: tx / l, tz: tz / l };
                 });
-                if (d.poleAt && (v.pole === BUILTIN_POLE || d.wholePoles && v.pole)) {
+                if (d.poleAt && v.trussPoles !== false && (v.pole === BUILTIN_POLE || d.wholePoles && v.pole)) {
                     const ps = [];
                     for (let k = 0; k + 1 < ends.length; k++)
                         for (const q of d.poleAt)

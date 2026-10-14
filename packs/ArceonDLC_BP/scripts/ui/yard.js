@@ -5,7 +5,8 @@
  * (track, bridge, poles, wires):
  *   tap anywhere                     add a point to the line being drawn
  *   tap a track end / a track's side  the line starts there (carries on / branches off),
- *                                     or, when it already has points, finishes there and is saved
+ *                                     or, when it already has points, finishes there and is saved;
+ *                                     a track's side and then its end block = carry on from that end
  *   break                            take back the last point
  *   sneak + break                    save the line (it ends at its last point)
  *   sneak + tap                      menu: lay the saved lines, connect two tracks, ...
@@ -52,6 +53,7 @@ function keep(h) {
     const src = h.track.line !== undefined ? { src: 'line', idx: h.track.line } : { src: 'track', id: h.track.id };
     return h.type === 'end' ? { type: 'end', ...src, end: h.end } : { type: 'track', ...src, s: h.s, lane: h.lane };
 }
+const sameTrack = (a, b) => a.src === b.src && (a.src === 'line' ? a.idx === b.idx : a.id === b.id);
 /** Back to a ref with its track: a recorded track, a saved line's shape, or (laying) the track it became. */
 function resolve(ref, lines, laid = []) {
     if (!ref)
@@ -119,6 +121,12 @@ export function yardTap(player, hit, sneaking) {
             c.start = keep(h);
             save(player);
             return bar(player, `§a[배선] 시작: ${describe(h)}§r  §7${h.type === 'end' ? '이 끝에서 이어집니다' : '분기기로 갈라집니다'} · 지나갈 곳을 터치`);
+        }
+        // a tap on a track, then on that track's end: carry on from that end
+        if (!c.pts.length && c.start?.type === 'track' && h.type === 'end' && sameTrack(c.start, keep(h))) {
+            c.start = { ...keep(h), lane: c.start.lane };
+            save(player);
+            return bar(player, `§a[배선] 시작: ${describe(h)}§r  §7이 끝에서 그대로 이어집니다 · 지나갈 곳을 터치`);
         }
         c.finish = keep(h);
         bar(player, `§a[배선] 끝: ${describe(h)}`);

@@ -495,7 +495,7 @@ export const BRIDGES = [
         l: 56, span: 56, fixed: true, straight: true, widen: 2, dyMin: -2, dyMax: 17, steel: true, openDeck: true,
         poleAt: [14, 42], wholePoles: true,
         section: warren,
-        lamps: (u, dy, j, g, e) => e === 2 && dy === 14 && (j === 14 || j === 42) ? 'lantern[hanging=true]' : e === 0 && dy === 1 && j % 14 === 7 ? 'lantern' : e === 0 && dy >= 1 ? null : undefined,
+        lamps: (u, dy, j, g, e) => e === 2 && dy === 14 && (j === 14 || j === 42) ? 'light_block_12' : e === 0 && dy === 1 && j % 14 === 7 ? 'light_block_13' : e === 0 && dy >= 1 ? null : undefined,
         pier: trussPier,
     },
     // ---------------------------------------------------------- steel 3
@@ -503,7 +503,7 @@ export const BRIDGES = [
         id: 'truss3', name: '하로 사각 트러스교 (정사각형 3칸, 경간 45칸, 경간마다 직선)', group: 'steel',
         l: 45, span: 45, fixed: true, straight: true, widen: 2, dyMin: -2, dyMax: 17, steel: true, openDeck: true,
         poleAt: [0, 15, 30], trussPlanes: true,
-        lamps: (u, dy, j, g, e) => e === 2 && dy === 14 && j % 15 === 0 ? 'lantern[hanging=true]' : e === 0 && dy === 1 && j % 15 === 7 ? 'lantern' : e === 0 && dy >= 1 ? null : undefined,
+        lamps: (u, dy, j, g, e) => e === 2 && dy === 14 && j % 15 === 0 ? 'light_block_12' : e === 0 && dy === 1 && j % 15 === 7 ? 'light_block_13' : e === 0 && dy >= 1 ? null : undefined,
         section: truss('square', 45, 15),
         pier: trussPier,
     },
@@ -966,28 +966,26 @@ function material(cache, t) {
 // ------------------------------------------------------------ lights
 const PROP = /button|chain|lightning_rod|lantern|light_block|torch/;
 /**
- * Lighting, in cells the design leaves empty: a lantern standing on the
- * parapet (or the walkway railing) every 12 blocks, a lantern hanging under
- * the deck on the centre line between them, and invisible light blocks
- * (빛 블록) under the deck soffit and along the walkway so the bridge glows
- * at night without visible clutter. A design can add its own spots (d.lamps).
+ * Lighting with invisible light blocks (빛 블록) only, in cells the design
+ * leaves empty: over the parapet (or the walkway railing) every 12 blocks,
+ * under the deck on the centre line every 6, along the walkway, and in the
+ * trusses under the portals. Nothing shows; the bridge is just lit at night.
+ * A design can add its own spots (d.lamps).
  */
 function lamp(d, g, u, e, dy, j, at) {
     const own = d.lamps?.(u, dy, j, g, e);
     if (own !== undefined)
         return own;
     const below = at(dy - 1), above = at(dy + 1);
-    // standing on the parapet top
+    // over the parapet top
     if (e === 0 && dy >= 0 && j % 12 === 0 && below && !PROP.test(below) && !above)
-        return 'lantern';
-    // hanging under the deck on the centre line
+        return 'light_block_14';
+    // under the deck on the centre line
     if (u === g.c0r && dy <= -2 && above && !PROP.test(above) && !/bars/.test(above)) {
-        if (j % 12 === 6 && !at(dy - 1))
-            return 'lantern[hanging=true]';
-        if (j % 12 === 0 && !at(dy - 1))
+        if (j % 6 === 0 && !at(dy - 1))
             return 'light_block_12';
     }
-    // along the walkway / parapet foot, invisible
+    // along the walkway / parapet foot
     if (e === 1 && dy === (d.openDeck ? 1 : 2) && j % 12 === 6 && below && !PROP.test(below))
         return 'light_block_10';
     return null;

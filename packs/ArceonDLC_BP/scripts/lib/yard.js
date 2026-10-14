@@ -76,7 +76,7 @@ export function newId() {
 }
 
 // ------------------------------------------------------------ samples
-const r1 = (v) => Math.round(v * 10) / 10, r2 = (v) => Math.round(v * 100) / 100;
+const r2 = (v) => Math.round(v * 100) / 100;
 /** Samples with tangents, normals and distance from a list of points. */
 export function withFrames(P) {
     const S = [];
@@ -115,6 +115,54 @@ export function sampleCurve(ctrl) {
     for (let i = 0; i <= steps; i++)
         P.push(path.frac(i / steps));
     return withFrames(P);
+}
+/**
+ * A smooth centre line through control points (block centres) with the
+ * tangent at either end given (a unit [x, z], or null to leave it free):
+ * cubic Hermite segments with Catmull-Rom tangents inside, so the line leaves
+ * a track end exactly along it and bends gently away (no kink, no overlap),
+ * resampled a third of a block apart.
+ */
+export function sampleSmooth(ctrl, t0 = null, t1 = null) {
+    const P = ctrl, n = P.length;
+    const seg = (i) => Math.hypot(P[i + 1].x - P[i].x, P[i + 1].z - P[i].z) || 1;
+    const M = P.map((p, i) => {
+        if (i === 0)
+            return t0 ? { x: t0[0] * seg(0), z: t0[1] * seg(0) } : { x: P[1].x - p.x, z: P[1].z - p.z };
+        if (i === n - 1)
+            return t1 ? { x: t1[0] * seg(n - 2), z: t1[1] * seg(n - 2) } : { x: p.x - P[i - 1].x, z: p.z - P[i - 1].z };
+        // Catmull-Rom, scaled to the shorter neighbouring segment (no overshoot on uneven spacing)
+        const a = P[i - 1], b = P[i + 1], l = Math.hypot(b.x - a.x, b.z - a.z) || 1, k = Math.min(seg(i - 1), seg(i));
+        return { x: (b.x - a.x) / l * k, z: (b.z - a.z) / l * k };
+    });
+    const dense = [];
+    for (let i = 0; i + 1 < n; i++) {
+        const a = P[i], b = P[i + 1], ma = M[i], mb = M[i + 1];
+        const steps = Math.max(8, Math.ceil(seg(i) * 12));
+        for (let k = i ? 1 : 0; k <= steps; k++) {
+            const t = k / steps, t2 = t * t, t3 = t2 * t;
+            const h00 = 2 * t3 - 3 * t2 + 1, h10 = t3 - 2 * t2 + t, h01 = -2 * t3 + 3 * t2, h11 = t3 - t2;
+            dense.push({ x: h00 * a.x + h10 * ma.x + h01 * b.x + h11 * mb.x, y: a.y + (b.y - a.y) * (3 * t2 - 2 * t3), z: h00 * a.z + h10 * ma.z + h01 * b.z + h11 * mb.z });
+        }
+    }
+    // even spacing along the line
+    const out = [dense[0]];
+    let acc = 0;
+    for (let i = 1; i < dense.length; i++) {
+        const p = dense[i - 1], q = dense[i], l = Math.hypot(q.x - p.x, q.z - p.z);
+        let from = 0;
+        while (acc + l - from >= 1 / SUB - 1e-9) {
+            from += 1 / SUB - acc;
+            acc = 0;
+            const t = from / l;
+            out.push({ x: p.x + (q.x - p.x) * t, y: p.y + (q.y - p.y) * t, z: p.z + (q.z - p.z) * t });
+        }
+        acc += l - from;
+    }
+    const last = dense[dense.length - 1], o = out[out.length - 1];
+    if (Math.hypot(last.x - o.x, last.z - o.z) > 0.05)
+        out.push(last);
+    return withFrames(out);
 }
 /** The centre line a block apart (by distance along it), for the record. */
 export function thinPts(S) {
@@ -213,11 +261,27 @@ const endOffset = (e, i, c) => {
 };
 /** Where a track end is, on one lane (a single track carrying on from a double one). */
 function endAt(ref, single) {
-    const e = ref.track.ends[ref.end];
+    const e0 = ref.track.ends[ref.end];
+    const e = { ...e0, dir: endDir(ref.track, ref.end) ?? e0.dir };
     const centres = ref.track.centres ?? [0];
     const off = single && centres.length > 1 ? centres[ref.lane ?? 0] ?? 0 : 0;
     const [nx, nz] = endNormal(e, ref.end);
     return { e, E: { x: e.at[0] + nx * off, y: e.at[1], z: e.at[2] + nz * off } };
+}
+/** The outward direction at a track end, from its last few blocks (exact, not the rounded record). */
+function endDir(t, i) {
+    const P = t.pts, n = P.length;
+    if (n < 2)
+        return null;
+    // second-order one-sided difference: the tangent right at the end, also on a curve
+    const q = i === 1 ? [P[n - 1], P[n - 2], P[Math.max(0, n - 3)]] : [P[0], P[1], P[Math.min(n - 1, 2)]];
+    // (the points need not be evenly spaced: the last one is the exact tip)
+    const h1 = Math.hypot(q[0][0] - q[1][0], q[0][2] - q[1][2]) || 1, h2 = Math.hypot(q[1][0] - q[2][0], q[1][2] - q[2][2]);
+    const f = (k) => n >= 3 && h2 > 0.1
+        ? (q[0][k] - q[1][k]) * (2 * h1 + h2) / (h1 * (h1 + h2)) - (q[1][k] - q[2][k]) * h1 / (h2 * (h1 + h2))
+        : q[0][k] - q[1][k];
+    const dx = f(0), dz = f(2), l = Math.hypot(dx, dz);
+    return l ? [dx / l, dz / l] : null;
 }
 
 // ------------------------------------------------------------ turnouts
@@ -328,64 +392,75 @@ export function turnoutFurniture(parent, child, railSouth, paint) {
  * Plan a drawn track: from a start (a track end, a spot on a track = branch,
  * or a plain point) through the tapped points to a finish (likewise).
  * start/finish: {type: 'end', track, end} | {type: 'track', track, s} | {type: 'point', pos}.
- * Returns {S, branchFrom, joinTo, startEnd, finishEnd}.
+ * A track end is carried on exactly along the track (same direction, no
+ * kink), a branch leaves through a turnout lead; the line in between is a
+ * smooth curve that starts and ends tangent to them. Tapped points behind
+ * such a start (or past such a finish) would fold the line back over the
+ * track, so they are left out.
+ * Returns {S, branchFrom, joinTo}.
  */
 export function planDrawn(start, points, finish, N = 8, single = false) {
     const centre = (p) => ({ x: p.x + 0.5, y: p.y, z: p.z + 0.5 });
-    const mids = points.map(centre);
-    const ctrl = [];
+    let mids = points.map(centre);
     let headS = null, tailS = null, branchFrom = null, joinTo = null;
-    const firstTarget = mids[0] ?? (finish && anchorOf(finish));
+    let A, tA = null, B = null, tB = null;
+    const firstTarget = () => mids[0] ?? (finish && anchorOf(finish, single));
     // the start
     if (start.type === 'end') {
         const { e, E } = endAt(start, single);
-        ctrl.push(E, { x: E.x + e.dir[0] * 4, y: E.y, z: E.z + e.dir[1] * 4 });
+        A = E;
+        tA = e.dir;
     }
     else if (start.type === 'track') {
         const S = laneOf(start);
         const b = at(S, start.s);
-        const to = firstTarget ?? { x: b.x + b.tx * 10, z: b.z + b.tz * 10 };
+        const to = firstTarget() ?? { x: b.x + b.tx * 10, z: b.z + b.tz * 10 };
         const dir = (to.x - b.x) * b.tx + (to.z - b.z) * b.tz >= 0 ? 1 : -1;
         const side = Math.sign(dir * ((to.x - b.x) * b.nx + (to.z - b.z) * b.nz)) || 1;
         headS = lead(S, start.s, dir, side, N);
         const L = headS[headS.length - 1];
-        ctrl.push({ x: L.x, y: L.y, z: L.z }, { x: L.x + L.tx * 4, y: L.y, z: L.z + L.tz * 4 });
+        A = { x: L.x, y: L.y, z: L.z };
+        tA = [L.tx, L.tz];
         branchFrom = { track: start.track, s: start.s, dir, lane: start.lane ?? 0 };
     }
     else
-        ctrl.push(centre(start.pos));
-    // points behind (or too near) the end of a turnout lead would loop the line back
-    if (headS) {
-        const L = headS[headS.length - 1];
-        while (mids.length && ((mids[0].x - L.x) * L.tx + (mids[0].z - L.z) * L.tz < 4))
-            mids.shift();
-    }
-    ctrl.push(...mids);
+        A = centre(start.pos);
     // the finish
     if (finish?.type === 'end') {
         const { e, E } = endAt(finish, single);
-        ctrl.push({ x: E.x + e.dir[0] * 4, y: E.y, z: E.z + e.dir[1] * 4 }, E);
+        B = E;
+        tB = [-e.dir[0], -e.dir[1]]; // arriving into the end
     }
     else if (finish?.type === 'track') {
         const S = laneOf(finish);
         const b = at(S, finish.s);
-        const from = ctrl[ctrl.length - 1];
+        const from = mids[mids.length - 1] ?? A;
         const dir = (from.x - b.x) * b.tx + (from.z - b.z) * b.tz >= 0 ? 1 : -1;
         const side = Math.sign(dir * ((from.x - b.x) * b.nx + (from.z - b.z) * b.nz)) || 1;
         const m = lead(S, finish.s, dir, side, N);
         const L = m[m.length - 1];
         tailS = reversed(m);
-        ctrl.push({ x: L.x + L.tx * 4, y: L.y, z: L.z + L.tz * 4 }, { x: L.x, y: L.y, z: L.z });
+        B = { x: L.x, y: L.y, z: L.z };
+        tB = [-L.tx, -L.tz];
         joinTo = { track: finish.track, s: finish.s, dir, lane: finish.lane ?? 0 };
     }
     else if (finish?.type === 'point')
-        ctrl.push(centre(finish.pos));
-    if (ctrl.length < 2)
-        throw new Error('점이 더 필요합니다 (시작과 끝, 또는 점 2개 이상)');
+        B = centre(finish.pos);
+    // points behind a tangent start / past a tangent finish fold the line back: leave them out
+    const ahead = (p, o, t) => (p.x - o.x) * t[0] + (p.z - o.z) * t[1];
+    if (tA)
+        mids = mids.filter(p => ahead(p, A, tA) >= 3);
+    if (tB && B)
+        mids = mids.filter(p => ahead(p, B, tB) <= -3);
+    const ctrl = [A, ...mids];
+    if (B)
+        ctrl.push(B);
     for (let i = ctrl.length - 1; i > 0; i--)
-        if (Math.hypot(ctrl[i].x - ctrl[i - 1].x, ctrl[i].z - ctrl[i - 1].z) < 0.5)
+        if (Math.hypot(ctrl[i].x - ctrl[i - 1].x, ctrl[i].z - ctrl[i - 1].z) < 1.5 && i !== ctrl.length - 1 && i !== 0)
             ctrl.splice(i, 1);
-    const mid = ctrl.length >= 2 ? sampleCurve(ctrl) : [];
+    if (ctrl.length < 2 || Math.hypot(ctrl[ctrl.length - 1].x - A.x, ctrl[ctrl.length - 1].z - A.z) < 2)
+        throw new Error('점이 더 필요합니다 (이어 깔 끝에서 앞쪽으로 갈 곳을 찍으세요)');
+    const mid = sampleSmooth(ctrl, tA, tB);
     const P = [...(headS ?? []), ...mid.slice(headS ? 1 : 0), ...(tailS ? tailS.slice(1) : [])];
     return { S: withFrames(P), branchFrom, joinTo };
 }
@@ -395,9 +470,9 @@ function laneOf(ref) {
     const off = (ref.track.centres ?? [0])[ref.lane ?? 0] ?? 0;
     return off ? withFrames(S.map(p => ({ x: p.x + p.nx * off, y: p.y, z: p.z + p.nz * off }))) : S;
 }
-function anchorOf(x) {
+function anchorOf(x, single = true) {
     if (x.type === 'end')
-        return endAt(x, true).E;
+        return endAt(x, single).E;
     if (x.type === 'track')
         return at(laneOf(x), x.s);
     return { x: x.pos.x + 0.5, y: x.pos.y, z: x.pos.z + 0.5 };
@@ -407,8 +482,8 @@ function anchorOf(x) {
 export function endsOf(S) {
     const a = S[0], b = S[S.length - 1];
     return [
-        { at: [r1(a.x), r1(a.y), r1(a.z)], dir: [r1(-a.tx), r1(-a.tz)], open: true },
-        { at: [r1(b.x), r1(b.y), r1(b.z)], dir: [r1(b.tx), r1(b.tz)], open: true },
+        { at: [r2(a.x), r2(a.y), r2(a.z)], dir: [r2(-a.tx), r2(-a.tz)], open: true },
+        { at: [r2(b.x), r2(b.y), r2(b.z)], dir: [r2(b.tx), r2(b.tz)], open: true },
     ];
 }
 
@@ -434,12 +509,33 @@ export function yardTile(opts = {}) {
 export function planFromPoints(points, N = 8, extra = [], single = false) {
     if (points.length < 2)
         return null;
-    const first = hitTest(points[0], extra), last = hitTest(points[points.length - 1], extra);
+    let pts = points.slice();
+    let first = hitTest(pts[0], extra), last = hitTest(pts[pts.length - 1], extra);
+    // a tap on a track and then on its end block: carry on from that end (the
+    // first tap only says which track, and which lane of it)
+    if (first?.type === 'track' && pts.length >= 2) {
+        const h = hitTest(pts[1], extra);
+        if (h?.type === 'end' && h.track.id === first.track.id) {
+            first = { ...h, lane: first.lane };
+            pts.shift();
+            if (pts.length === 1)
+                last = null;
+        }
+    }
+    if (last?.type === 'track' && pts.length >= 3) {
+        const h = hitTest(pts[pts.length - 2], extra);
+        if (h?.type === 'end' && h.track.id === last.track.id) {
+            last = { ...h, lane: last.lane };
+            pts.pop();
+        }
+    }
     if (!first && !last)
         return null;
-    const start = first ?? { type: 'point', pos: points[0] };
-    const finish = last ?? { type: 'point', pos: points[points.length - 1] };
-    const plan = planDrawn(start, points.slice(1, -1), finish, N, single);
+    if (pts.length < 2)
+        throw new Error('이어 깔 끝 다음에 갈 곳을 찍으세요');
+    const start = first ?? { type: 'point', pos: pts[0] };
+    const finish = last ?? { type: 'point', pos: pts[pts.length - 1] };
+    const plan = planDrawn(start, pts.slice(1, -1), finish, N, single);
     return { ...plan, start, finish };
 }
 
