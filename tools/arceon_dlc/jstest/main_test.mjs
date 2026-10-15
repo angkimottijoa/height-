@@ -274,6 +274,10 @@ check(errs.length === 0, 'no error messages ' + JSON.stringify(errs));
   pp.block(1, 2, 3);
   const segs = pl.particles.filter(p => p[0] === 'arc:seg'), faces = pl.particles.filter(p => p[0].startsWith('arc:face_'));
   check(segs.length === 13 && faces.length === 6 && segs[0][2].vars['variable.len'] === 5 && Math.abs(segs[0][2].vars['variable.dy'] - 0.8) < 1e-9, 'painter: a solid line and a highlighted block (12 edges + 6 faces)');
+  pl.particles = [];
+  pp.seg({ x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 100 }, 'guide');
+  check(pl.particles.length === 5 && pl.particles.every(p => p[2].vars['variable.len'] === 20), 'a long line is drawn in pieces');
+  check(P.guides([{ x: 0, y: 40, z: 0 }, { x: 4, y: 40, z: 0 }], P.DEFAULTS).every(g => g.L === 256), 'guides are long (256 blocks) by default');
   // blocks side by side: one solid, no lines between them, long edges as one line
   pl.particles = [];
   pp.cells(['0,0,0', '1,0,0', '2,0,0']);

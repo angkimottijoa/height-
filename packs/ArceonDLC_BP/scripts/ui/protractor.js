@@ -45,7 +45,7 @@ function bar(player, msg) {
     }
 }
 
-export const DEFAULTS = { angle: 90, plane: 'h', sides: 'both', guide: 0, shape: 'para', n: 5, block: 'stone', fill: false, vanilla: false, mode: 'prot', show: 'line' };
+export const DEFAULTS = { angle: 90, plane: 'h', sides: 'both', guideLen: 256, shape: 'para', n: 5, block: 'stone', fill: false, vanilla: false, mode: 'prot', show: 'line' };
 export function protState(player) {
     const s = session(player);
     if (!s.prot || !Array.isArray(s.prot.pts))
@@ -91,7 +91,7 @@ export function guides(pts, set) {
     }
     const a = Number(set.angle) * Math.PI / 180;
     const sides = set.sides === 'left' ? [1] : set.sides === 'right' ? [-1] : [1, -1];
-    const L = Number(set.guide) > 0 ? Number(set.guide) : Math.max(4, Math.round(len(sub(A, B))));
+    const L = Number(set.guideLen) > 0 ? Number(set.guideLen) : Math.max(4, Math.round(len(sub(A, B))));
     const out = [];
     for (const sd of sides) {
         const d = norm(rotate(base, axis, sd * a));
@@ -114,7 +114,7 @@ export function snap(gs, eye, view, hitPos) {
             const w0 = sub(g.o, eye), b = dot(g.d, view), d = dot(g.d, w0), e = dot(view, w0);
             const den = 1 - b * b;
             t = den < 1e-6 ? -d : (b * e - d) / den;
-            t = Math.max(1, Math.min(96, Math.round(t)));
+            t = Math.max(1, Math.min(g.L, Math.round(t)));
             const q = add(g.o, mul(g.d, t));
             const along = dot(sub(q, eye), view);
             const miss = len(sub(q, add(eye, mul(view, along))));
@@ -123,7 +123,7 @@ export function snap(gs, eye, view, hitPos) {
         }
         if (hitPos) {
             const h = c(hitPos);
-            const t2 = Math.max(1, Math.round(dot(sub(h, g.o), g.d)));
+            const t2 = Math.max(1, Math.min(g.L, Math.round(dot(sub(h, g.o), g.d))));
             const miss = len(sub(h, add(g.o, mul(g.d, t2))));
             if (miss <= 1.0 && (!best || miss < best.miss))
                 best = { miss, t: t2, g };
@@ -317,12 +317,12 @@ export async function protMenu(player) {
                     { value: 'right', label: '오른쪽만' },
                 ],
             },
-            { key: 'guide', type: 'slider', label: '안내선 길이 (0 = 마지막 선과 같게)', default: Number(set.guide), min: 0, max: 64 },
+            { key: 'guideLen', type: 'slider', label: '안내선 길이 (칸, 0 = 마지막 선과 같게)', default: Number(set.guideLen), min: 0, max: 512, step: 8 },
             { key: 'vanilla', type: 'toggle', label: '기본(바닐라) 파티클로 보기 (리소스 팩이 꺼져 있어 안 보일 때)', default: !!set.vanilla },
         ], { submit: '저장' });
         if (r) {
             const typed = parseFloat(String(r.angleText ?? '').replace(',', '.'));
-            s.settings.prot = { ...set, angle: typed > 0 && typed < 180 ? typed : r.angle, plane: r.plane, sides: r.sides, guide: r.guide, vanilla: !!r.vanilla, mode: r.mode, show: r.show };
+            s.settings.prot = { ...set, angle: typed > 0 && typed < 180 ? typed : r.angle, plane: r.plane, sides: r.sides, guideLen: r.guideLen, vanilla: !!r.vanilla, mode: r.mode, show: r.show };
             save(player);
             bar(player, isRuler(s.settings.prot) ? '§a[줄자]§r 설정 저장' : `§e[각도기] ${s.settings.prot.angle}° 안내선`);
         }

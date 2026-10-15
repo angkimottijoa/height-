@@ -57,6 +57,13 @@ export function painter(player, { vanilla = false, budget = 1600 } = {}) {
                 return;
             if (!custom)
                 return dots(a, b, kind);
+            if (L > 24) {
+                // a long line in pieces, so a far-off middle doesn't hide all of it
+                const n = Math.ceil(L / 24);
+                for (let i = 0; i < n; i++)
+                    P.seg({ x: a.x + dx * i / n, y: a.y + dy * i / n, z: a.z + dz * i / n }, { x: a.x + dx * (i + 1) / n, y: a.y + dy * (i + 1) / n, z: a.z + dz * (i + 1) / n }, kind, w);
+                return;
+            }
             const ok = spawn('arc:seg', { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, z: (a.z + b.z) / 2 },
                 vars(COLORS[kind] ?? COLORS.line, { dx: dx / L, dy: dy / L, dz: dz / L, len: L, w }));
             if (!ok && left > 0) {
