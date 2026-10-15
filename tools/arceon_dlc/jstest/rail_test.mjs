@@ -281,6 +281,7 @@ console.log(view(dim, 8, -8, -8, 8, 8).join('\n'));
     const ids = [...dim.map.values()].map(p => p.id);
     const lights = ids.filter(i => /light_block/.test(i)).length;
     check(lights >= 4 && !ids.some(i => /lantern|bulb/.test(i)), `${b.id}: lit by invisible light blocks only (${lights}), no lanterns`);
+    if (b.group === 'low') check(!ids.some(i => /yellow_concrete|black_concrete/.test(i)), `${b.id}: no hazard stripes (left to the builder)`);
     if (b.id === 'viaduct' || b.id === 'segment') check(!ids.includes('minecraft:smooth_stone'), `${b.id}: no smooth stone (rough andesite)`);
     if (b.id === 'plate') check(ids.includes('minecraft:hopper') && ids.includes('minecraft:weathered_copper_grate') && ids.includes('minecraft:iron_chain'), 'plate: grating parapet with hopper coping and chains');
     if (b.id === 'truss') {

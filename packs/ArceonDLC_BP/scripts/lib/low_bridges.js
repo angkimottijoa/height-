@@ -1,25 +1,20 @@
 /*
  * Low railway bridges (저상 교량): for a railway that crosses a road with
  * little room under it, the way city lines go over streets — a thin deck,
- * low railings instead of tall parapets, hazard stripes (yellow and black)
- * where vehicles pass, and short spans. Three designs:
+ * low railings instead of tall parapets, and short spans (no hazard
+ * stripes: those are painted on by hand where wanted). Three designs:
  *   lowslab - a thin RC slab bridge: three-block deck with soffit ribs, a
- *             fascia beam with a striped lower edge, a kerb and a steel
- *             railing; slender rectangular columns under a thin cap, striped
- *             at the bottom.
+ *             fascia beam with a drip edge, a kerb and a steel railing;
+ *             slender rectangular columns under a thin cap.
  *   lowsteel - shallow steel girders under each rail with cross beams, a
- *             riveted edge girder, a bar railing; steel bents with striped
- *             column feet.
+ *             riveted edge girder, a bar railing; steel bents.
  *   rahmen  - a rigid frame (라멘교) as at an underpass: a thin deck cast with
  *             wall piers across the whole width, haunched where they meet,
- *             the wall ends and the fascia striped, a low wall + railing.
+ *             a low wall + railing.
  * They join the railway's BRIDGES list (hidden like the rest).
  */
 import { BRIDGES, BOXCAST, FOOT, top, bolt, stair, OUT_F } from './bridges.js';
 
-const YEL = 'yellow_concrete', BLK = 'black_concrete';
-/** Diagonal hazard stripes along a face (two blocks each). */
-const stripe = (a, b) => (((a + b) % 4) + 4) % 4 < 2 ? YEL : BLK;
 const RAIL_POST = 'andesite_wall';
 
 const LOW = [
@@ -32,7 +27,7 @@ const LOW = [
                 return null;
             if (e === 0) {
                 if (dy === -3)
-                    return stripe(j, dy); // striped lower edge of the fascia (clearance mark)
+                    return BOXCAST.slab(true); // drip edge under the fascia
                 if (dy === -2 || dy === -1)
                     return BOXCAST.b; // fascia beam
                 if (dy === 0)
@@ -62,7 +57,7 @@ const LOW = [
                 for (let dy = -5; dy > ground; dy--)
                     for (const du of [0, 1])
                         for (const a of [0, 1])
-                            out.push([cu + du, dy, a, dy <= ground + 4 ? stripe(du + a, dy) : BOXCAST.b]);
+                            out.push([cu + du, dy, a, BOXCAST.b]);
                 for (let du = -1; du <= 2; du++)
                     for (let a = -1; a <= 2; a++)
                         out.push([cu + du, ground, a, FOOT.b]);
@@ -112,7 +107,7 @@ const LOW = [
                         for (let a = -1; a <= 1; a++) {
                             if (Math.abs(du) === 1 && Math.abs(a) === 1)
                                 continue; // a cross-shaped (H) section
-                            out.push([cu + du, dy, a, dy <= ground + 3 ? stripe(du + a, dy) : P.main]);
+                            out.push([cu + du, dy, a, P.main]);
                         }
                 for (let du = -2; du <= 2; du++)
                     for (let a = -2; a <= 2; a++)
@@ -130,7 +125,7 @@ const LOW = [
                 return null;
             if (e === 0) {
                 if (dy === -2)
-                    return stripe(j, dy); // striped fascia over the road
+                    return BOXCAST.slab(true); // drip edge under the fascia
                 if (dy === -1 || dy === 0)
                     return BOXCAST.b; // fascia, low wall
                 if (dy === 1)
@@ -145,10 +140,9 @@ const LOW = [
             const out = [];
             // a wall across the whole width, cast with the deck: haunched at the top
             for (let u = g.uL + 1; u <= g.uR - 1; u++) {
-                const end = u === g.uL + 1 || u === g.uR - 1;
                 for (let dy = -3; dy > ground; dy--)
                     for (const a of [-1, 0])
-                        out.push([u, dy, a, end && dy <= ground + 5 ? stripe(a, dy) : BOXCAST.b]);
+                        out.push([u, dy, a, BOXCAST.b]);
                 out.push([u, -3, 1, stair('andesite_stairs', 2, true)]); // haunches
                 out.push([u, -3, -2, stair('andesite_stairs', 3, true)]);
                 for (const a of [-2, -1, 0, 1])
