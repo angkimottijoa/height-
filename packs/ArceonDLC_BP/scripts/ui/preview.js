@@ -109,7 +109,7 @@ export function preview(player, item) {
         return;
     }
     if (item === PROTRACTOR) {
-        protPreview(s, painter(player, { vanilla: !!s.settings.prot?.vanilla }));
+        protPreview(s, painter(player, { vanilla: !!s.settings.prot?.vanilla, budget: 4000 }));
         // in tape-measure mode the reading stays on screen while it is held
         const m = s.settings.prot?.mode === 'ruler' ? measure(s.prot?.pts ?? []) : '';
         if (m)

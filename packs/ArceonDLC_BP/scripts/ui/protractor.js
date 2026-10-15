@@ -40,7 +40,8 @@ import { ask, blockValue, menu } from './form.js';
 const fmt = (p) => `${p.x} ${p.y} ${p.z}`;
 const c = (p) => ({ x: p.x + 0.5, y: p.y + 0.5, z: p.z + 0.5 });
 const deg = (r) => r * 180 / Math.PI;
-const GUIDE_BLOCKS = 48; // guides shown as blocks: this many blocks along each
+// guides shown as blocks: whole blocks this far along each, then flat tops on to GUIDE_FAR
+const GUIDE_BLOCKS = 48, GUIDE_FAR = 150;
 const SHAPE_NAME = (set) => ({ para: '사각형', tri: '삼각형', regular: `정${set.n}각형`, circle: '원' })[set.shape] ?? '도형';
 const isRuler = (set) => set?.mode === 'ruler';
 const tagOf = (set) => isRuler(set) ? '§a[줄자]§r' : '§b[각도기]§r';
@@ -349,7 +350,7 @@ export async function protMenu(player) {
             {
                 key: 'guideShow', type: 'dropdown', label: '노란 안내선 보기', default: set.guideShow, options: [
                     { value: 'line', label: '선으로' },
-                    { value: 'block', label: `블록으로 (그 각도로 놓일 블록, 가까운 ${GUIDE_BLOCKS}칸)` },
+                    { value: 'block', label: `블록으로 (그 각도로 놓일 블록, ${GUIDE_FAR}칸까지)` },
                     { value: 'both', label: '선 + 블록' },
                 ],
             },
@@ -699,10 +700,20 @@ export function protPreview(s, P) {
                 P.seg(g.o, add(g.o, mul(g.d, g.L)), 'guide', 0.05);
             if (set.guideShow !== 'line') {
                 // the blocks a line along the guide would take (the nearest ones)
-                const cells = new Set();
+                const cells = new Set(), far = new Set();
                 blocksOn(g.o, add(g.o, mul(g.d, Math.min(g.L, GUIDE_BLOCKS))), cells);
                 cells.delete(`${Math.floor(g.o.x)},${Math.floor(g.o.y)},${Math.floor(g.o.z)}`);
                 P.cells([...cells], 'guide', 'guideFace');
+                // further on, a flat see-through top on each block (cheaper, still easy to follow)
+                if (g.L > GUIDE_BLOCKS && P.face) {
+                    blocksOn(add(g.o, mul(g.d, GUIDE_BLOCKS)), add(g.o, mul(g.d, Math.min(g.L, GUIDE_FAR))), far);
+                    for (const k of far) {
+                        if (cells.has(k))
+                            continue;
+                        const [x, y, z] = k.split(',').map(Number);
+                        P.face({ x: x + 0.5, y: y + 1.01, z: z + 0.5 }, 'y', 1, 1, 'guideFace');
+                    }
+                }
             }
         }
         // the angle at the last corner, as a small arc

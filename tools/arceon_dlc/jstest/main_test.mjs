@@ -302,7 +302,8 @@ check(errs.length === 0, 'no error messages ' + JSON.stringify(errs));
   // the yellow guides as blocks
   kinds.clear();
   const gcells = [];
-  P.protPreview({ ...s, settings: { ...s.settings, prot: { ...s.settings.prot, guideShow: 'block' } } }, { ...fake, cells: (ks, k) => { kinds.add('cells:' + k); if (k === 'guide') gcells.push(ks.length); } });
+  P.protPreview({ ...s, settings: { ...s.settings, prot: { ...s.settings.prot, guideShow: 'block' } } }, { ...fake, face: (c, ax, w, h, k) => k === 'guideFace' && kinds.add('far'), cells: (ks, k) => { kinds.add('cells:' + k); if (k === 'guide') gcells.push(ks.length); } });
+  check(kinds.has('far'), 'guides as blocks run on to 150 blocks (flat tops past the first 48)');
   check(kinds.has('cells:guide') && !kinds.has('guide') && gcells.length >= 1 && gcells.every(n => n >= 30 && n <= 97), 'guides shown as blocks (no yellow line): ' + gcells.join(','));
   // the ruler: a diagonal measured exactly
   const m = P.measure([{ x: 0, y: 40, z: 0 }, { x: 10, y: 40, z: 10 }]);
