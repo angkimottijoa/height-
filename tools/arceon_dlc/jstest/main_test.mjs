@@ -252,8 +252,25 @@ check(errs.length === 0, 'no error messages ' + JSON.stringify(errs));
   check(/저장한 선과 45°/.test(msg), 'a new line is measured against the saved ones: ' + msg);
   // the preview spawns the pack's particles
   const kinds = new Set();
-  P.protPreview(s, (k) => kinds.add(k));
-  check(['line', 'point', 'guide', 'saved'].every(k => kinds.has(k)), 'preview: lines, points, guides, saved lines: ' + [...kinds].join(','));
+  const fake = { seg: (a, b, k) => kinds.add(k), dot: (p, k) => kinds.add(k), block: () => kinds.add('block'), face: () => {}, box: (a, b, k) => kinds.add(k) };
+  P.protPreview(s, fake);
+  check(['line', 'point', 'guide', 'saved', 'tick', 'block'].every(k => kinds.has(k)), 'preview: lines, points, guides, saved lines, ruler ticks, blocks: ' + [...kinds].join(','));
+  // the ruler: a diagonal measured exactly
+  const m = P.measure([{ x: 0, y: 40, z: 0 }, { x: 10, y: 40, z: 10 }]);
+  check(/14\.142칸/.test(m) && /블록/.test(m), 'the ruler gives the exact length of a diagonal: ' + m);
+  const m3 = P.measure([{ x: 0, y: 40, z: 0 }, { x: 3, y: 44, z: 0 }]);
+  check(/5\.000칸|5칸/.test(m3) && /경사/.test(m3), 'a sloping line: length and slope: ' + m3);
+  // the painter spawns the pack's particles with molang variables
+  const { painter } = await import('./scripts/ui/draw.js');
+  const pl = { particles: [], spawnParticle(id, l, v) { this.particles.push([id, l, v]); } };
+  const pp = painter(pl);
+  pp.seg({ x: 0, y: 0, z: 0 }, { x: 3, y: 4, z: 0 });
+  pp.block(1, 2, 3);
+  const segs = pl.particles.filter(p => p[0] === 'arc:seg'), faces = pl.particles.filter(p => p[0] === 'arc:face');
+  check(segs.length === 13 && faces.length === 6 && segs[0][2].vars['variable.len'] === 5 && Math.abs(segs[0][2].vars['variable.dy'] - 0.8) < 1e-9, 'painter: a solid line and a highlighted block (12 edges + 6 faces)');
+  const vp = { particles: [], spawnParticle(id, l) { if (id.startsWith('arc:')) throw new Error('no RP'); this.particles.push([id, l]); } };
+  painter(vp).seg({ x: 0, y: 0, z: 0 }, { x: 4, y: 0, z: 0 });
+  check(vp.particles.length > 5 && vp.particles.every(p => p[0] === 'minecraft:endrod'), 'without the resource pack the painter falls back to vanilla dots');
 }
 
 // ---- turning Debug Stick blocks

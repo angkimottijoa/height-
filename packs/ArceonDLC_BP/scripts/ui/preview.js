@@ -5,6 +5,7 @@
  *   프레임 피커   frames (blue flame, the one being drawn in green) and the
  *                rails joining them (flame), as the fill will connect them
  *   클립보드 도구 the box the clipboard would fill at the block you look at
+ *                (solid outline, see-through faces: the pack's own particles)
  *   각도기       its lines, angle guides, the shape and the saved lines (own particles)
  *   지형·에셋 도구 the selection box
  */
@@ -12,7 +13,8 @@ import { BezierPath, LinePath, resample } from '../core/spline.js';
 import { anchorFor, getClip, placedBounds } from '../core/clipboard.js';
 import { region, session } from '../core/session.js';
 import { CLIPBOARD, FRAME_PICKER, PROTRACTOR, WAND, YARD } from '../core/access.js';
-import { protPreview } from './protractor.js';
+import { measure, protPreview } from './protractor.js';
+import { painter } from './draw.js';
 
 const MAX = 240;
 
@@ -23,20 +25,6 @@ function spawn(player, id, p) {
     catch (e) { }
 }
 const c = (p) => ({ x: p.x + 0.5, y: p.y + 0.5, z: p.z + 0.5 });
-/** The pack's own particles (arc:line ...), a vanilla stand-in when the resource pack is off. */
-const VANILLA = { line: 'minecraft:endrod', point: 'minecraft:villager_happy', guide: 'minecraft:basic_flame_particle', shape: 'minecraft:villager_happy', saved: 'minecraft:blue_flame_particle', arc: 'minecraft:basic_flame_particle' };
-let customOk = true;
-function custom(player, kind, p) {
-    if (customOk)
-        try {
-            player.spawnParticle('arc:' + kind, p);
-            return;
-        }
-        catch (e) {
-            customOk = false;
-        }
-    spawn(player, VANILLA[kind], p);
-}
 
 function curve(player, pts, id) {
     if (pts.length < 2)
@@ -121,7 +109,14 @@ export function preview(player, item) {
         return;
     }
     if (item === PROTRACTOR) {
-        protPreview(s, (kind, p) => s.settings.prot?.vanilla ? spawn(player, VANILLA[kind], p) : custom(player, kind, p));
+        protPreview(s, painter(player, { vanilla: !!s.settings.prot?.vanilla }));
+        // the ruler reading stays on screen while the protractor is held
+        const m = s.settings.prot?.ruler !== false ? measure(s.prot?.pts ?? []) : '';
+        if (m)
+            try {
+                player.onScreenDisplay.setActionBar(`§b[각도기]§r ${m}`);
+            }
+            catch (e) { }
         return;
     }
     if (item === CLIPBOARD) {
@@ -136,8 +131,16 @@ export function preview(player, item) {
         if (!hit?.block)
             return;
         const at = anchorFor(hit.block.location, hit.face);
-        box(player, placedBounds(clip, at), 'minecraft:basic_flame_particle');
-        spawn(player, 'minecraft:villager_happy', c(at));
+        const r = placedBounds(clip, at);
+        if (s.settings.clipVanilla) {
+            box(player, r, 'minecraft:basic_flame_particle');
+            spawn(player, 'minecraft:villager_happy', c(at));
+            return;
+        }
+        // where it goes: a solid outline with see-through faces, the anchor block highlighted
+        const P = painter(player);
+        P.box(r.min, { x: r.max.x + 1, y: r.max.y + 1, z: r.max.z + 1 }, 'line', 'face');
+        P.box(at, { x: at.x + 1, y: at.y + 1, z: at.z + 1 }, 'point', 'block');
         return;
     }
     if (item === YARD) {

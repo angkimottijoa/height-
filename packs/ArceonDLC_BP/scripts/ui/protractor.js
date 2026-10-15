@@ -15,8 +15,10 @@
  * regular polygon of N sides on the first line, turning toward the second.
  * It (or the lines) can then be built in blocks, outlined or filled.
  *
- * Shown with the pack's own particles (arc:line, arc:point, arc:guide,
- * arc:shape, arc:saved, arc:arc), vanilla ones if the resource pack is off.
+ * Shown with the pack's own particles (solid lines and see-through blocks,
+ * ui/draw.js), vanilla dots if the resource pack is off. The ruler gives the
+ * exact length of the last line (diagonals too), its run along each axis and
+ * how many blocks it takes, and ticks every block along the lines.
  */
 import { add, cross, dot, len, mul, norm, sub } from '../core/vec.js';
 import { parseBlock } from '../core/blocks.js';
@@ -37,7 +39,7 @@ function bar(player, msg) {
     }
 }
 
-export const DEFAULTS = { angle: 90, plane: 'h', sides: 'both', guide: 0, shape: 'para', n: 5, block: 'stone', fill: false, vanilla: false };
+export const DEFAULTS = { angle: 90, plane: 'h', sides: 'both', guide: 0, shape: 'para', n: 5, block: 'stone', fill: false, vanilla: false, ruler: true, blocks: true };
 export function protState(player) {
     const s = session(player);
     if (!s.prot || !Array.isArray(s.prot.pts))
@@ -198,7 +200,7 @@ function describe(s, set) {
     const P = s.prot.pts, n = P.length;
     if (n < 2)
         return '';
-    const parts = [`길이 ${Math.round(len(sub(c(P[n - 1]), c(P[n - 2]))) * 10) / 10}칸`];
+    const parts = [measure(P)];
     if (n >= 3)
         parts.push(`앞 선과 ${Math.round(cornerAngle(P[n - 3], P[n - 2], P[n - 1]) * 10) / 10}°`);
     // against the nearest saved line
@@ -288,11 +290,13 @@ export async function protMenu(player) {
                 ],
             },
             { key: 'guide', type: 'slider', label: '안내선 길이 (0 = 마지막 선과 같게)', default: Number(set.guide), min: 0, max: 64 },
+            { key: 'ruler', type: 'toggle', label: '자: 선에 1칸마다 눈금 (5칸마다 긴 눈금), 화면 위에 정확한 길이', default: set.ruler !== false },
+            { key: 'blocks', type: 'toggle', label: '지어질 블록을 반투명 상자로 보기', default: set.blocks !== false },
             { key: 'vanilla', type: 'toggle', label: '기본(바닐라) 파티클로 보기 (리소스 팩이 꺼져 있어 안 보일 때)', default: !!set.vanilla },
         ], { submit: '저장' });
         if (r) {
             const typed = parseFloat(String(r.angleText ?? '').replace(',', '.'));
-            s.settings.prot = { ...set, angle: typed > 0 && typed < 180 ? typed : r.angle, plane: r.plane, sides: r.sides, guide: r.guide, vanilla: !!r.vanilla };
+            s.settings.prot = { ...set, angle: typed > 0 && typed < 180 ? typed : r.angle, plane: r.plane, sides: r.sides, guide: r.guide, vanilla: !!r.vanilla, ruler: !!r.ruler, blocks: !!r.blocks };
             save(player);
             bar(player, `§e[각도기] ${s.settings.prot.angle}° 안내선`);
         }
@@ -371,35 +375,92 @@ async function build(player, what) {
 }
 
 // ------------------------------------------------------------------ preview
-/** Draw it all with `spawn(kind, point)` (kinds: line, point, guide, shape, saved, arc). */
-export function protPreview(s, spawn) {
+/**
+ * Draw it all with a painter (ui/draw.js): solid lines, the guides, the
+ * shape, saved lines, the angle arc, a ruler (a tick every block, a long one
+ * every 5) on the lines, and the blocks that would be built highlighted
+ * (see-through, outlined) as on a selection.
+ */
+export function protPreview(s, P) {
     s.settings.prot = { ...DEFAULTS, ...(s.settings.prot ?? {}) };
-    const set = s.settings.prot, P = s.prot?.pts ?? [];
-    let budget = 700;
-    const seg = (a, b, kind, step = 0.35) => {
-        const L = len(sub(b, a)), n = Math.max(1, Math.ceil(L / step));
-        for (let i = 0; i <= n && budget-- > 0; i++)
-            spawn(kind, add(a, mul(sub(b, a), i / n)));
-    };
-    for (const p of P.slice(-32))
-        spawn('point', c(p));
-    for (let i = 0; i + 1 < P.length; i++)
-        seg(c(P[i]), c(P[i + 1]), 'line');
-    for (const g of guides(P, set))
-        seg(g.o, add(g.o, mul(g.d, g.L)), 'guide', 0.5);
-    // the angle at the last corner, as a small arc
-    if (P.length >= 3) {
-        const [A, B, C] = P.slice(-3).map(c);
-        const u = norm(sub(A, B)), w = norm(sub(C, B));
-        for (let i = 0; i <= 10; i++) {
-            const t = i / 10;
-            spawn('arc', add(B, mul(norm(add(mul(u, 1 - t), mul(w, t))), 1.2)));
+    const set = s.settings.prot, pts = s.prot?.pts ?? [];
+    // the blocks that would be built first (under the lines)
+    if (set.blocks !== false) {
+        const V = shape(pts, set);
+        let cells;
+        if (V)
+            cells = polygonBlocks(V, set.fill);
+        else if (pts.length >= 2) {
+            cells = new Set();
+            for (let i = 0; i + 1 < pts.length; i++)
+                blocksOn(c(pts[i]), c(pts[i + 1]), cells);
+        }
+        let n = 0;
+        for (const k of cells ?? []) {
+            if (n++ >= 120)
+                break;
+            const [x, y, z] = k.split(',').map(Number);
+            P.block(x, y, z, 'line');
         }
     }
-    const V = shape(P, set);
+    for (const p of pts.slice(-32))
+        P.dot(c(p), 'point');
+    for (let i = 0; i + 1 < pts.length; i++) {
+        const a = c(pts[i]), b = c(pts[i + 1]);
+        P.seg(a, b, 'line', 0.06);
+        if (set.ruler !== false)
+            ruler(P, a, b);
+    }
+    for (const g of guides(pts, set))
+        P.seg(g.o, add(g.o, mul(g.d, g.L)), 'guide', 0.05);
+    // the angle at the last corner, as a small arc
+    if (pts.length >= 3) {
+        const [A, B, C] = pts.slice(-3).map(c);
+        const u = norm(sub(A, B)), w = norm(sub(C, B));
+        let prev = null;
+        for (let i = 0; i <= 12; i++) {
+            const t = i / 12;
+            const q = add(B, mul(norm(add(mul(u, 1 - t), mul(w, t))), 1.4));
+            if (prev)
+                P.seg(prev, q, 'arc', 0.05);
+            prev = q;
+        }
+    }
+    const V = shape(pts, set);
     if (V)
         for (let i = 0; i < V.length; i++)
-            seg(V[i], V[(i + 1) % V.length], 'shape', 0.45);
+            P.seg(V[i], V[(i + 1) % V.length], 'shape', 0.05);
     for (const [a, b] of (s.prot?.saved ?? []).slice(-24))
-        seg(c(a), c(b), 'saved', 0.5);
+        P.seg(c(a), c(b), 'saved', 0.05);
+}
+/** Ticks across a line: every block, a long one every 5. */
+function ruler(P, a, b) {
+    const L = len(sub(b, a));
+    if (L < 1)
+        return;
+    const d = norm(sub(b, a));
+    let side = cross(d, { x: 0, y: 1, z: 0 });
+    if (len(side) < 1e-6)
+        side = { x: 1, y: 0, z: 0 };
+    side = norm(side);
+    for (let t = 1; t < L && t <= 128; t++) {
+        const m = add(a, mul(d, t)), k = t % 5 === 0 ? 0.45 : 0.22;
+        P.seg(add(m, mul(side, -k)), add(m, mul(side, k)), 'tick', t % 5 === 0 ? 0.05 : 0.03);
+    }
+}
+/** The ruler reading of the last line: exact length, along each axis, blocks it takes. */
+export function measure(pts) {
+    if (pts.length < 2)
+        return '';
+    const a = pts[pts.length - 2], b = pts[pts.length - 1];
+    const dx = b.x - a.x, dy = b.y - a.y, dz = b.z - a.z;
+    const L = Math.hypot(dx, dy, dz), H = Math.hypot(dx, dz);
+    const cells = new Set();
+    blocksOn(c(a), c(b), cells);
+    const r3 = (v) => Math.round(v * 1000) / 1000;
+    const parts = [`§f자: ${r3(L)}칸§r`, `Δx ${dx} Δy ${dy} Δz ${dz}`];
+    if (dy && H)
+        parts.push(`수평 ${r3(H)}칸, 경사 ${Math.round(Math.atan2(dy, H) * 1800 / Math.PI) / 10}°`);
+    parts.push(`블록 ${cells.size}개`);
+    return parts.join(' · ');
 }
