@@ -366,10 +366,8 @@ export const BRIDGES = [
                         return P.slab; // outer bottom flange
                     if (j % 6 === 3 && dy >= -6 && dy <= -3)
                         return P.main; // web stiffener plate, between the brackets
-                    if (dy === -3 || dy === -6)
+                    if ((dy === -3 || dy === -6) && j % 2 === 0 && j % 6 !== 0)
                         return bolt(OUT_F(sd)); // flange rivet rows along the web
-                    if (dy === -2 && j % 2 === 1)
-                        return bolt(OUT_F(sd));
                 }
                 return null;
             }
@@ -388,7 +386,10 @@ export const BRIDGES = [
                     return top(P.slab);
                 return null;
             }
-            if (dy >= 0)
+            if (dy === 0)
+                // steel under the sleepers, open grating between and beside the tracks
+                return g.rails.some(r => Math.abs(u - r) <= 2) ? P.main : P.grate;
+            if (dy > 0)
                 return null;
             if (dy === -1)
                 return P.main; // deck plate
@@ -423,8 +424,9 @@ export const BRIDGES = [
         },
         pier(g, ground) {
             const out = [], P = g.paint;
+            // two columns, as the old bents have (a third only under a very wide deck)
             const cols = [g.uL + 3, g.uR - 3];
-            if (g.Bh >= 11)
+            if (g.Bh >= 17)
                 cols.push(g.c0r);
             // the cross beam: a box girder with bearing shoes under every girder
             const girders = [g.uL + 3, g.uR - 3, ...g.rails];
@@ -439,11 +441,41 @@ export const BRIDGES = [
                     if ((u - g.uL) % 2 === 1)
                         out.push([u, -8, a, bolt(a > 0 ? 2 : 3)]);
                 }
-                out.push([u, -10, 0, girders.includes(u) ? null : null]);
             }
             for (const u of girders)
                 for (const a of [-2, 2])
                     out.push([u, -8, a, P.chis]); // bearing stiffeners over the shoes
+            // the arched soffit of the bent, as on the old Tokyo viaducts: between two
+            // columns the cross beam curves down into them (deep at the columns,
+            // flat in the middle), and the ends taper off as brackets past them;
+            // stairs smooth every step, rivets along the curve
+            const sorted = [...cols].sort((p, q) => p - q);
+            const depth = new Map();
+            const deepen = (u, d) => depth.set(u, Math.max(depth.get(u) ?? 0, d));
+            for (let k = 0; k + 1 < sorted.length; k++) {
+                const c1 = sorted[k] + 2, c2 = sorted[k + 1] - 2, mid = (c1 + c2) / 2, half = Math.max(1, (c2 - c1) / 2);
+                for (let u = c1; u <= c2; u++)
+                    deepen(u, Math.round(Math.min(4, half / 2) * ((u - mid) / half) ** 2));
+            }
+            for (const [from, to, step] of [[sorted[0] - 2, g.uL + 2, -1], [sorted[sorted.length - 1] + 2, g.uR - 2, 1]])
+                for (let u = from, d = 2; step < 0 ? u >= to : u <= to; u += step, d--)
+                    deepen(u, Math.max(0, d));
+            for (const [u, d] of depth) {
+                const next = (du) => depth.get(u + du) ?? 0;
+                for (let k = 1; k <= d; k++)
+                    for (let a = -1; a <= 1; a++) {
+                        // the lowest block of a step that falls toward a neighbour: a stair
+                        let t = P.main;
+                        if (k === d && next(1) > d && next(-1) < d)
+                            t = stair(P.stairs, 0, true);
+                        else if (k === d && next(-1) > d && next(1) < d)
+                            t = stair(P.stairs, 1, true);
+                        out.push([u, -9 - k, a, t]);
+                    }
+                if (d >= 1 && (u - g.uL) % 2 === 0)
+                    for (const a of [-2, 2])
+                        out.push([u, -10, a, bolt(a > 0 ? 2 : 3)]); // rivets along the haunch
+            }
             // columns: 3x3 steel boxes with a flared capital under the cross beam,
             // a bolted splice band halfway and a chiseled collar over the base,
             // on a base plate over a stepped stone plinth (plain faces, no rods)
@@ -455,13 +487,14 @@ export const BRIDGES = [
                             const ad = Math.abs(du), aa = Math.abs(a);
                             const face = ad === 2 && aa === 0 || aa === 2 && ad === 0;
                             if (ad <= 1 && aa <= 1)
-                                out.push([cu + du, dy, a, dy === splice || dy === ground + 3 ? P.chis : P.main]);
+                                // built-up box: plain faces, trimmed corners, bands at the splice and the foot
+                                out.push([cu + du, dy, a, dy === splice || dy === ground + 3 || (ad === 1 && aa === 1) ? P.chis : P.main]);
                             else if (dy === -10 && ad + aa < 4)
                                 // the capital: upside-down stairs flaring out to the cross beam
                                 out.push([cu + du, dy, a, ad === 2 ? stair(P.stairs, du < 0 ? 0 : 1, true) : stair(P.stairs, a > 0 ? 2 : 3, true)]);
                             else if (face && dy === splice)
                                 out.push([cu + du, dy, a, P.slab]); // splice cover plate
-                            else if ((ad === 2 && aa === 1 || aa === 2 && ad === 1) && (dy === splice + 1 || dy === splice - 1))
+                            else if ((ad === 2 && aa === 1 || aa === 2 && ad === 1) && dy === splice - 1)
                                 out.push([cu + du, dy, a, bolt(ad === 2 ? (du < 0 ? 4 : 5) : (a < 0 ? 3 : 2))]); // splice bolts
                         }
                 // knee braces into the cross beam
@@ -1065,9 +1098,10 @@ function deckBottom(d, g) {
 /**
  * Close the gap between a pier's top and the deck: where the top of a pier
  * column stops 1-4 blocks under the deck's underside, carry its top block up
- * to meet it (no slit of sky between cap and deck).
+ * to meet it (no slit of sky between cap and deck). `end`: the pier at
+ * either end of the bridge, where the deck only covers its middle row.
  */
-function closeUp(d, g, cells) {
+function closeUp(d, g, cells, end = false) {
     const bottom = deckBottom(d, g);
     const top = new Map();
     for (const c of cells)
@@ -1080,11 +1114,12 @@ function closeUp(d, g, cells) {
     // a diaphragm closes a box girder over every pier (and at its ends)
     for (const [u, dy, t] of g._hollow)
         if (t && !/button|chain|rod|bars|lantern|light/.test(t))
-            for (const a of [-1, 0, 1])
+            for (const a of end ? [0] : [-1, 0, 1])
                 out.push([u, dy, a, t]);
     for (const [u, dy, a, t] of top.values()) {
         const b = bottom.get(u);
-        if (b === undefined || b - dy < 2 || b - dy > 5 || /button|chain|rod|bars|slab|stairs|lantern|light/.test(t))
+        // at the bridge's ends only under the deck's last block (nothing sticks out past it)
+        if (b === undefined || b - dy < 2 || b - dy > 5 || (end ? a !== 0 : Math.abs(a) > 1) || /button|chain|rod|bars|slab|stairs|lantern|light/.test(t))
             continue;
         for (let y = dy + 1; y < b; y++)
             out.push([u, y, a, t]);
@@ -1093,12 +1128,39 @@ function closeUp(d, g, cells) {
 }
 
 /**
+ * The end of the deck, closed: the deck's silhouette under the track bed at
+ * the first and last block, filled with its own main material, so a bridge
+ * that stops (on the ground or at the last pier) shows a clean end plate
+ * instead of a cut through its beams.
+ */
+export function endPiece(d, g, tile) {
+    const cells = new Map();
+    const detail = /button|chain|rod|bars|light|lantern|stairs|trapdoor|hopper/;
+    for (let u = g.uL - 1; u <= g.uR + 1; u++)
+        for (let dy = d.dyMin; dy < 0; dy++) {
+            const seen = new Map();
+            for (let j = 0; j < d.l; j++) {
+                const t = d.section(u, dy, j, g);
+                if (t && !detail.test(t))
+                    seen.set(t, (seen.get(t) ?? 0) + 1);
+            }
+            if (!seen.size)
+                continue;
+            const t = [...seen].sort((p, q) => q[1] - p[1])[0][0];
+            const p = tile.material(t).at({ x: u, y: dy, z: 0 });
+            if (p)
+                cells.set(`${u},${dy},0`, p);
+        }
+    return { cells, buttons: [], dirAng: 0 };
+}
+
+/**
  * The pier at one spot, as a pole-like piece (cells "dx,dy,dz" facing north).
  * `seed` shifts the stone mixes so no two piers are laid alike.
  */
-export function pierPiece(d, g, groundDy, tile, seed = 0) {
+export function pierPiece(d, g, groundDy, tile, seed = 0, end = false) {
     const cells = new Map();
-    for (const [u, dy, a, t] of closeUp(d, g, d.pier(g, groundDy))) {
+    for (const [u, dy, a, t] of closeUp(d, g, d.pier(g, groundDy), end)) {
         if (!t)
             continue;
         const p = tile.material(t).at({ x: u + seed * 97, y: dy, z: a + seed * 61 });

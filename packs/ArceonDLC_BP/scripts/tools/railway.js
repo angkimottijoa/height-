@@ -7,7 +7,7 @@ import { ask } from '../ui/form.js';
 import { listAssets } from './assets.js';
 import { builtinPole, builtinTile, freeWires, loadPole, poleSpots, presetTile, standPoles, stringWires, sweep, TOP_MIX } from '../lib/rail.js';
 import { loadTracks, trackNames } from '../lib/track_presets.js';
-import { BRIDGES, bridgeById, bridgeTile, geometry, pierPiece, polish, STEEL } from '../lib/bridges.js';
+import { BRIDGES, bridgeById, bridgeTile, endPiece, geometry, pierPiece, polish, STEEL } from '../lib/bridges.js';
 import { stamp } from '../lib/rail.js';
 import { loadAll } from '../core/edit.js';
 import { session, unlocked } from '../core/session.js';
@@ -392,10 +392,15 @@ export default {
                     continue; // the deck is on the ground here
                 if (inTunnel?.has(Math.floor(p.x) + ',' + Math.floor(p.z)))
                     continue; // in a tunnel
-                stamp(p, pierPiece(d, g, gdy, bt, piers + 1), v.poleAngle, bp, turned);
+                stamp(p, pierPiece(d, g, gdy, bt, piers + 1, p === pierAt[0] || p === pierAt[pierAt.length - 1]), v.poleAngle, bp, turned);
                 if (++piers % 2 === 0)
                     yield;
             }
+            // the deck's two ends closed with an end plate
+            const cap = endPiece(d, g, bt);
+            for (const p of [pierAt[0], pierAt[pierAt.length - 1]])
+                if (p && !inTunnel?.has(Math.floor(p.x) + ',' + Math.floor(p.z)))
+                    stamp(p, cap, v.poleAngle, bp, turned);
             // no bridge inside a tunnel
             if (inTunnel)
                 for (const k of [...bp.keys()]) {
