@@ -4,7 +4,8 @@
  * with the station where the player stands. Only the size of the area to
  * build can be chosen; the scale is always 1:1.
  *
- * By default the map itself is laid flat on the ground; the 3D option builds:
+ * By default the map itself, drawn as it is on the map (buildMapTile); or a
+ * realistic flat ground (asphalt, pavements), or in 3D, which builds:
  * buildings at their real height (outline walls with windows, a flat
  * roof; glass curtain walls on tall ones), roads (asphalt, a dashed centre
  * line, pavements, elevated roads on piers), railways (ballast and rails,
@@ -82,6 +83,7 @@ function city(id, turn = 0) {
         platforms: raw.p.map(a => { const p = pts(a, 2); return { fl: a[0], layer: a[1], pts: p, box: box(p, 4) }; }),
         water: raw.w.map(a => { const p = pts(a, 1); return { area: !!a[0], pts: p, box: box(p, 6) }; }),
         green: raw.g.map(a => { const p = pts(a, 0); return { pts: p, box: box(p, 3) }; }),
+        bounds: raw.bd?.length ? pts(raw.bd, 0) : null,
     };
     // a building over the tracks (a station hall) is a roof on columns, not walls across the line
     for (const b of d.buildings) {
@@ -196,13 +198,95 @@ function* every(pts, step) {
     }
 }
 
+// ---------------------------------------------------------------- map style
+/**
+ * The map as it is drawn (like the preview of tools/city): a light ground over
+ * the whole area, roads in their colours (main roads pale yellow, small ones
+ * white, walkways grey), building footprints in grey-blue shades by height
+ * with a dark outline, green, water, pink platforms, and the railways as dark
+ * lines (red on bridges), or real tracks, or none. All at ground level.
+ */
+function buildMapTile(d, o, x0, z0, x1, z1, R, minY, maxY, rails = 'line') {
+    const out = new Map(), g = o.y, tb = [x0, z0, x1, z1];
+    const put = (x, y, z, p) => {
+        if (x < x0 || x > x1 || z < z0 || z > z1 || Math.abs(x) > R || Math.abs(z) > R || y < minY || y > maxY)
+            return;
+        out.set(`${x + o.x},${y},${z + o.z}`, p);
+    };
+    const M = {
+        ground: P('smooth_quartz'), green: P('grass_block'), water: P('light_blue_concrete'),
+        major: P('smooth_sandstone'), bridge: P('sandstone'), minor: P('snow'), walk: P('light_gray_concrete_powder'),
+        low: P('white_terracotta'), mid: P('light_blue_terracotta'), high: P('gray_concrete'), line: P('gray_concrete'), lineDark: P('black_concrete'),
+        platform: P('pink_concrete_powder'), rail: P('black_concrete'), railBridge: P('red_concrete'),
+        gravel: P('gravel'), railNS: P('rail', { rail_direction: 0 }), railEW: P('rail', { rail_direction: 1 }),
+    };
+    const area = (pts, f, pad = 0) => {
+        const G = polyGrid(pts, x0 - 1, z0 - 1, x1 + 1, z1 + 1);
+        for (let z = z0; z <= z1; z++)
+            for (let x = x0; x <= x1; x++)
+                if (G.at(x, z))
+                    f(x, z, !G.at(x + 1, z) || !G.at(x - 1, z) || !G.at(x, z + 1) || !G.at(x, z - 1));
+    };
+    // the ground of the area the map covers
+    if (d.bounds)
+        area(d.bounds, (x, z) => put(x, g, z, M.ground));
+    for (const a of d.green)
+        if (overlap(a.box, tb))
+            area(a.pts, (x, z) => put(x, g, z, M.green));
+    for (const w of d.water) {
+        if (!overlap(w.box, tb))
+            continue;
+        if (w.area)
+            area(w.pts, (x, z) => put(x, g, z, M.water));
+        else
+            band(w.pts, 5, x0, z0, x1, z1, (x, z) => put(x, g, z, M.water));
+    }
+    // roads: walkways, then small roads, then main roads on top
+    const rank = (r) => WALK.has(r.kind) ? 0 : r.kind >= 5 ? 1 : 2;
+    for (const r of d.roads.filter(r => overlap(r.box, tb)).sort((a, b) => rank(a) - rank(b))) {
+        const blk = WALK.has(r.kind) ? M.walk : r.kind >= 5 ? M.minor : r.fl & 1 ? M.bridge : M.major;
+        if (r.fl & 4)
+            area(r.pts, (x, z) => put(x, g, z, blk));
+        else
+            band(r.pts, Math.max(0.6, r.w / 2), x0, z0, x1, z1, (x, z) => put(x, g, z, blk));
+    }
+    // building footprints over the roads, shaded by height, low ones first
+    for (const b of d.buildings.filter(b => overlap(b.box, tb)).sort((a, b) => a.h - b.h)) {
+        const fill = b.h >= 60 ? M.high : b.h >= 20 ? M.mid : M.low, edge = b.h >= 60 ? M.lineDark : M.line;
+        area(b.pts, (x, z, e) => put(x, g, z, e ? edge : fill));
+    }
+    if (rails === 'none')
+        return out;
+    for (const p of d.platforms) {
+        if (!overlap(p.box, tb))
+            continue;
+        if (p.fl & 4)
+            area(p.pts, (x, z) => put(x, g, z, M.platform));
+        else
+            band(p.pts, 1.5, x0, z0, x1, z1, (x, z) => put(x, g, z, M.platform));
+    }
+    for (const r of d.rails) {
+        if (!overlap(r.box, tb))
+            continue;
+        if (rails === 'track')
+            band(r.pts, 1.6, x0, z0, x1, z1, (x, z, dist, along, dx, dz) => {
+                put(x, g, z, M.gravel);
+                if (dist <= 0.5)
+                    put(x, g + 1, z, Math.abs(dx) > Math.abs(dz) ? M.railEW : M.railNS);
+            });
+        else
+            band(r.pts, 0.75, x0, z0, x1, z1, (x, z) => put(x, g, z, r.fl & 1 ? M.railBridge : M.rail));
+    }
+    return out;
+}
+
 // ---------------------------------------------------------------- one tile
 /**
  * One tile. `flat`: the map itself, laid flat on the ground (building
  * footprints, roads, tracks, platforms, water, green, all at ground level);
  * otherwise in 3D (buildings at their height, viaducts, elevated roads).
  */
-function buildTile(d, o, x0, z0, x1, z1, R, minY, maxY, flat = true) {
+function buildTile(d, o, x0, z0, x1, z1, R, minY, maxY, flat = true, rails = 'track') {
     const roadUp = flat ? () => 0 : roadUp3, railUp = flat ? () => 0 : railUp3;
     const out = new Map();
     const inRange = (x, z) => Math.abs(x) <= R && Math.abs(z) <= R;
@@ -298,7 +382,7 @@ function buildTile(d, o, x0, z0, x1, z1, R, minY, maxY, flat = true) {
                             put(Math.floor(px) + dx, yy, Math.floor(pz) + dz, B.deck);
     }
     // railways: ballast and rails, viaducts on piers
-    for (const r of d.rails) {
+    for (const r of rails === 'none' ? [] : d.rails) {
         if (!overlap(r.box, tb))
             continue;
         const up = railUp(r), y = g + up;
@@ -318,7 +402,7 @@ function buildTile(d, o, x0, z0, x1, z1, R, minY, maxY, flat = true) {
                     put(Math.floor(px), yy, Math.floor(pz), B.deck);
     }
     // platforms, level with their tracks, a yellow line along the edge
-    for (const p of d.platforms) {
+    for (const p of rails === 'none' ? [] : d.platforms) {
         if (!overlap(p.box, tb))
             continue;
         const y = flat ? g : g + p.up + 1;
@@ -397,9 +481,17 @@ export default {
             },
             { key: 'angle', type: 'slider', label: '더 돌리기 (°, 위에서 볼 때 시계 방향)', default: 0, min: -180, max: 180, step: 1 },
             {
-                key: 'mode', type: 'dropdown', label: '방식', default: 'flat', options: [
-                    { value: 'flat', label: '지도 그대로 (땅 위에 평면으로: 건물 자리·도로·선로·승강장·물·녹지)' },
+                key: 'mode', type: 'dropdown', label: '방식', default: 'map', options: [
+                    { value: 'map', label: '지도 그대로 (지도 그림처럼 땅에 평면으로: 바탕·도로 색·건물 높이별 색·녹지·물)' },
+                    { value: 'flat', label: '실제 땅처럼 평면 (아스팔트·중앙선·보도, 건물 자리)' },
                     { value: '3d', label: '입체 (건물을 실제 높이로, 고가 선로·고가 도로)' },
+                ],
+            },
+            {
+                key: 'rails', type: 'dropdown', label: '철도', default: 'line', options: [
+                    { value: 'line', label: '지도처럼 선으로 (고가는 빨간 선, 입체에선 선로)' },
+                    { value: 'track', label: '실제 선로 (자갈 + 레일)' },
+                    { value: 'none', label: '없음' },
                 ],
             },
             { key: 'range', type: 'slider', label: '불러올 범위 (역에서 사방으로, 칸 = m) — 축척은 항상 1:1', default: 200, min: 50, max: 1500, step: 50 },
@@ -428,7 +520,9 @@ export default {
         tiles.sort((a, b) => Math.hypot(a[0] + TILE / 2, a[1] + TILE / 2) - Math.hypot(b[0] + TILE / 2, b[1] + TILE / 2));
         let done = 0, skipped = 0, n = 0;
         for (const [tx, tz] of tiles) {
-            const cells = buildTile(d, o, tx, tz, Math.min(X1, tx + TILE - 1), Math.min(Z1, tz + TILE - 1), R, minY, maxY, v.mode !== '3d');
+            const tx1 = Math.min(X1, tx + TILE - 1), tz1 = Math.min(Z1, tz + TILE - 1), mode = v.mode ?? 'map';
+            const cells = mode === 'map' ? buildMapTile(d, o, tx, tz, tx1, tz1, R, minY, maxY, v.rails ?? 'line')
+                : buildTile(d, o, tx, tz, tx1, tz1, R, minY, maxY, mode !== '3d', v.rails === 'none' ? 'none' : 'track');
             const list = [];
             for (const [k, p] of cells) {
                 const [x, y, z] = k.split(',').map(Number);
@@ -444,6 +538,6 @@ export default {
             catch (e) { }
             await tick();
         }
-        return `${d.name} ${v.mode === '3d' ? '입체' : '지도'} 반경 ${R}m, 회전 ${turn}°: ${tiles.length}구역, ${done}블록${skipped ? ` (건너뜀 ${skipped})` : ''} §8지도 © OpenStreetMap`;
+        return `${d.name} ${{ map: '지도', flat: '평면', '3d': '입체' }[v.mode ?? 'map']} 반경 ${R}m, 회전 ${turn}°: ${tiles.length}구역, ${done}블록${skipped ? ` (건너뜀 ${skipped})` : ''} §8지도 © OpenStreetMap`;
     },
 };

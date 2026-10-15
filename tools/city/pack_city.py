@@ -11,7 +11,8 @@ Compact form (coordinates in blocks, one decimal):
     r: [[kind, w, flags, layer, x,z, ...]],   roads (flags 1 bridge, 2 tunnel, 4 area)
     t: [[flags, layer, x,z, ...]],             railways (flags as roads)
     p: [[flags, layer, x,z, ...]],             platforms (4 = area, 2 = underground)
-    w: [[area, x,z, ...]], g: [[x,z, ...]] }   water, green
+    w: [[area, x,z, ...]], g: [[x,z, ...]],    water, green
+    bd: [x,z, ...] }                           the area the map covers
 """
 import json, os, sys
 
@@ -40,6 +41,7 @@ def pack(d):
         'p': [[fl(p), int(p['layer'])] + flat(p['pts']) for p in d['platforms'] if not p['tunnel']],
         'w': [[1 if w['area'] else 0] + flat(w['pts']) for w in d['water']],
         'g': [flat(g['pts']) for g in d['green']],
+        'bd': flat(d.get('bounds') or []),
     }
 
 

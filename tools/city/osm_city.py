@@ -255,6 +255,9 @@ def convert(path, station, angle=None, north=False, radius=None):
                 out['water'].append({'id': wid, 'pts': pts, 'area': closed, 'kind': t.get('waterway') or 'water'})
             elif closed and (t.get('leisure') in ('park', 'garden') or t.get('landuse') in ('grass', 'forest') or t.get('natural') in ('wood', 'scrub', 'grassland')):
                 out['green'].append({'id': wid, 'pts': pts, 'kind': t.get('leisure') or t.get('landuse') or t.get('natural')})
+    # the area the map covers (the box exported), as a turned outline
+    if B:
+        out['bounds'] = [list(fr(la, lo)) for la, lo in ((B['minlat'], B['minlon']), (B['minlat'], B['maxlon']), (B['maxlat'], B['maxlon']), (B['maxlat'], B['minlon']))]
     # multipolygon buildings: their outer rings
     for members, t in rels:
         if t.get('type') == 'multipolygon' and ('building' in t or 'building:part' in t):
