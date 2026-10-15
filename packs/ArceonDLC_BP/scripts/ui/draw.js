@@ -18,6 +18,8 @@ export const COLORS = {
 const VANILLA = { line: 'minecraft:endrod', point: 'minecraft:villager_happy', guide: 'minecraft:basic_flame_particle', shape: 'minecraft:villager_happy', saved: 'minecraft:blue_flame_particle', arc: 'minecraft:basic_flame_particle', tick: 'minecraft:endrod', face: 'minecraft:endrod', block: 'minecraft:endrod' };
 
 /** A painter for one player: seg, face, block, box; `budget` caps the particles per call of the preview. */
+/** Players whose game has shown the pack's particles (so the resource pack is on). */
+const works = new Set();
 export function painter(player, { vanilla = false, budget = 1600 } = {}) {
     let left = budget, custom = !vanilla;
     const spawn = (id, p, vars) => {
@@ -30,6 +32,20 @@ export function painter(player, { vanilla = false, budget = 1600 } = {}) {
         catch (e) {
             return false;
         }
+    };
+    /**
+     * A custom particle that would not spawn: far away (an unloaded chunk) or
+     * no resource pack. Only the second turns the dots on, so try a vanilla
+     * particle at the same place: if that spawns, the pack's ones are missing.
+     */
+    const failed = (p) => {
+        if (works.has(player.id) || left <= 0)
+            return false;
+        if (spawn('minecraft:endrod', p)) {
+            custom = false;
+            return true;
+        }
+        return false;
     };
     const vars = (rgba, set) => {
         const m = new MolangVariableMap();
@@ -66,10 +82,10 @@ export function painter(player, { vanilla = false, budget = 1600 } = {}) {
             }
             const ok = spawn('arc:seg', { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, z: (a.z + b.z) / 2 },
                 vars(COLORS[kind] ?? COLORS.line, { dx: dx / L, dy: dy / L, dz: dz / L, len: L, w }));
-            if (!ok && left > 0) {
-                custom = false; // no resource pack: dots from now on
-                dots(a, b, kind);
-            }
+            if (ok)
+                works.add(player.id);
+            else if (failed({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, z: (a.z + b.z) / 2 }))
+                dots(a, b, kind); // no resource pack: dots from now on
         },
         /** A face centred at c, normal along axis 'x' | 'y' | 'z', w × h (covered with squares). */
         face(c, axis, w, h, kind = 'face') {

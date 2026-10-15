@@ -324,7 +324,13 @@ check(errs.length === 0, 'no error messages ' + JSON.stringify(errs));
   pl.particles = [];
   pp.cells(['0,0,0', '1,0,0', '1,0,1']);
   check(pl.particles.filter(p => p[0] === 'arc:seg').length === 18, 'an L of blocks: its outline bends at the corner');
-  const vp = { particles: [], spawnParticle(id, l) { if (id.startsWith('arc:')) throw new Error('no RP'); this.particles.push([id, l]); } };
+  // far away (unloaded chunks throw for every particle): the far pieces are skipped, the rest stays solid
+  const fp = { id: 'far', particles: [], spawnParticle(id, l, v) { if (l.z > 100) throw new Error('unloaded'); this.particles.push([id, l, v]); } };
+  const fpp = painter(fp);
+  fpp.seg({ x: 0, y: 0, z: 150 }, { x: 0, y: 0, z: 0 });
+  fpp.seg({ x: 0, y: 0, z: 0 }, { x: 5, y: 0, z: 0 });
+  check(fp.particles.length > 0 && fp.particles.every(p => p[0] === 'arc:seg'), 'a line running off into unloaded chunks: no fallback to dots: ' + [...new Set(fp.particles.map(p => p[0]))]);
+  const vp = { id: 'norp', particles: [], spawnParticle(id, l) { if (id.startsWith('arc:')) throw new Error('no RP'); this.particles.push([id, l]); } };
   painter(vp).seg({ x: 0, y: 0, z: 0 }, { x: 4, y: 0, z: 0 });
   check(vp.particles.length > 5 && vp.particles.every(p => p[0] === 'minecraft:endrod'), 'without the resource pack the painter falls back to vanilla dots');
 }
