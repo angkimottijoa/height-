@@ -2,7 +2,8 @@
  * Drawing with the pack's own particles (ArceonDLC_RP):
  *   arc:seg   a straight line segment of any length and direction (a thin strip
  *             turned to face the camera), coloured per call
- *   arc:face  a flat translucent square or rectangle with a given normal
+ *   arc:face_x/y/z  a flat translucent square lying in the world's yz / xz / xy
+ *             plane (fixed to the world, not turned to the camera)
  * so previews show solid lines, see-through faces and highlighted blocks
  * instead of dotted particles. Every call takes a colour [r, g, b, a].
  * Without the resource pack (or with `vanilla` on) it falls back to dots of
@@ -63,21 +64,21 @@ export function painter(player, { vanilla = false, budget = 1600 } = {}) {
                 dots(a, b, kind);
             }
         },
-        /** A face centred at c, normal along axis 'x' | 'y' | 'z' (sign s), w × h (h upward on upright faces). */
+        /** A face centred at c, normal along axis 'x' | 'y' | 'z', w × h (covered with squares). */
         face(c, axis, w, h, kind = 'face') {
-            if (!custom)
+            if (!custom || w < 1e-6 || h < 1e-6)
                 return;
-            const n = { x: axis === 'x' ? 1 : 0, y: axis === 'y' ? 1 : 0, z: axis === 'z' ? 1 : 0 };
-            if (axis === 'y' && Math.abs(w - h) > 1e-6) {
-                // a flat face lies any way round: cover it with squares
-                const s = Math.min(w, h), n2 = Math.ceil(Math.max(w, h) / s), long = w > h ? 'x' : 'z';
-                for (let i = 0; i < n2; i++) {
-                    const off = -Math.max(w, h) / 2 + s / 2 + (n2 > 1 ? i * (Math.max(w, h) - s) / (n2 - 1) : 0);
-                    spawn('arc:face', { ...c, [long]: c[long] + off }, vars(COLORS[kind], { nx: 0, ny: 1, nz: 0, sw: s, sh: s }));
+            // the face's two in-plane axes: w runs along the first, h along the second
+            const [A, B] = { x: ['z', 'y'], y: ['x', 'z'], z: ['x', 'y'] }[axis];
+            const sq = Math.min(w, h), na = Math.ceil(w / sq - 1e-6), nb = Math.ceil(h / sq - 1e-6);
+            const col = COLORS[kind] ?? COLORS.face;
+            for (let i = 0; i < na; i++)
+                for (let j = 0; j < nb; j++) {
+                    const p = { ...c };
+                    p[A] += -w / 2 + sq / 2 + (na > 1 ? i * (w - sq) / (na - 1) : 0);
+                    p[B] += -h / 2 + sq / 2 + (nb > 1 ? j * (h - sq) / (nb - 1) : 0);
+                    spawn('arc:face_' + axis, p, vars(col, { s: sq }));
                 }
-                return;
-            }
-            spawn('arc:face', c, vars(COLORS[kind] ?? COLORS.face, { nx: n.x, ny: n.y, nz: n.z, sw: w, sh: h }));
         },
         /** A box from lo to hi (corners, floats): its 12 edges, and its faces see-through. */
         box(lo, hi, kind = 'line', faces = 'face') {
@@ -104,6 +105,64 @@ export function painter(player, { vanilla = false, budget = 1600 } = {}) {
         /** One block highlighted: see-through faces, outlined edges. */
         block(x, y, z, kind = 'line') {
             P.box({ x, y, z }, { x: x + 1, y: y + 1, z: z + 1 }, kind, 'block');
+        },
+        /**
+         * A set of blocks ("x,y,z" keys) highlighted as one solid: only the outer
+         * faces, and only the edges where the surface bends (no lines between two
+         * blocks side by side), long edges drawn as one line.
+         */
+        cells(keys, kind = 'line', faces = 'block') {
+            const S = new Set(keys);
+            const edges = new Map(); // "axis|x|y|z" (start corner) → normals of the faces on it
+            const DIRS = [['x', 1], ['x', -1], ['y', 1], ['y', -1], ['z', 1], ['z', -1]];
+            for (const k of S) {
+                const [x, y, z] = k.split(',').map(Number), q = { x, y, z };
+                for (const [ax, sg] of DIRS) {
+                    const n = { ...q };
+                    n[ax] += sg;
+                    if (S.has(`${n.x},${n.y},${n.z}`))
+                        continue;
+                    const [A, B] = { x: ['z', 'y'], y: ['x', 'z'], z: ['x', 'y'] }[ax];
+                    const f = { x: x + 0.5, y: y + 0.5, z: z + 0.5 };
+                    f[ax] += sg * 0.5;
+                    if (faces)
+                        P.face(f, ax, 1, 1, faces);
+                    const plane = sg > 0 ? q[ax] + 1 : q[ax];
+                    for (const [E, O] of [[A, B], [B, A]])
+                        for (const o of [0, 1]) {
+                            const st = { ...q };
+                            st[ax] = plane;
+                            st[O] = q[O] + o;
+                            const key = `${E}|${st.x}|${st.y}|${st.z}`;
+                            const list = edges.get(key) ?? [];
+                            list.push(ax + sg);
+                            edges.set(key, list);
+                        }
+                }
+            }
+            // keep the edges where the surface bends, then join them into long lines
+            const runs = new Map();
+            for (const [key, ns] of edges) {
+                if (ns.length === 2 && ns[0] === ns[1])
+                    continue;
+                const [E, x, y, z] = key.split('|');
+                const st = { x: +x, y: +y, z: +z };
+                const line = E + '|' + ['x', 'y', 'z'].filter(a => a !== E).map(a => st[a]).join('|');
+                (runs.get(line) ?? runs.set(line, []).get(line)).push(st[E]);
+            }
+            for (const [line, ts] of runs) {
+                const [E, u, v] = line.split('|');
+                const [U, V] = ['x', 'y', 'z'].filter(a => a !== E);
+                ts.sort((a, b) => a - b);
+                for (let i = 0; i < ts.length;) {
+                    let j = i;
+                    while (j + 1 < ts.length && ts[j + 1] === ts[j] + 1)
+                        j++;
+                    const a = { [E]: ts[i], [U]: +u, [V]: +v }, b = { [E]: ts[j] + 1, [U]: +u, [V]: +v };
+                    P.seg(a, b, kind, 0.04);
+                    i = j + 1;
+                }
+            }
         },
         /** A marker at a point. */
         dot(p, kind = 'point') {

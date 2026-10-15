@@ -110,11 +110,11 @@ export function preview(player, item) {
     }
     if (item === PROTRACTOR) {
         protPreview(s, painter(player, { vanilla: !!s.settings.prot?.vanilla }));
-        // the ruler reading stays on screen while the protractor is held
-        const m = s.settings.prot?.ruler !== false ? measure(s.prot?.pts ?? []) : '';
+        // in tape-measure mode the reading stays on screen while it is held
+        const m = s.settings.prot?.mode === 'ruler' ? measure(s.prot?.pts ?? []) : '';
         if (m)
             try {
-                player.onScreenDisplay.setActionBar(`§b[각도기]§r ${m}`);
+                player.onScreenDisplay.setActionBar(`§a[줄자]§r ${m}`);
             }
             catch (e) { }
         return;
