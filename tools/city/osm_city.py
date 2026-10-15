@@ -7,7 +7,7 @@ OSM → Minecraft city data, 1:1 (1 m = 1 block), lined up on a station.
 * Origin: the station (its main railway=station node; the one with no
   `station=subway` when there are several).
 * Lined up: the map is turned so the station's tracks run along the
-  Minecraft Z axis (north end toward -Z), so platforms, tracks and the street
+  Minecraft Z axis (north end toward -Z), or X when they run east-west, so platforms, tracks and the street
   grid laid out with them come out straight instead of in diagonal steps.
   --north keeps true north at -Z instead, --angle sets the turn by hand.
 * Writes <out>.json (features in block coordinates) and <out>.png (a top
@@ -61,7 +61,8 @@ def find_station(nodes, name):
             continue
         if name not in (t.get('name') or '') and name != t.get('name:en') and name != t.get('name:ja'):
             continue
-        score = (t.get('railway') == 'station') * 2 + (t.get('station') != 'subway') * 4 + (t.get('name') == name)
+        jr = any(k in (t.get('operator') or '') for k in ('JR', '旅客鉄道'))
+        score = (t.get('railway') == 'station') * 2 + (t.get('station') != 'subway') * 4 + (t.get('name') == name) * 8 + jr * 3
         if not best or score > best[0]:
             best = (score, lat, lon, t.get('name'))
     if not best:
@@ -109,8 +110,14 @@ def track_angle(nodes, ways, frame, radius=350):
     if not sx and not sy:
         return 0.0
     bearing = math.degrees(math.atan2(sy, sx) / 2)
-    # turning by -bearing brings that direction onto north (-z); keep it within ±90
-    return -bearing
+    # turning by -bearing brings that direction onto north (-z); when the tracks
+    # run more east-west, line them up with X instead (the smaller turn)
+    a = -bearing
+    if a > 45:
+        a -= 90
+    elif a < -45:
+        a += 90
+    return a
 
 
 def building_height(t):
@@ -213,7 +220,7 @@ def convert(path, station, angle=None, north=False, radius=None):
         if len(pts) < 3 or not near(pts):
             return
         h, mh, est = building_height(t)
-        out['buildings'].append({'id': wid, 'pts': pts, 'h': h, 'min': mh, 'est': est, 'part': 'building:part' in t,
+        out['buildings'].append({'id': wid, 'pts': pts, 'h': h, 'min': mh, 'est': est, 'part': 'building:part' in t, 'kind': t.get('building') or t.get('building:part'),
                                  'name': t.get('name'), 'levels': num(t.get('building:levels'))})
 
     flag = lambda t, k: t.get(k) not in (None, 'no')

@@ -56,6 +56,7 @@ export async function openMenu(player) {
         { text: '선택 영역 · 곡선 점', icon: 'textures/items/blaze_rod', value: 'select' },
         ...GROUPS.map(g => ({ text: `${g.name}\n§8${g.desc}`, icon: g.icon, value: 'group:' + g.id })),
         { text: '글자 쓰기', icon: 'textures/items/book_writable', value: 'tool:text' },
+        ...(unlocked(player) ? [{ text: '도시 지도 불러오기', icon: 'textures/items/map_filled', value: 'tool:city' }] : []),
         { text: '클립보드 (복사·붙여넣기)', icon: 'textures/items/paper', value: 'clip' },
         { text: '블록 피커 (고른 블록)', icon: 'textures/items/spyglass', value: 'picker' },
         { text: '에셋 (구조물 저장·배치)', icon: 'textures/blocks/structure_block', value: 'assets' },
@@ -152,7 +153,7 @@ function needsText(player, tool) {
 }
 
 export async function toolForm(player, tool) {
-    if (!tool)
+    if (!tool || (tool.hidden && !unlocked(player)))
         return;
     if (tool.id === 'assets')
         return assetsMenu(player);

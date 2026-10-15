@@ -6,6 +6,7 @@ import * as assets from './assets.js';
 import * as axisrevolve from './axisrevolve.js';
 import * as colorreplace from './colorreplace.js';
 import * as dashes from './dashes.js';
+import * as city from './city.js';
 import * as fill from './fill.js';
 import * as icosphere from './icosphere.js';
 import * as lanes from './lanes.js';
@@ -53,6 +54,7 @@ export const TOOLS = [
     T(loft, 'frame'), T(surface, 'frame'),
     T(terragen, 'terrain'), T(smoothsnow, 'terrain'),
     T(text, 'text'), T(assets, 'assets'),
+    T(city, 'city'), // hidden (settings code): only in the menu once unlocked
 ];
 
 export const BRUSHES = [bBoulder, bCube, bSpike, bErode, bRevolve, bVine, bCrop].map(m => m.default);
