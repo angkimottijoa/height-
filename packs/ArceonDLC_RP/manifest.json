@@ -1,0 +1,30 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "§b아르세온 DLC 파티클§r",
+    "description": "아르세온 DLC 도구(각도기 등)의 미리보기용 커스텀 파티클.",
+    "uuid": "5e0b3a8e-6f4c-4b1e-9a77-2f4c8e1d6a31",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      21,
+      0
+    ]
+  },
+  "modules": [
+    {
+      "description": "particles",
+      "type": "resources",
+      "uuid": "c3a9d1f2-8b7e-4c55-a1d0-6e2f9b8c7a44",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ]
+}

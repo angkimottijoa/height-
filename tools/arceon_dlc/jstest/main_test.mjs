@@ -204,3 +204,64 @@ check(errs.length === 0, 'no error messages ' + JSON.stringify(errs));
   await tap('arc:yard_tool', { x: 3, y: 0, z: 3 });
   check(s.yard?.cur?.pts?.length === 1, 'and the layout tool');
 }
+
+// ---- the protractor: lines, angle guides, snapping, shapes, saved lines
+{
+  const P = await import('./scripts/ui/protractor.js');
+  const { ITEMS } = await import('./scripts/core/access.js');
+  check(ITEMS.includes('arc:protractor'), 'the protractor is one of the general tools');
+  s.prot = undefined; s.settings.prot = undefined;
+  player.location = { x: 200, y: 50, z: 200 };
+  await tap('arc:protractor', { x: 0, y: 40, z: 0 });
+  await tap('arc:protractor', { x: 10, y: 40, z: 0 });
+  const g = P.guides(s.prot.pts, s.settings.prot);
+  check(g.length === 2 && g.every(x => Math.abs(x.d.x) < 1e-9 && Math.abs(Math.abs(x.d.z) - 1) < 1e-9), 'a line: 90° guides at its end, both sides');
+  // a tap near the guide lands on it
+  await tap('arc:protractor', { x: 11, y: 40, z: 6 });
+  const p3 = s.prot.pts[2];
+  check(p3.x === 10 && p3.z === 6, 'a tap beside the guide goes onto it: ' + JSON.stringify(p3));
+  check(/앞 선과 90°/.test(player.bar ?? player.msgs.slice(-1)[0] ?? ''), 'the angle with the previous line is shown: ' + (player.bar ?? player.msgs.slice(-1)[0]));
+  const V = P.shape(s.prot.pts, s.settings.prot);
+  check(V.length === 4 && Math.floor(V[3].x) === 0 && Math.floor(V[3].z) === 6, 'two lines: the rectangle they start');
+  // looking along a 60° guide (no block there) puts the point on it
+  s.settings.prot = { ...s.settings.prot, angle: 60 };
+  const gs = P.guides([{ x: 0, y: 40, z: 0 }, { x: 10, y: 40, z: 0 }], s.settings.prot);
+  const g1 = gs[0], target = { x: g1.o.x + g1.d.x * 8, y: g1.o.y + g1.d.y * 8, z: g1.o.z + g1.d.z * 8 };
+  const eye = { x: target.x, y: target.y + 10, z: target.z }, view = { x: 0, y: -1, z: 0 };
+  const sn = P.snap(gs, eye, view, null);
+  check(sn && sn.t === 8, '60°: looking at a guide in the air snaps onto it: ' + JSON.stringify(sn));
+  const ang = Math.acos(-g1.d.x) * 180 / Math.PI;
+  check(Math.abs(ang - 60) < 1e-6, 'the guide meets the line at 60°: ' + ang.toFixed(3));
+  // build the rectangle (outline) through the menu
+  s.settings.prot = { ...s.settings.prot, angle: 90, block: 'stone', fill: false, shape: 'para' };
+  ui.answers.push(btn('도형 만들기'));
+  await tap('arc:protractor', { x: 0, y: 40, z: 0 }, true); await settle(); await settle();
+  const st = (x, z) => dim.map.get(`${x},40,${z}`)?.id === 'minecraft:stone';
+  check(st(0, 0) && st(10, 0) && st(10, 6) && st(0, 6) && st(5, 0) && st(0, 3) && !st(5, 3), 'the rectangle built as an outline');
+  // a regular pentagon on the first line
+  s.settings.prot = { ...s.settings.prot, shape: 'regular', n: 5 };
+  const pent = P.shape(s.prot.pts, s.settings.prot);
+  const sideLens = pent.map((a, i) => Math.hypot(pent[(i + 1) % 5].x - a.x, pent[(i + 1) % 5].z - a.z));
+  check(pent.length === 5 && sideLens.every(l => Math.abs(l - 10) < 1e-6) && pent.every(p => p.z >= -1e-6), 'a regular pentagon on the first line, toward the second: ' + sideLens.map(l => l.toFixed(2)).join(','));
+  // save the lines, draw a new one: measured against them
+  await brk('arc:protractor', { x: 0, y: 40, z: 0 }, true);
+  check(s.prot.saved.length === 2 && s.prot.pts.length === 0, 'sneak + break saves the lines');
+  await tap('arc:protractor', { x: 20, y: 40, z: 20 });
+  await tap('arc:protractor', { x: 30, y: 40, z: 30 });
+  const msg = player.bar ?? player.msgs.slice(-1)[0] ?? '';
+  check(/저장한 선과 45°/.test(msg), 'a new line is measured against the saved ones: ' + msg);
+  // the preview spawns the pack's particles
+  const kinds = new Set();
+  P.protPreview(s, (k) => kinds.add(k));
+  check(['line', 'point', 'guide', 'saved'].every(k => kinds.has(k)), 'preview: lines, points, guides, saved lines: ' + [...kinds].join(','));
+}
+
+// ---- turning Debug Stick blocks
+{
+  const { turnStates, matrix } = await import('./scripts/core/turn.js');
+  const R = (id, st) => mc.BlockPermutation.resolve(id, st);
+  const t = turnStates(R('vyt:ds_oak_stairs', { 'vyt:facing': 0 }), matrix(90, 0, 0));
+  const f = turnStates(R('vyt:ds_oak_fence', { 'vyt:north': 1 }), matrix(90, 0, 0));
+  const off = turnStates(R('vyt:ds_oak_stairs', { 'vyt:facing': 0 }), matrix(90, 0, 0), { vyt: false });
+  check(t.getState('vyt:facing') === 2 && f.getState('vyt:east') === 1 && f.getState('vyt:north') === 0 && off.getState('vyt:facing') === 0, 'Debug Stick stairs and fences turn with the rotation (and stay when the option is off)');
+}

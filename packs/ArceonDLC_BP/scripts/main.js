@@ -27,7 +27,8 @@ import { permToString } from './core/blocks.js';
 import { BRUSHES, TOOLS } from './tools/index.js';
 import { assetSaveForm, assetsMenu, blockPickerMenu, clipboardMenu, frameMenu, giveTools, openMenu, terrainMenu, wandMenu } from './ui/menu.js';
 import { preview } from './ui/preview.js';
-import { allowed, ALL_ITEMS, BLOCK_PICKER, CLIPBOARD, FRAME_PICKER, PLACER, TERRAIN, WAND, YARD } from './core/access.js';
+import { allowed, ALL_ITEMS, BLOCK_PICKER, CLIPBOARD, FRAME_PICKER, PLACER, PROTRACTOR, TERRAIN, WAND, YARD } from './core/access.js';
+import { protBreak, protTap } from './ui/protractor.js';
 import { yardBreak, yardTap } from './ui/yard.js';
 
 const SELECTION_TOOL = 'andexdb:selection_tool';
@@ -139,6 +140,9 @@ const TAP = {
     [YARD](player, hit, sneaking) {
         return yardTap(player, hit, sneaking);
     },
+    [PROTRACTOR](player, hit, sneaking) {
+        return protTap(player, hit, sneaking);
+    },
 };
 
 const BREAK = {
@@ -189,6 +193,9 @@ const BREAK = {
     [TERRAIN]() { },
     [YARD](player, pos, sneaking) {
         yardBreak(player, pos, sneaking);
+    },
+    [PROTRACTOR](player, pos, sneaking) {
+        protBreak(player, pos, sneaking);
     },
 };
 

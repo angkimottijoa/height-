@@ -4,6 +4,7 @@
                   + Arceon DLC (items, scripts)
                   + structures with their functions (Jewel Changi diagrid, Cocoon Tower)
   resource pack   = Debug Stick models / names (textures are vanilla)
+                  + Arceon DLC particles (the protractor's lines and guides)
 
 Both script packs keep their own folders under scripts/ and are started by
 one entry file. The structures only come into the world through their
@@ -49,12 +50,12 @@ RP_UUID, RP_RES = '883833f2-e5d0-462c-8136-ea47811b6bae', '442c1e32-188f-4641-aa
 
 DESC_BP = ("§b에디터 DLC {label}§r — 디버그 스틱 + 아르세온 DLC + 구조물\n\n"
            "§e디버그 스틱§r §a/give @s vyt:debug_stick§r — 독립형 블록 333종, 멀리서도 안 사라지는 철문 (vyt:ds_iron_door)\n"
-           "§e아르세온 DLC§r §a/arc:tools§r 도구 6개 · §a/arc:menu§r 메뉴 (8Crafter's Server Utilities와 같이 쓰는 확장)\n"
+           "§e아르세온 DLC§r §a/arc:tools§r 도구 7개 · §a/arc:menu§r 메뉴 (8Crafter's Server Utilities와 같이 쓰는 확장)\n"
            "§e구조물§r (치트 필요, 서 있는 자리가 -X/-Z 아래 모서리)\n"
            "  §a/function diagrid/build§r 주얼 창이 다이아그리드 171×46×228 (p01~p12 분할, clear)\n"
            "  §a/function ctw4/build§r 코쿤 타워 52×203×59 (clear)\n\n"
            "§c따로 받은 Debug Stick / Arceon DLC / Jewel Diagrid / Cocoon Tower 팩과 예전 통합팩은 빼고 이것만 적용하세요.§r")
-DESC_RP = "§b에디터 DLC {label} 리소스§r — 디버그 스틱 독립형 블록의 모델·이름. 텍스처는 바닐라 것을 씁니다.\n§c에디터 DLC 행동 팩과 함께 적용하세요.§r"
+DESC_RP = "§b에디터 DLC {label} 리소스§r — 디버그 스틱 독립형 블록의 모델·이름, 아르세온 도구의 커스텀 파티클. 블록 텍스처는 바닐라 것을 씁니다.\n§c에디터 DLC 행동 팩과 함께 적용하세요.§r"
 
 
 def copytree(src, dst, skip=()):
@@ -100,6 +101,7 @@ def build(tmp):
     }, open(os.path.join(bp, 'manifest.json'), 'w'), ensure_ascii=False, indent=2)
     # resource pack
     copytree(P('DebugStickRP'), rp, skip=('manifest.json', 'pack_icon.png'))
+    copytree(P('ArceonDLC_RP'), rp, skip=('manifest.json',))  # the tools' own particles
     # same icon on both so the pair is easy to spot in the pack list
     shutil.copy2(os.path.join(bp, 'pack_icon.png'), os.path.join(rp, 'pack_icon.png'))
     json.dump({

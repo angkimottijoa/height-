@@ -78,7 +78,46 @@ function turnLever(m, v) {
         return v.endsWith('north_south') ? v.replace('north_south', 'east_west') : v.replace('east_west', 'north_south');
     return v;
 }
-export function turnStates(perm, m) {
+// the Debug Stick pack's support-free blocks (vyt:ds_*) keep their own states
+const V_TORCH = ['unknown', 'west', 'east', 'north', 'south', 'top'];
+const V_LEVER = ['down_east_west', 'east', 'west', 'south', 'north', 'up_north_south', 'up_east_west', 'down_north_south'];
+const V_STAIR = ['east', 'west', 'south', 'north'];
+const V_FACE = ['down', 'up', 'north', 'south', 'west', 'east'];
+const V_TORCHES = /ds_(soul_|redstone_|unlit_redstone_|copper_)?torch$/;
+/** The turned states of a Debug Stick block (only the ones it has). */
+function turnVyt(typeId, states, m) {
+    const out = {};
+    const id = typeId.replace(/^vyt:/, '');
+    const f = states['vyt:facing'];
+    if (typeof f === 'number') {
+        const list = id.endsWith('_stairs') ? V_STAIR : V_TORCHES.test(id) ? V_TORCH : V_FACE;
+        const d = list[f];
+        if (VEC[d])
+            out['vyt:facing'] = list.indexOf(turnDir(m, d, list.filter(x => VEC[x])));
+    }
+    if (typeof states['vyt:dir'] === 'number' && V_LEVER[states['vyt:dir']])
+        out['vyt:dir'] = V_LEVER.indexOf(turnLever(m, V_LEVER[states['vyt:dir']]));
+    // connections (fences, walls, panes, bars, attached plants): the values move round
+    const sides = ALL.filter(d => states['vyt:' + d] !== undefined);
+    if (sides.length >= 4)
+        for (const d of sides) {
+            const to = turnDir(m, d, sides.length === 4 ? H : ALL);
+            if (states['vyt:' + to] !== undefined)
+                out['vyt:' + to] = states['vyt:' + d];
+        }
+    // stair corners swap left and right in a mirror image
+    if (det(m) < 0 && typeof states['vyt:shape'] === 'number' && id.endsWith('_stairs'))
+        out['vyt:shape'] = [0, 2, 1, 4, 3][states['vyt:shape']] ?? states['vyt:shape'];
+    return out;
+}
+
+/**
+ * The block turned by m. `vyt` (default on): Debug Stick blocks turn too —
+ * their vyt: states that mirror vanilla ones (vyt:minecraft:cardinal_direction,
+ * vyt:direction, vyt:facing_direction ...) and their own (stairs, torches,
+ * buttons, levers, connections).
+ */
+export function turnStates(perm, m, { vyt = true } = {}) {
     let states;
     try {
         states = perm.getAllStates();
@@ -87,31 +126,36 @@ export function turnStates(perm, m) {
         return perm;
     }
     const typeId = perm.type.id;
-    const out = {};
-    for (const [k, v] of Object.entries(states)) {
+    const out = vyt && typeId.startsWith('vyt:') ? turnVyt(typeId, states, m) : {};
+    for (const [k0, v] of Object.entries(states)) {
+        if (k0 in out)
+            continue;
+        const k = vyt && k0.startsWith('vyt:') ? k0.slice(4) : k0;
+        if (!vyt && k0.startsWith('vyt:') && !k0.endsWith('vine_direction_bits') && k0 !== 'vyt:pillar_axis')
+            continue;
         const enc = ENCODINGS[k];
         if (k === 'lever_direction' && typeof v === 'string') {
-            out[k] = turnLever(m, v);
+            out[k0] = turnLever(m, v);
         }
         else if (enc?.values && typeof v === 'string') {
-            out[k] = turnDir(m, v, enc.values);
+            out[k0] = turnDir(m, v, enc.values);
         }
         else if (enc?.list && typeof v === 'number' && enc.list[v]) {
             const d = enc.list[v];
-            out[k] = VEC[d] ? enc.list.indexOf(turnDir(m, d, enc.list.filter(x => VEC[x]))) : v;
+            out[k0] = VEC[d] ? enc.list.indexOf(turnDir(m, d, enc.list.filter(x => VEC[x]))) : v;
         }
         else if (enc?.strings && typeof v === 'string' && enc.strings[v]) {
-            out[k] = turnDir(m, v, H);
+            out[k0] = turnDir(m, v, H);
         }
-        else if ((k === 'pillar_axis' || k === 'vyt:pillar_axis') && typeof v === 'string' && AXIS_NAME[v]) {
+        else if (k === 'pillar_axis' && typeof v === 'string' && AXIS_NAME[v]) {
             const w = apply(m, AXIS_NAME[v]).map(Math.abs);
-            out[k] = ['x', 'y', 'z'][w.indexOf(Math.max(...w))];
+            out[k0] = ['x', 'y', 'z'][w.indexOf(Math.max(...w))];
         }
         else if (k.endsWith('ground_sign_direction') && typeof v === 'number') {
             // 16 steps of 22.5 degrees clockwise from south
             const a = v * Math.PI / 8;
             const w = apply(m, [-Math.sin(a), 0, Math.cos(a)]);
-            out[k] = ((Math.round(Math.atan2(-w[0], w[2]) * 8 / Math.PI)) % 16 + 16) % 16;
+            out[k0] = ((Math.round(Math.atan2(-w[0], w[2]) * 8 / Math.PI)) % 16 + 16) % 16;
         }
         else if (k.endsWith('vine_direction_bits') && typeof v === 'number') {
             let bits = 0;
@@ -119,7 +163,7 @@ export function turnStates(perm, m) {
                 if ((v >> i) & 1)
                     bits |= 1 << VINE_BITS.indexOf(turnDir(m, d, H));
             });
-            out[k] = bits;
+            out[k0] = bits;
         }
     }
     if (det(m) < 0) {

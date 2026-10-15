@@ -9,8 +9,9 @@ export const BLOCK_PICKER = 'arc:block_picker';
 export const PLACER = 'arc:asset_placer';
 export const TERRAIN = 'arc:terrain_tool';
 export const CLIPBOARD = 'arc:clipboard';
+export const PROTRACTOR = 'arc:protractor';
 export const YARD = 'arc:yard_tool'; // hidden (settings code)
-export const ITEMS = [WAND, FRAME_PICKER, BLOCK_PICKER, CLIPBOARD, PLACER, TERRAIN];
+export const ITEMS = [WAND, FRAME_PICKER, BLOCK_PICKER, CLIPBOARD, PLACER, TERRAIN, PROTRACTOR];
 export const ALL_ITEMS = [...ITEMS, YARD];
 
 /** Operators, or players with the "arceon" (or "worldedit") tag. */

@@ -17,5 +17,15 @@ for b in d['data_items']:
             vals = [FIRST[p['name']]] + [v for v in vals if v != FIRST[p['name']]]
         st[p['name']] = vals
     out[b['name']] = st
+# the Debug Stick pack's own blocks (vyt:ds_*), so tests can use them too
+import glob, os
+here = os.path.dirname(os.path.abspath(__file__))
+for f in glob.glob(os.path.join(here, '../../../packs/DebugStickBP/blocks/*.json')):
+    desc = json.load(open(f))['minecraft:block']['description']
+    st = dict(desc.get('states', {}))
+    for t, cfg in desc.get('traits', {}).items():
+        for name in cfg.get('enabled_states', []):
+            st.setdefault(name, {'minecraft:cardinal_direction': ['south', 'west', 'north', 'east'], 'minecraft:facing_direction': ['down', 'up', 'north', 'south', 'west', 'east'], 'minecraft:block_face': ['down', 'up', 'north', 'south', 'west', 'east'], 'minecraft:multi_block_part': [0, 1]}.get(name, [0]))
+    out[desc['identifier']] = st
 json.dump(out, open(sys.argv[2], 'w'))
 print(len(out), 'blocks')

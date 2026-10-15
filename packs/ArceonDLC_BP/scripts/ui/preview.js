@@ -5,12 +5,14 @@
  *   프레임 피커   frames (blue flame, the one being drawn in green) and the
  *                rails joining them (flame), as the fill will connect them
  *   클립보드 도구 the box the clipboard would fill at the block you look at
+ *   각도기       its lines, angle guides, the shape and the saved lines (own particles)
  *   지형·에셋 도구 the selection box
  */
 import { BezierPath, LinePath, resample } from '../core/spline.js';
 import { anchorFor, getClip, placedBounds } from '../core/clipboard.js';
 import { region, session } from '../core/session.js';
-import { CLIPBOARD, FRAME_PICKER, WAND, YARD } from '../core/access.js';
+import { CLIPBOARD, FRAME_PICKER, PROTRACTOR, WAND, YARD } from '../core/access.js';
+import { protPreview } from './protractor.js';
 
 const MAX = 240;
 
@@ -21,6 +23,20 @@ function spawn(player, id, p) {
     catch (e) { }
 }
 const c = (p) => ({ x: p.x + 0.5, y: p.y + 0.5, z: p.z + 0.5 });
+/** The pack's own particles (arc:line ...), a vanilla stand-in when the resource pack is off. */
+const VANILLA = { line: 'minecraft:endrod', point: 'minecraft:villager_happy', guide: 'minecraft:basic_flame_particle', shape: 'minecraft:villager_happy', saved: 'minecraft:blue_flame_particle', arc: 'minecraft:basic_flame_particle' };
+let customOk = true;
+function custom(player, kind, p) {
+    if (customOk)
+        try {
+            player.spawnParticle('arc:' + kind, p);
+            return;
+        }
+        catch (e) {
+            customOk = false;
+        }
+    spawn(player, VANILLA[kind], p);
+}
 
 function curve(player, pts, id) {
     if (pts.length < 2)
@@ -102,6 +118,10 @@ export function preview(player, item) {
         return;
     if (item === FRAME_PICKER) {
         frames(player, s);
+        return;
+    }
+    if (item === PROTRACTOR) {
+        protPreview(s, (kind, p) => custom(player, kind, p));
         return;
     }
     if (item === CLIPBOARD) {

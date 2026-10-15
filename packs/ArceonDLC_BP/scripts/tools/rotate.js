@@ -34,6 +34,7 @@ export default {
         },
         { key: 'skipAir', type: 'toggle', label: '공기는 덮어쓰지 않기', default: true },
         { key: 'states', type: 'toggle', label: '계단·원목 등 방향도 같이 돌리기', default: true },
+        { key: 'vyt', type: 'toggle', label: '디버그 스틱 블록(독립형)도 방향 돌리기', default: true },
         { key: 'toClip', type: 'toggle', label: '월드는 그대로 두고 결과만 클립보드에 저장', default: false, tooltip: '클립보드 도구를 들면 놓일 자리가 보이고, 터치하면 붙여넣습니다' },
     ],
     *run(ctx, v) {
@@ -103,7 +104,7 @@ export default {
                     if (turn) {
                         out = turned.get(p);
                         if (!out) {
-                            out = turnStates(p, m);
+                            out = turnStates(p, m, { vyt: v.vyt !== false });
                             turned.set(p, out);
                         }
                     }

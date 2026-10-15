@@ -1,0 +1,404 @@
+/*
+ * The protractor (각도기) tool.
+ *
+ *   tap                  add a point; points join into lines. With a line drawn,
+ *                        guide lines at the set angle show from its end (yellow);
+ *                        tapping on (or just looking along) a guide puts the next
+ *                        point exactly on it, so the new line is at that angle
+ *   break                take back the last point
+ *   sneak + break        save the lines drawn (like a frame) and start new ones;
+ *                        new lines are then measured against the saved ones
+ *   sneak + tap          menu: angle and guides, the shape, build, clear
+ *
+ * With two lines (three points) the shape they start shows in green: a
+ * parallelogram (a rectangle when the corner is square), the triangle, or a
+ * regular polygon of N sides on the first line, turning toward the second.
+ * It (or the lines) can then be built in blocks, outlined or filled.
+ *
+ * Shown with the pack's own particles (arc:line, arc:point, arc:guide,
+ * arc:shape, arc:saved, arc:arc), vanilla ones if the resource pack is off.
+ */
+import { add, cross, dot, len, mul, norm, sub } from '../core/vec.js';
+import { parseBlock } from '../core/blocks.js';
+import { isBusy, runAsync, say } from '../core/edit.js';
+import { finish, makeContext } from '../core/runner.js';
+import { save, session } from '../core/session.js';
+import { ask, menu } from './form.js';
+
+const fmt = (p) => `${p.x} ${p.y} ${p.z}`;
+const c = (p) => ({ x: p.x + 0.5, y: p.y + 0.5, z: p.z + 0.5 });
+const deg = (r) => r * 180 / Math.PI;
+function bar(player, msg) {
+    try {
+        player.onScreenDisplay.setActionBar(msg);
+    }
+    catch (e) {
+        say(player, msg);
+    }
+}
+
+export const DEFAULTS = { angle: 90, plane: 'h', sides: 'both', guide: 0, shape: 'para', n: 5, block: 'stone', fill: false };
+export function protState(player) {
+    const s = session(player);
+    if (!s.prot || !Array.isArray(s.prot.pts))
+        s.prot = { pts: [], saved: [] };
+    s.settings.prot = { ...DEFAULTS, ...(s.settings.prot ?? {}) };
+    return s;
+}
+
+// ------------------------------------------------------------------ geometry
+/** Rotate v about the unit axis k by angle a (Rodrigues). */
+function rotate(v, k, a) {
+    const cs = Math.cos(a), sn = Math.sin(a);
+    return add(add(mul(v, cs), mul(cross(k, v), sn)), mul(k, dot(k, v) * (1 - cs)));
+}
+/**
+ * Guide rays from the last point B of the last line AB: the directions that
+ * meet AB at the set angle (the angle at B between BA and the new line), in
+ * the horizontal plane through B or the upright plane holding AB.
+ */
+export function guides(pts, set) {
+    if (pts.length < 2)
+        return [];
+    const A = c(pts[pts.length - 2]), B = c(pts[pts.length - 1]);
+    const back = norm(sub(A, B));
+    if (!len(sub(A, B)))
+        return [];
+    let axis;
+    if (set.plane === 'v') {
+        axis = cross(back, { x: 0, y: 1, z: 0 });
+        if (len(axis) < 1e-6)
+            axis = { x: 1, y: 0, z: 0 };
+        axis = norm(axis);
+    }
+    else
+        axis = { x: 0, y: 1, z: 0 };
+    let base = back;
+    if (set.plane !== 'v') {
+        // in the horizontal plane: measure from AB's direction seen from above
+        base = { x: back.x, y: 0, z: back.z };
+        if (len(base) < 1e-6)
+            base = { x: 1, y: 0, z: 0 };
+        base = norm(base);
+    }
+    const a = Number(set.angle) * Math.PI / 180;
+    const sides = set.sides === 'left' ? [1] : set.sides === 'right' ? [-1] : [1, -1];
+    const L = Number(set.guide) > 0 ? Number(set.guide) : Math.max(4, Math.round(len(sub(A, B))));
+    const out = [];
+    for (const sd of sides) {
+        const d = norm(rotate(base, axis, sd * a));
+        if (!out.some(o => len(sub(o.d, d)) < 1e-6))
+            out.push({ o: B, d, L, side: sd });
+    }
+    return out;
+}
+/**
+ * Where a tap goes on a guide: the point of the guide nearest the line of
+ * sight (or the tapped block), if close enough; a whole number of blocks
+ * along it, so the line keeps its angle exactly.
+ */
+export function snap(gs, eye, view, hitPos) {
+    let best = null;
+    for (const g of gs) {
+        let t;
+        if (eye && view) {
+            // closest approach of the sight line and the guide
+            const w0 = sub(g.o, eye), b = dot(g.d, view), d = dot(g.d, w0), e = dot(view, w0);
+            const den = 1 - b * b;
+            t = den < 1e-6 ? -d : (b * e - d) / den;
+            t = Math.max(1, Math.min(96, Math.round(t)));
+            const q = add(g.o, mul(g.d, t));
+            const along = dot(sub(q, eye), view);
+            const miss = len(sub(q, add(eye, mul(view, along))));
+            if (along > 0 && miss <= 0.8 + along * 0.02 && (!best || miss < best.miss))
+                best = { miss, t, g };
+        }
+        if (hitPos) {
+            const h = c(hitPos);
+            const t2 = Math.max(1, Math.round(dot(sub(h, g.o), g.d)));
+            const miss = len(sub(h, add(g.o, mul(g.d, t2))));
+            if (miss <= 1.0 && (!best || miss < best.miss))
+                best = { miss, t: t2, g };
+        }
+    }
+    if (!best)
+        return null;
+    const q = add(best.g.o, mul(best.g.d, best.t));
+    return { pos: { x: Math.floor(q.x), y: Math.floor(q.y), z: Math.floor(q.z) }, t: best.t, side: best.g.side };
+}
+/** The angle between two lines (0..180), and as lines (0..90). */
+function between(a1, a2, b1, b2) {
+    const u = norm(sub(c(a2), c(a1))), v = norm(sub(c(b2), c(b1)));
+    const t = deg(Math.acos(Math.max(-1, Math.min(1, dot(u, v)))));
+    return { full: t, acute: Math.min(t, 180 - t) };
+}
+/** The angle at the middle point of p, q, r. */
+function cornerAngle(p, q, r) {
+    const u = norm(sub(c(p), c(q))), v = norm(sub(c(r), c(q)));
+    return deg(Math.acos(Math.max(-1, Math.min(1, dot(u, v)))));
+}
+/** The shape the last two lines start (vertices as block-centre points), or null. */
+export function shape(pts, set) {
+    if (pts.length < 3)
+        return null;
+    const [P0, P1, P2] = pts.slice(-3).map(c);
+    if (set.shape === 'tri')
+        return [P0, P1, P2];
+    if (set.shape === 'para')
+        return [P0, P1, P2, sub(add(P0, P2), P1)];
+    // a regular polygon on P0P1, turning toward P2
+    const n = Math.max(3, Math.min(24, Math.floor(set.n)));
+    const s = sub(P1, P0), L = len(s);
+    if (!L)
+        return null;
+    const e1 = norm(s);
+    let nrm = cross(s, sub(P2, P1));
+    if (len(nrm) < 1e-6)
+        nrm = { x: 0, y: 1, z: 0 };
+    let e2 = norm(cross(nrm, e1));
+    if (dot(e2, sub(P2, P1)) < 0)
+        e2 = mul(e2, -1);
+    const ext = 2 * Math.PI / n;
+    const out = [P0];
+    let p = P0;
+    for (let i = 0; i < n - 1; i++) {
+        p = add(p, mul(add(mul(e1, Math.cos(i * ext)), mul(e2, Math.sin(i * ext))), L));
+        out.push(p);
+    }
+    return out;
+}
+/** Blocks on a line between two points (thin: one block per step). */
+function blocksOn(a, b, out) {
+    const n = Math.max(1, Math.ceil(len(sub(b, a)) * 3));
+    for (let i = 0; i <= n; i++) {
+        const p = add(a, mul(sub(b, a), i / n));
+        out.add(`${Math.floor(p.x)},${Math.floor(p.y)},${Math.floor(p.z)}`);
+    }
+}
+/** The blocks of a closed polygon: its outline, and inside it when `fill`. */
+export function polygonBlocks(V, fill) {
+    const out = new Set();
+    for (let i = 0; i < V.length; i++)
+        blocksOn(V[i], V[(i + 1) % V.length], out);
+    if (fill)
+        for (let i = 1; i + 1 < V.length; i++) {
+            const A = V[0], B = V[i], C = V[i + 1];
+            const n = Math.max(2, Math.ceil(Math.max(len(sub(B, A)), len(sub(C, A))) * 3));
+            for (let u = 0; u <= n; u++)
+                for (let w = 0; u + w <= n; w++) {
+                    const p = add(A, add(mul(sub(B, A), u / n), mul(sub(C, A), w / n)));
+                    out.add(`${Math.floor(p.x)},${Math.floor(p.y)},${Math.floor(p.z)}`);
+                }
+        }
+    return out;
+}
+
+// ------------------------------------------------------------------ actions
+function describe(s, set) {
+    const P = s.prot.pts, n = P.length;
+    if (n < 2)
+        return '';
+    const parts = [`길이 ${Math.round(len(sub(c(P[n - 1]), c(P[n - 2]))) * 10) / 10}칸`];
+    if (n >= 3)
+        parts.push(`앞 선과 ${Math.round(cornerAngle(P[n - 3], P[n - 2], P[n - 1]) * 10) / 10}°`);
+    // against the nearest saved line
+    let best = null;
+    for (const [a, b] of s.prot.saved) {
+        const m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, z: (a.z + b.z) / 2 };
+        const d = len(sub(m, P[n - 1]));
+        if (!best || d < best.d)
+            best = { d, a, b };
+    }
+    if (best) {
+        const t = between(best.a, best.b, P[n - 2], P[n - 1]);
+        parts.push(`저장한 선과 ${Math.round(t.acute * 10) / 10}° (${Math.round(t.full * 10) / 10}°)`);
+    }
+    return parts.join(' · ');
+}
+
+export function protTap(player, hit, sneaking) {
+    if (sneaking)
+        return void protMenu(player);
+    const s = protState(player), set = s.settings.prot, P = s.prot.pts;
+    let eye = null, view = null;
+    try {
+        eye = player.getHeadLocation();
+        view = player.getViewDirection();
+    }
+    catch (e) { }
+    const sn = snap(guides(P, set), eye, view, hit?.pos ?? null);
+    const pos = sn?.pos ?? hit?.pos;
+    if (!pos)
+        return bar(player, '§c블록이나 노란 안내선을 바라보세요');
+    P.push({ ...pos });
+    save(player);
+    const tag = sn ? `§e[${set.angle}° 안내선 ${sn.t}칸]§r ` : '';
+    bar(player, `§b[각도기] 점 ${P.length}§r ${tag}${fmt(pos)}  §7${describe(s, set)}`);
+    return () => {
+        P.pop();
+        save(player);
+    };
+}
+
+export function protBreak(player, pos, sneaking) {
+    const s = protState(player), P = s.prot.pts;
+    if (sneaking) {
+        if (P.length < 2)
+            return bar(player, '§c[각도기] 저장할 선이 없습니다 (점 2개 이상)');
+        for (let i = 0; i + 1 < P.length; i++)
+            s.prot.saved.push([{ ...P[i] }, { ...P[i + 1] }]);
+        const n = P.length - 1;
+        s.prot.pts = [];
+        save(player);
+        return bar(player, `§d[각도기] 선 ${n}개 저장§r (저장한 선 ${s.prot.saved.length}개)  §7새 선을 그리면 저장한 선과의 각도를 잽니다`);
+    }
+    P.pop();
+    save(player);
+    bar(player, `§e[각도기] 마지막 점 취소§r (점 ${P.length}개)`);
+}
+
+export async function protMenu(player) {
+    const s = protState(player), set = s.settings.prot, P = s.prot.pts;
+    const V = shape(P, set);
+    const shapeName = { para: '사각형 (평행사변형 · 직각이면 직사각형)', tri: '삼각형', regular: `정${set.n}각형` }[set.shape];
+    const head = `점 ${P.length}개 · 선 ${Math.max(0, P.length - 1)}개 · 저장한 선 ${s.prot.saved.length}개\n각도 ${set.angle}° (${set.plane === 'v' ? '세로면' : '수평'}) · 도형: ${shapeName}`;
+    const v = await menu(player, '각도기', head, [
+        { text: '각도·안내선 설정', value: 'angle' },
+        { text: '도형 설정 (사각형 · 삼각형 · 정다각형)', value: 'shape' },
+        { text: V ? '§2도형 만들기§r\n§8마지막 두 선으로 시작하는 도형' : '§8도형 만들기 (선 2개를 먼저 그리세요)', value: V ? 'build' : '' },
+        { text: P.length >= 2 ? '§2선만 만들기§r' : '§8선만 만들기 (선을 먼저 그리세요)', value: P.length >= 2 ? 'lines' : '' },
+        { text: '§d저장한 선 지우기', value: 'unsave' },
+        { text: '§c지금 그린 점·선 지우기', value: 'clear' },
+    ]);
+    if (v === 'angle') {
+        const r = await ask(player, 'prot:angle', '각도기 - 각도', [
+            { key: 'angle', type: 'slider', label: '각도 (선과 선이 만나는 각, °)', default: Number(set.angle), min: 1, max: 179 },
+            { key: 'angleText', type: 'text', label: '각도 직접 입력 (소수 가능, 비우면 위 슬라이더)', placeholder: '예: 37.5', default: '' },
+            {
+                key: 'plane', type: 'dropdown', label: '어느 면에서 잴까', default: set.plane, options: [
+                    { value: 'h', label: '수평 (위에서 본 각도)' },
+                    { value: 'v', label: '세로면 (선을 담은 수직면, 경사로·지붕)' },
+                ],
+            },
+            {
+                key: 'sides', type: 'dropdown', label: '안내선', default: set.sides, options: [
+                    { value: 'both', label: '양쪽' },
+                    { value: 'left', label: '왼쪽만' },
+                    { value: 'right', label: '오른쪽만' },
+                ],
+            },
+            { key: 'guide', type: 'slider', label: '안내선 길이 (0 = 마지막 선과 같게)', default: Number(set.guide), min: 0, max: 64 },
+        ], { submit: '저장' });
+        if (r) {
+            const typed = parseFloat(String(r.angleText ?? '').replace(',', '.'));
+            s.settings.prot = { ...set, angle: typed > 0 && typed < 180 ? typed : r.angle, plane: r.plane, sides: r.sides, guide: r.guide };
+            save(player);
+            bar(player, `§e[각도기] ${s.settings.prot.angle}° 안내선`);
+        }
+    }
+    else if (v === 'shape') {
+        const r = await ask(player, 'prot:shape', '각도기 - 도형', [
+            {
+                key: 'shape', type: 'dropdown', label: '도형 (마지막 두 선으로 시작)', default: set.shape, options: [
+                    { value: 'para', label: '사각형 (네 번째 꼭짓점을 채움: 평행사변형, 직각이면 직사각형)' },
+                    { value: 'tri', label: '삼각형 (세 점을 이음)' },
+                    { value: 'regular', label: '정다각형 (첫 선을 한 변으로, 둘째 선 쪽으로)' },
+                ],
+            },
+            { key: 'n', type: 'slider', label: '정다각형 변 수 (3 = 정삼각형, 5 = 정오각형 ...)', default: Number(set.n), min: 3, max: 24 },
+            { key: 'block', type: 'text', label: '블록', default: set.block, placeholder: 'stone' },
+            { key: 'fill', type: 'toggle', label: '안을 채우기 (끄면 테두리만)', default: !!set.fill },
+        ], { submit: '저장' });
+        if (r) {
+            s.settings.prot = { ...set, shape: r.shape, n: r.n, block: String(r.block || 'stone').trim(), fill: !!r.fill };
+            save(player);
+        }
+    }
+    else if (v === 'build' || v === 'lines')
+        await build(player, v);
+    else if (v === 'unsave') {
+        s.prot.saved = [];
+        save(player);
+        bar(player, '§e[각도기] 저장한 선을 지웠습니다');
+    }
+    else if (v === 'clear') {
+        s.prot.pts = [];
+        save(player);
+        bar(player, '§e[각도기] 점·선을 지웠습니다');
+    }
+}
+
+async function build(player, what) {
+    const s = protState(player), set = s.settings.prot, P = s.prot.pts;
+    let block;
+    try {
+        block = parseBlock(set.block || 'stone');
+    }
+    catch (e) {
+        return say(player, `§c각도기: ${e?.message ?? e}`);
+    }
+    let cells;
+    if (what === 'build') {
+        const V = shape(P, set);
+        if (!V)
+            return say(player, '§c각도기: 선을 2개 그리세요');
+        cells = polygonBlocks(V, set.fill);
+    }
+    else {
+        cells = new Set();
+        for (let i = 0; i + 1 < P.length; i++)
+            blocksOn(c(P[i]), c(P[i + 1]), cells);
+    }
+    if (isBusy(player))
+        return say(player, '§c이전 작업이 아직 진행 중입니다.');
+    const ctx = makeContext(player, {});
+    try {
+        await runAsync((function* () {
+            let n = 0;
+            for (const k of cells) {
+                const [x, y, z] = k.split(',').map(Number);
+                ctx.edit.set({ x, y, z }, block);
+                if (++n % 2000 === 0)
+                    yield;
+            }
+        })());
+    }
+    catch (e) {
+        return say(player, `§c각도기: ${e?.message ?? e}`);
+    }
+    await finish(player, '각도기', ctx.edit, what === 'build' ? `${{ para: '사각형', tri: '삼각형', regular: `정${set.n}각형` }[set.shape]}${set.fill ? ' (채움)' : ''}` : `선 ${P.length - 1}개`);
+}
+
+// ------------------------------------------------------------------ preview
+/** Draw it all with `spawn(kind, point)` (kinds: line, point, guide, shape, saved, arc). */
+export function protPreview(s, spawn) {
+    s.settings.prot = { ...DEFAULTS, ...(s.settings.prot ?? {}) };
+    const set = s.settings.prot, P = s.prot?.pts ?? [];
+    let budget = 700;
+    const seg = (a, b, kind, step = 0.35) => {
+        const L = len(sub(b, a)), n = Math.max(1, Math.ceil(L / step));
+        for (let i = 0; i <= n && budget-- > 0; i++)
+            spawn(kind, add(a, mul(sub(b, a), i / n)));
+    };
+    for (const p of P.slice(-32))
+        spawn('point', c(p));
+    for (let i = 0; i + 1 < P.length; i++)
+        seg(c(P[i]), c(P[i + 1]), 'line');
+    for (const g of guides(P, set))
+        seg(g.o, add(g.o, mul(g.d, g.L)), 'guide', 0.5);
+    // the angle at the last corner, as a small arc
+    if (P.length >= 3) {
+        const [A, B, C] = P.slice(-3).map(c);
+        const u = norm(sub(A, B)), w = norm(sub(C, B));
+        for (let i = 0; i <= 10; i++) {
+            const t = i / 10;
+            spawn('arc', add(B, mul(norm(add(mul(u, 1 - t), mul(w, t))), 1.2)));
+        }
+    }
+    const V = shape(P, set);
+    if (V)
+        for (let i = 0; i < V.length; i++)
+            seg(V[i], V[(i + 1) % V.length], 'shape', 0.45);
+    for (const [a, b] of (s.prot?.saved ?? []).slice(-24))
+        seg(c(a), c(b), 'saved', 0.5);
+}
