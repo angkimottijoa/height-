@@ -189,3 +189,18 @@ check(errs.length === 0, 'no error messages ' + JSON.stringify(errs));
   const got = [...Array(36).keys()].map(i => inv().getItem(i)?.typeId).filter(Boolean);
   check(got.includes('arc:yard_tool'), 'menu > 도구 아이템 받기 > 전부 받기 includes the layout tool once unlocked: ' + got.join(','));
 }
+
+// ---- one code unlocks everything hidden: railway bridges, tunnels, truss poles, slab column spacing, the layout tool, track records
+{
+  const railway = (await import('./scripts/tools/railway.js')).default;
+  s.settings.unlocked = false;
+  const lockedKeys = railway.fieldsFor(player).map(f => f.key);
+  ui.answers.push(btn('설정'), f => f.defaults({ '코드': '4917' }));
+  await cmds['arc:menu'](({ sourceEntity: player })); await settle(); await settle();
+  const keys = railway.fieldsFor(player).map(f => f.key);
+  const hidden = ['bridge', 'steel', 'span', 'tunnel', 'tunnelType', 'trussPoles'];
+  check(hidden.every(k => !lockedKeys.includes(k)) && hidden.every(k => keys.includes(k)), 'the code 4917 unlocks every hidden railway option: ' + hidden.filter(k => !keys.includes(k)).join(','));
+  s.yard = undefined;
+  await tap('arc:yard_tool', { x: 3, y: 0, z: 3 });
+  check(s.yard?.cur?.pts?.length === 1, 'and the layout tool');
+}

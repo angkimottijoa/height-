@@ -321,7 +321,7 @@ for (const f of ['mesh', 'grate']) {
       const last = m.slice(-1)[0];
       const get = (x, y, z) => dim.map.get(`${x},${y},${z}`)?.id ?? 'minecraft:air';
       const clear = [4, 6, 8].every(y => get(55, y, 4).endsWith('air') || /button|hopper|chain|light|barrier/.test(get(55, y, 4)));
-      const lining = [-12, 12].some(z => !/stone$|air/.test(get(55, 4, z)));
+      const lining = [-12, 12].every(z => [2, 3, 4, 5, 6].some(y => !/:stone$|air/.test(get(55, y, z))));
       if (mode === 'auto')
         check(/터널 1곳/.test(last) && clear && lining && /교각/.test(last), `${type} auto: one tunnel under the hill, clear inside, lined, the bridge kept outside it: ${last}`);
       if (mode === 'full')

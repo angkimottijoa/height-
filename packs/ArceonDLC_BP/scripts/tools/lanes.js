@@ -21,6 +21,7 @@ import { AIR } from '../core/blocks.js';
 import { ask } from '../ui/form.js';
 import { curve, curvePoints, TOO_CLOSE } from '../lib/curve_common.js';
 import { openPreset, presetNames } from '../lib/lane_presets.js';
+import { ROAD_BRIDGES, roadBridge } from '../lib/road_bridge.js';
 
 const SUB = 3; // samples per block, across the road and along it
 
@@ -97,6 +98,14 @@ const FIELDS = [
     { key: 'advanced', type: 'toggle', label: '고급 옵션: 차로마다 폭·차선 종류 따로 정하기 (다음 화면)', default: false },
 ];
 const COMMON = [
+    {
+        key: 'bridge', type: 'dropdown', label: '교량 (도로를 다리 위에)', default: '', options: [
+            { value: '', label: '없음 (땅 위)' },
+            ...ROAD_BRIDGES,
+        ],
+        tooltip: '곡선 점 높이가 도로 바닥 높이입니다. 교각은 경간마다 땅까지 내려갑니다.',
+    },
+    { key: 'span', type: 'slider', label: '교량 경간 (교각 사이 칸 수, 0 = 기본)', default: 0, min: 0, max: 60 },
     { key: 'thick', type: 'slider', label: '도로 두께 (칸)', default: 1, min: 1, max: 10 },
     { key: 'down', type: 'toggle', label: '아래로 땅까지 채우기', default: false },
     { key: 'clear', type: 'slider', label: '도로 위 비우기 (칸)', default: 0, min: 0, max: 20 },
@@ -276,11 +285,13 @@ export default {
                     put(c, 'lane');
             });
         }
-        yield* place(ctx, v, paint, (cell) => pats[cell.kind], () => pats.asphalt);
+        const bridged = v.bridge ? yield* roadBridge(ctx, v, road, W) : '';
+        yield* place(ctx, v.bridge ? { ...v, down: false } : v, paint, (cell) => pats[cell.kind], () => pats.asphalt);
+        const tail = bridged ? `, ${bridged}` : '';
         const sides = adv ? '' : `, 차로 폭 ${w}`;
         if (one)
-            return `1차선 도로, 폭 ${W}칸, 길이 약 ${Math.round(total)}칸`;
-        return `폭 ${W}칸 (왼쪽 ${L} · 오른쪽 ${R}차로${M ? `, 분리대 ${M}칸` : ''}${sides}), 길이 약 ${Math.round(total)}칸`;
+            return `1차선 도로, 폭 ${W}칸${tail}, 길이 약 ${Math.round(total)}칸`;
+        return `폭 ${W}칸 (왼쪽 ${L} · 오른쪽 ${R}차로${M ? `, 분리대 ${M}칸` : ''}${sides})${tail}, 길이 약 ${Math.round(total)}칸`;
     },
 };
 
@@ -408,10 +419,11 @@ function* custom(ctx, v) {
         yield;
     }
     // a preset several layers deep is laid at least that thick
-    yield* place(ctx, { ...v, thick: Math.max(Math.floor(v.thick) || 1, t.h) }, paint, (cell) => single(cell.perm), (cell, depth) => {
+    const bridged = v.bridge ? yield* roadBridge(ctx, v, road, W) : '';
+    yield* place(ctx, { ...v, thick: Math.max(Math.floor(v.thick) || 1, t.h), down: v.bridge ? false : v.down }, paint, (cell) => single(cell.perm), (cell, depth) => {
         if (depth < t.h)
             return single(t.at(depth, cell.col, cell.j));
         return single(t.at(t.h - 1, cell.col, cell.j) ?? t.base);
     });
-    return `커스텀 "${v.preset}" 폭 ${W}칸, 길이 약 ${Math.round(total)}칸`;
+    return `커스텀 "${v.preset}" 폭 ${W}칸${bridged ? `, ${bridged}` : ''}, 길이 약 ${Math.round(total)}칸`;
 }

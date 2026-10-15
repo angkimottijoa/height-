@@ -104,3 +104,18 @@ check(rows.length === 6 && !rows.some(r => r.includes('W')), '1-lane road: edge 
 ({ dim, player } = world({ id: 'l11' }));
 m = await runTool(lanes, {}, { player, points: [], region: [{ x: 0, y: 0, z: 0 }, { x: 20, y: 0, z: 0 }] });
 check(/곡선 점이 2개 이상/.test(m.slice(-1)[0]) && dim.count() === 0, 'no curve points: refuses instead of using pos1/pos2');
+
+// ---- road bridges (basic options, no code needed): PSC beam bridge and concrete box bridge
+{
+  const lanesT = (await import('./scripts/tools/lanes.js')).default;
+  for (const b of ['psci', 'segment']) {
+    const { dim, player } = world({ id: 'rbr' + b });
+    for (let x = -20; x <= 70; x++) for (let z = -30; z <= 30; z++) put(dim, x, -20, z, 'grass_block');
+    const m = await runTool(lanesT, { bridge: b, left: 2, right: 2 }, { player, points: [{ x: 0, y: 0, z: 0 }, { x: 50, y: 0, z: 0 }] });
+    const last = m.slice(-1)[0];
+    const piers = +(/교각 (\d+)개/.exec(last)?.[1] ?? 0);
+    const asphalt = [...dim.map].filter(([k, p]) => p.id === 'minecraft:gray_concrete' && k.split(',')[1] === '0').length;
+    const low = [...dim.map].filter(([k, p]) => +k.split(',')[1] === -19 && !p.id.endsWith('air')).length;
+    check(piers >= 2 && asphalt > 300 && low > 10, `road on a ${b} bridge: ${last} (asphalt ${asphalt}, footings ${low})`);
+  }
+}

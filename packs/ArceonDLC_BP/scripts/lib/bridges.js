@@ -960,7 +960,9 @@ export const bridgeById = (id) => BRIDGES.find(b => b.id === id);
 export function geometry(d, track, opts = {}) {
     const R = [...track.rails].sort((a, b) => a - b);
     const L = Math.min(R[0] - 5, Math.floor(track.bed[0]) - 3), Rt = Math.max(R[R.length - 1] + 5, Math.ceil(track.bed[1]) + 3);
-    const uL = Math.min(Math.floor(track.bed[0]) - 2, L - 2) - d.widen, uR = Math.max(Math.ceil(track.bed[1]) + 2, Rt + 2) + d.widen;
+    // `tight` (a road): the deck just two past the bed for the barrier, no room for poles
+    const uL = (opts.tight ? Math.floor(track.bed[0]) - 2 : Math.min(Math.floor(track.bed[0]) - 2, L - 2)) - d.widen;
+    const uR = (opts.tight ? Math.ceil(track.bed[1]) + 2 : Math.max(Math.ceil(track.bed[1]) + 2, Rt + 2)) + d.widen;
     const c0 = (uL + uR) / 2;
     const g = {
         uL, uR, c0, c0r: Math.round(c0 - 1e-9), Bh: (uR - uL) / 2, rails: R, bed: track.bed,
