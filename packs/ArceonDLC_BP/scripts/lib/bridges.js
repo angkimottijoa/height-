@@ -12,7 +12,7 @@
  * piers, as real ones do (design.straight).
  *
  * Details are drawn with small blocks the way builders do: bolts are buttons
- * on the steel faces, stiffeners are lightning rods, the joints between
+ * on the steel faces, stiffeners are plates and slabs, the joints between
  * concrete segments are chains on the faces, railings are bars. Stone work is
  * never one flat block: it is a weathered mix of stone, stone bricks, tuff,
  * andesite, cracked and mossy bricks (mossier near the ground).
@@ -311,25 +311,26 @@ function trussPier(g, ground) {
 export const BRIDGES = [
     // ---------------------------------------------------------- steel 1
     // Deck plate girders as on the Yamanote line (Ueno, Akihabara): a deep
-    // outer girder each side with stiffeners every 2 blocks and rivet rows,
-    // a grated walkway on triangular brackets outside it with a cable trough
-    // and railing, girders under every rail, floor beams and cross frames,
-    // and steel bents (columns + cross beam on bearing shoes) as piers.
+    // outer girder each side with a stiffener plate every 6 blocks between
+    // the walkway brackets and two rivet rows, a grated walkway on triangular
+    // brackets outside it with a cable trough and the low grating parapet,
+    // girders under every rail, floor beams and cross frames, and steel bents
+    // (columns + cross beam on bearing shoes) as piers.
     {
         id: 'plate', name: '강판형교 (상로 플레이트 거더, 야마노테선 고가 양식)', group: 'steel',
-        l: 12, span: 18, widen: 0, dyMin: -7, dyMax: 5, steel: true, fillFrom: 3, lift: false,
+        l: 12, span: 18, widen: 0, dyMin: -7, dyMax: 4, steel: true, fillFrom: 3, lift: false,
         section(u, dy, j, g) {
             const e = g.e(u), sd = g.sd(u), P = g.paint;
             const OUT = OUT_W(sd), IN = IN_W(sd);
-            // the parapet as on the Yamanote line: three courses of grating with
-            // bolt heads, chains hung along the top course, a hopper coping and
-            // an iron bar fence on it
+            // the parapet as on the Yamanote line, kept low (no ballast on the deck):
+            // two courses of grating with bolt heads, chains hung along the top
+            // course, a hopper coping and an iron bar fence on it
             if (e < 0) {
                 if (dy === -1)
                     return j % 2 === 1 ? bolt(OUT_F(sd)) : null; // rivets on the edge channel
-                if (dy === 0 || dy === 1)
+                if (dy === 0)
                     return bolt(OUT_F(sd)); // bolt heads on the grating
-                if (dy === 2)
+                if (dy === 1)
                     return CHAIN; // chains hung from the coping
                 return null;
             }
@@ -338,11 +339,11 @@ export const BRIDGES = [
                     return P.main; // edge channel
                 if (dy === -2)
                     return top(P.slab);
-                if (dy >= 0 && dy <= 2)
+                if (dy === 0 || dy === 1)
                     return P.grate; // grating panels
-                if (dy === 3)
+                if (dy === 2)
                     return ST('hopper', { facing_direction: 0, toggle_bit: false }); // coping
-                if (dy === 4)
+                if (dy === 3)
                     return 'iron_bars'; // fence
                 return null;
             }
@@ -363,10 +364,12 @@ export const BRIDGES = [
                 if (e === 2) {
                     if (dy === -7)
                         return P.slab; // outer bottom flange
-                    if (dy >= -6 && dy <= -3 && j % 2 === 0)
-                        return P.stiff(1); // stiffeners
-                    if ((dy === -2 || dy === -6) && j % 2 === 1)
-                        return bolt(OUT_F(sd)); // rivet rows
+                    if (j % 6 === 3 && dy >= -6 && dy <= -3)
+                        return P.main; // web stiffener plate, between the brackets
+                    if (dy === -3 || dy === -6)
+                        return bolt(OUT_F(sd)); // flange rivet rows along the web
+                    if (dy === -2 && j % 2 === 1)
+                        return bolt(OUT_F(sd));
                 }
                 return null;
             }
@@ -379,8 +382,8 @@ export const BRIDGES = [
                     return P.main;
                 if (dy === -7)
                     return P.slab;
-                if (dy >= -6 && dy <= -3 && j % 2 === 0)
-                    return P.stiff(1);
+                if (j % 6 === 3 && dy >= -6 && dy <= -3)
+                    return P.main; // stiffener plate
                 if (dy === -2)
                     return top(P.slab);
                 return null;
@@ -399,8 +402,8 @@ export const BRIDGES = [
                         return top(P.slab);
                     if (dy === -7)
                         return P.slab;
-                    if (dy >= -6 && dy <= -3 && j % 2 === 0)
-                        return P.stiff(1);
+                    if (j % 6 === 3 && dy >= -6 && dy <= -3)
+                        return P.main; // stiffener plate
                     if (dy === -6 && j % 2 === 1)
                         return bolt(d < 0 ? 4 : 5);
                 }
@@ -440,11 +443,11 @@ export const BRIDGES = [
             }
             for (const u of girders)
                 for (const a of [-2, 2])
-                    out.push([u, -8, a, P.stiff(1)]);
+                    out.push([u, -8, a, P.chis]); // bearing stiffeners over the shoes
             // columns: 3x3 steel boxes with a flared capital under the cross beam,
-            // stiffener ribs and a splice band, on a base plate over a stepped
-            // stone plinth (the ribs stop short of the capital and the plinth)
-            const ribTop = -11, splice = Math.round((-10 + ground) / 2);
+            // a bolted splice band halfway and a chiseled collar over the base,
+            // on a base plate over a stepped stone plinth (plain faces, no rods)
+            const splice = Math.round((-10 + ground) / 2);
             for (const cu of cols) {
                 for (let dy = -10; dy > ground + 2; dy--)
                     for (let du = -2; du <= 2; du++)
@@ -452,12 +455,12 @@ export const BRIDGES = [
                             const ad = Math.abs(du), aa = Math.abs(a);
                             const face = ad === 2 && aa === 0 || aa === 2 && ad === 0;
                             if (ad <= 1 && aa <= 1)
-                                out.push([cu + du, dy, a, dy === splice ? P.chis : P.main]);
+                                out.push([cu + du, dy, a, dy === splice || dy === ground + 3 ? P.chis : P.main]);
                             else if (dy === -10 && ad + aa < 4)
                                 // the capital: upside-down stairs flaring out to the cross beam
                                 out.push([cu + du, dy, a, ad === 2 ? stair(P.stairs, du < 0 ? 0 : 1, true) : stair(P.stairs, a > 0 ? 2 : 3, true)]);
-                            else if (face && dy <= ribTop && dy > ground + 3)
-                                out.push([cu + du, dy, a, dy === splice ? P.slab : P.stiff(1)]);
+                            else if (face && dy === splice)
+                                out.push([cu + du, dy, a, P.slab]); // splice cover plate
                             else if ((ad === 2 && aa === 1 || aa === 2 && ad === 1) && (dy === splice + 1 || dy === splice - 1))
                                 out.push([cu + du, dy, a, bolt(ad === 2 ? (du < 0 ? 4 : 5) : (a < 0 ? 3 : 2))]); // splice bolts
                         }
@@ -539,7 +542,7 @@ export const BRIDGES = [
                     return null;
                 if (j % 6 === 0)
                     return top(P.slab);
-                return (e - we(-6)) % 3 === 1 ? P.stiff(2) : null;
+                return (e - we(-6)) % 4 === 1 ? top(P.slab) : null;
             }
             if (dy === -7)
                 return e >= we(-6) ? P.main : e === we(-6) - 1 ? top(P.slab) : null; // bottom flange
@@ -554,7 +557,7 @@ export const BRIDGES = [
                 if (splice && (dy === -3 || dy === -5))
                     return bolt(OUT_F(sd));
                 if (dy === -5)
-                    return P.stiff(2); // horizontal stiffener rib
+                    return top(P.slab); // horizontal stiffener rib
             }
             if (j % 6 === 0) {
                 if (dy === -2 && e < w)
@@ -947,7 +950,7 @@ export function geometry(d, track, opts = {}) {
  * Block text -> something with at(pos): a single block, or a weighted mix
  * ("60%stone,40%tuff") that varies with the position.
  */
-function material(cache, t) {
+export function material(cache, t) {
     let m = cache.get(t);
     if (m === undefined) {
         if (/%|,/.test(t.replace(/\[[^\]]*\]/g, ''))) {
@@ -992,7 +995,7 @@ function lamp(d, g, u, e, dy, j, at) {
 }
 
 /** How much higher the parapets stand than in the drawn sections. */
-const RAISE = 2;
+const RAISE = 1;
 
 /** The deck as a tile for rail.js sweep (no traced lines: every column is laid by area). */
 export function bridgeTile(d, g) {
@@ -1004,11 +1007,14 @@ export function bridgeTile(d, g) {
         w, l: d.l, h: h + RAISE + 1, anchor, dirAng: 0, lines: new Map(), // a row over the parapets for lamps
         cell(k, c, j) {
             const u = uOf(c), dy = k - anchor, f = g.fill, e = g.e(u);
-            // between the track bed and the parapet / walkway: the bed's ballast and top
-            if (!d.openDeck && e >= f.from && e < f.bedE && (dy === 0 || dy === 1)) {
-                const t = dy === 0 ? f.ballast : f.top;
+            // no ballast on a bridge: the deck itself comes up to the sleepers, from the
+            // parapet / walkway to the far one (sleepers and rails lie on it)
+            if (!d.openDeck && e >= f.from && dy === 0) {
+                const t = d.section(u, 0, j, g) ?? d.section(u, -1, j, g);
                 return t ? material(cache, t) : null;
             }
+            if (!d.openDeck && e >= f.from && e < f.bedE && dy === 1)
+                return null;
             // parapets stand a block higher than the track bed (the rails sit lower
             // than the guard walls): the edge zone is drawn one up on its deck edge
             const at = (y) => {
@@ -1024,12 +1030,75 @@ export function bridgeTile(d, g) {
 }
 
 /**
+ * The underside of the deck at each u: the lowest row the deck covers along
+ * most of its length (a sparse rib row below it does not count).
+ */
+function deckBottom(d, g) {
+    if (g._bottom)
+        return g._bottom;
+    const out = new Map(), hollow = [];
+    const cover = (u, dy) => {
+        let n = 0;
+        for (let j = 0; j < d.l; j++)
+            if (d.section(u, dy, j, g))
+                n++;
+        return n / d.l;
+    };
+    for (let u = g.uL - 1; u <= g.uR + 1; u++) {
+        const rows = [];
+        for (let dy = d.dyMin; dy < 0; dy++)
+            rows.push([dy, cover(u, dy)]);
+        const full = rows.filter(r => r[1] >= 0.6).map(r => r[0]);
+        if (!full.length)
+            continue;
+        out.set(u, full[0]);
+        // inside a box girder: open rows between its bottom and top slabs
+        const lo = full[0], hi = full[full.length - 1];
+        for (const [dy, c] of rows)
+            if (dy > lo && dy < hi && c < 0.4)
+                hollow.push([u, dy, d.section(u, lo, 0, g) ?? d.section(u, lo, 1, g)]);
+    }
+    g._bottom = out;
+    g._hollow = hollow;
+    return out;
+}
+/**
+ * Close the gap between a pier's top and the deck: where the top of a pier
+ * column stops 1-4 blocks under the deck's underside, carry its top block up
+ * to meet it (no slit of sky between cap and deck).
+ */
+function closeUp(d, g, cells) {
+    const bottom = deckBottom(d, g);
+    const top = new Map();
+    for (const c of cells)
+        if (c[3]) {
+            const k = c[0] + ',' + c[2];
+            if (!top.has(k) || top.get(k)[1] < c[1])
+                top.set(k, c);
+        }
+    const out = [...cells];
+    // a diaphragm closes a box girder over every pier (and at its ends)
+    for (const [u, dy, t] of g._hollow)
+        if (t && !/button|chain|rod|bars|lantern|light/.test(t))
+            for (const a of [-1, 0, 1])
+                out.push([u, dy, a, t]);
+    for (const [u, dy, a, t] of top.values()) {
+        const b = bottom.get(u);
+        if (b === undefined || b - dy < 2 || b - dy > 5 || /button|chain|rod|bars|slab|stairs|lantern|light/.test(t))
+            continue;
+        for (let y = dy + 1; y < b; y++)
+            out.push([u, y, a, t]);
+    }
+    return out;
+}
+
+/**
  * The pier at one spot, as a pole-like piece (cells "dx,dy,dz" facing north).
  * `seed` shifts the stone mixes so no two piers are laid alike.
  */
 export function pierPiece(d, g, groundDy, tile, seed = 0) {
     const cells = new Map();
-    for (const [u, dy, a, t] of d.pier(g, groundDy)) {
+    for (const [u, dy, a, t] of closeUp(d, g, d.pier(g, groundDy))) {
         if (!t)
             continue;
         const p = tile.material(t).at({ x: u + seed * 97, y: dy, z: a + seed * 61 });

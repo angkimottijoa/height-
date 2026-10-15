@@ -5,7 +5,7 @@
 import { AIR, perm } from '../core/blocks.js';
 import { ask } from '../ui/form.js';
 import { listAssets } from './assets.js';
-import { builtinPole, builtinTile, freeWires, loadPole, presetTile, standPoles, stringWires, sweep, TOP_MIX } from '../lib/rail.js';
+import { builtinPole, builtinTile, freeWires, loadPole, poleSpots, presetTile, standPoles, stringWires, sweep, TOP_MIX } from '../lib/rail.js';
 import { loadTracks, trackNames } from '../lib/track_presets.js';
 import { BRIDGES, bridgeById, bridgeTile, geometry, pierPiece, polish, STEEL } from '../lib/bridges.js';
 import { stamp } from '../lib/rail.js';
@@ -13,10 +13,11 @@ import { loadAll } from '../core/edit.js';
 import { session, unlocked } from '../core/session.js';
 import { bufferStop, endsOf, laneLine, newId, planFromPoints, reversed, saveTrack, thinPts, TrackPaint, trackSamples, turnoutFurniture, yardTile } from '../lib/yard.js';
 import { ensureLoaded } from '../core/loader.js';
+import { buildTunnel, rangeAt, tunnelById, tunnelPole, tunnelRanges, tunnelSize, TUNNELS } from '../lib/tunnels.js';
 import { layout, roadFrom } from './lanes.js';
 
 const BUILTIN_POLE = '@기본', POST_ONLY = '@기둥';
-const BRIDGE_KEYS = ['bridge', 'steel', 'span', 'colGap', 'trussPoles'];
+const BRIDGE_KEYS = ['bridge', 'steel', 'span', 'colGap', 'trussPoles', 'tunnel', 'tunnelType'];
 
 const DETAIL = [
     { key: 'gauge', type: 'slider', label: '레일(모루) 사이 칸 수', default: 2, min: 1, max: 8 },
@@ -169,6 +170,17 @@ export default {
                 options: Object.entries(STEEL).map(([value, s]) => ({ value, label: s.name })),
             },
             { key: 'span', type: 'slider', label: '교량 경간 (교각 사이 칸 수, 트러스·아치는 고정)', default: 0, min: 0, max: 60 },
+            {
+                key: 'tunnel', type: 'dropdown', label: '터널', default: '', options: [
+                    { value: '', label: '만들지 않음' },
+                    { value: 'auto', label: '터널 교차 (땅을 지나는 곳만 터널, 앞은 깎기)' },
+                    { value: 'full', label: '처음부터 끝까지 터널 (교량 대신)' },
+                ],
+            },
+            {
+                key: 'tunnelType', type: 'dropdown', label: '터널 디자인', default: 'natm',
+                options: TUNNELS.map(t => ({ value: t.id, label: t.name })),
+            },
             { key: 'trussPoles', type: 'toggle', label: '트러스교: 전신주를 트러스 수직재 자리에 세우기 (끄면 보통 간격대로)', default: true },
             { key: 'detail', type: 'toggle', label: '기본 선로 고급 설정 (레일 사이 칸 수·블록 비율, 다음 화면)', default: false },
             {
@@ -227,8 +239,10 @@ export default {
         return ask(player, 'tool:railway:detail', '철도 - 기본 선로 세부 설정', unlocked(player) ? DETAIL : DETAIL.filter(x => !BRIDGE_KEYS.includes(x.key)), { submit: '깔기' });
     },
     *run(ctx, v) {
-        if (v.bridge && !unlocked(ctx.player))
-            v = { ...v, bridge: '' }; // hidden until the settings code is given
+        if ((v.bridge || v.tunnel) && !unlocked(ctx.player))
+            v = { ...v, bridge: '', tunnel: '' }; // hidden until the settings code is given
+        if (v.tunnel === 'full')
+            v = { ...v, bridge: '' }; // a tunnel all the way: no bridge
         const parts = [];
         let tile;
         if (v.track === '-')
@@ -248,8 +262,8 @@ export default {
                 else if (d[f.key] === undefined)
                     d[f.key] = f.default;
             }
-            // an open-deck (truss) bridge: no ballast, the sleepers lie on the steel deck
-            if (bridgeById(v.bridge)?.openDeck) {
+            // on a bridge no ballast: the sleepers lie on the deck
+            if (bridgeById(v.bridge)) {
                 d.noBallast = true;
                 d.top = '';
             }
@@ -264,6 +278,30 @@ export default {
         const C = plan?.S ?? null; // the centre line, when it is not just the curve through the points
         const paint = rec ? new TrackPaint(ctx.edit) : new Map();
         let trussPoles = null; // poles hung on the truss verticals: {samples, spots, planes}
+        // the centre line (the plan's, or the curve through the points)
+        let centre = null;
+        function* centreRoad() {
+            if (!centre)
+                centre = C ? { total: C[C.length - 1].s, samples: C } : yield* layout(ctx, v, 1);
+            return centre;
+        }
+        // tunnels: where they run, and the cells around the line they take
+        let tunnel = null, inTunnel = null;
+        if (v.tunnel) {
+            const T = tunnelById(v.tunnelType || 'natm') ?? TUNNELS[0];
+            const bed = tile.rails ? tile : builtinTile({ tracks: v.tracks ?? 2 });
+            const half = Math.max(Math.abs(bed.bed[0]), Math.abs(bed.bed[1])) + 0.5;
+            const { hw, Hc } = tunnelSize(half, v.wireHeight ?? 5);
+            const cr = yield* centreRoad();
+            const { ranges, ground } = yield* tunnelRanges(ctx, cr.samples, cr.total, Hc, v.tunnel);
+            const troad = yield* roadFrom(cr.samples, Math.ceil(2 * (hw + 7)), cr.total);
+            const n = Number(v.tracks ?? 2);
+            tunnel = { T, ranges, ground, troad, info: { hw, Hc, half, pillars: !v.track && n >= 2 && n % 2 === 0 } };
+            inTunnel = new Set();
+            for (const [k, c] of troad.cells)
+                if (rangeAt(ranges, c.s))
+                    inTunnel.add(k);
+        }
         if (v.bridge) {
             // the bridge first: the track is laid over it
             const d = bridgeById(v.bridge);
@@ -273,7 +311,7 @@ export default {
             const g = geometry(d, bed, { paint: v.steel, colGap: tile.fill?.colGap ?? v.colGap, ballast: tile.fill?.ballast, top: tile.fill ? tile.fill.top : TOP_MIX });
             const bt = bridgeTile(d, g);
             const bp = new Map();
-            const curveRoad = C ? { total: C[C.length - 1].s, samples: C } : yield* layout(ctx, v, 1);
+            const curveRoad = yield* centreRoad();
             const total = curveRoad.total, CS = curveRoad.samples;
             let span = d.fixed ? d.span : (Math.floor(v.span) || d.span);
             const at = (s) => {
@@ -352,15 +390,29 @@ export default {
                 release?.();
                 if (gdy >= d.dyMin - 1)
                     continue; // the deck is on the ground here
+                if (inTunnel?.has(Math.floor(p.x) + ',' + Math.floor(p.z)))
+                    continue; // in a tunnel
                 stamp(p, pierPiece(d, g, gdy, bt, piers + 1), v.poleAngle, bp, turned);
                 if (++piers % 2 === 0)
                     yield;
             }
+            // no bridge inside a tunnel
+            if (inTunnel)
+                for (const k of [...bp.keys()]) {
+                    const [x, , z] = k.split(',');
+                    if (inTunnel.has(x + ',' + z))
+                        bp.delete(k);
+                }
             yield* polish(bp);
             for (const [k, perm] of bp)
                 if (perm)
                     paint.set(k, perm);
             parts.push(`${d.name} (교각 ${piers}개, 경간 ${d.straight ? Math.round(total / Math.max(1, spots.length - 1)) : span}칸)`);
+        }
+        if (tunnel) {
+            const n = yield* buildTunnel(ctx, tunnel.T, tunnel.troad, tunnel.ranges, tunnel.ground, tunnel.info, paint);
+            const len = Math.round(tunnel.ranges.reduce((a, r) => a + r[1] - r[0], 0));
+            parts.push(n ? `${tunnel.T.name.split(' (')[0]} ${tunnel.ranges.length}곳 (약 ${len}칸)` : '터널 없음 (땅이 선로를 덮는 곳이 없음)');
         }
         const road = yield* sweep(ctx, v.track === '-' ? { ...v, clearAir: false } : v.bridge ? { ...v, down: false } : v, tile, paint,
             C ? yield* roadFrom(C, tile.w, C[C.length - 1].s) : null);
@@ -376,7 +428,7 @@ export default {
             const bed = tile.rails ? tile : builtinTile({ tracks: v.tracks ?? 2 });
             const pole = v.pole === BUILTIN_POLE || v.pole === POST_ONLY
                 ? builtinPole(v.pole === POST_ONLY ? 'post' : 'gantry', bed.rails, bed.bed, { lift: (v.wireHeight ?? 5) - 5 }) : loadPole(v.pole);
-            let poles;
+            let poles, hungPole = null;
             if (trussPoles) {
                 // on a truss: whole poles standing at the truss verticals, square to each
                 // straight span, or a gantry beam hung between the verticals
@@ -386,12 +438,36 @@ export default {
                 pole.buttons = tp.buttons;
                 pole.styles = tp.styles;
             }
+            else if (tunnel?.ranges.length) {
+                // in a tunnel the poles hang from the roof (what fits of them), wire anchors kept
+                const hung = tunnelPole({ ...pole, chain: perm('minecraft:iron_chain') }, tunnel.T, tunnel.info);
+                const S = road.samples, turned = new Map(), turnedT = new Map();
+                poles = [];
+                let si = 0;
+                for (const s of poleSpots(road, v)) {
+                    while (si + 1 < S.length && S[si].s + 1e-6 < s)
+                        si++;
+                    const inside = rangeAt(tunnel.ranges, s);
+                    const st = stamp(S[si], inside ? hung : pole, v.poleAngle, paint, inside ? turnedT : turned);
+                    st.hung = !!inside;
+                    poles.push(st);
+                    if (poles.length % 4 === 0)
+                        yield;
+                }
+                hungPole = hung;
+            }
             else
                 poles = yield* standPoles(road, pole, v, paint);
             parts.push(`전신주 ${poles.length}개`);
             if (v.wires) {
                 if (!pole.buttons.length)
                     ctx.say('§e전신주 에셋 안에 버튼이 없어 전선을 걸 곳이 없습니다 (애자 끝에 버튼을 달아 다시 저장하세요)');
+                else if (hungPole) {
+                    // into, through and out of a tunnel only the wires that fit inside it
+                    for (let i = 0; i + 1 < poles.length; i++)
+                        yield* stringWires([poles[i], poles[i + 1]], poles[i].hung || poles[i + 1].hung ? hungPole : pole, v, paint);
+                    parts.push(`전선 ${pole.buttons.length}가닥`);
+                }
                 else
                     parts.push(`전선 ${yield* stringWires(poles, pole, v, paint)}가닥`);
             }

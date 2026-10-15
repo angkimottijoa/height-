@@ -308,3 +308,33 @@ for (const f of ['mesh', 'grate']) {
   }
   check(spots[true] === 4 && spots[false] > 4, `truss poles: on = at the verticals (${spots[true]}), off = usual spacing (${spots[false]})`);
 }
+
+// ---- tunnels: through a hill only where the ground covers the crown ('auto'), all the way ('full'), or none
+{
+  const hill = (dim) => { for (let x = -10; x <= 110; x++) for (let z = -30; z <= 30; z++) { put(dim, x, -1, z, 'grass_block'); const h = Math.round(26 - Math.abs(x - 55) * 1.1); for (let y = 0; y < h; y++) put(dim, x, y, z, 'stone'); } };
+  for (const type of ['natm', 'box']) {
+    for (const mode of ['', 'auto', 'full']) {
+      const { dim, player } = world({ id: 'tn' + type + mode });
+      session(player).settings.unlocked = true;
+      hill(dim);
+      const m = await runTool(railway, { tunnel: mode, tunnelType: type, bridge: 'psci', poleEvery: 16 }, { player, points: [{ x: 0, y: 0, z: 0 }, { x: 110, y: 0, z: 0 }] });
+      const last = m.slice(-1)[0];
+      const get = (x, y, z) => dim.map.get(`${x},${y},${z}`)?.id ?? 'minecraft:air';
+      const clear = [4, 6, 8].every(y => get(55, y, 4).endsWith('air') || /button|hopper|chain|light|barrier/.test(get(55, y, 4)));
+      const lining = [-12, 12].some(z => !/stone$|air/.test(get(55, 4, z)));
+      if (mode === 'auto')
+        check(/터널 1곳/.test(last) && clear && lining && /교각/.test(last), `${type} auto: one tunnel under the hill, clear inside, lined, the bridge kept outside it: ${last}`);
+      if (mode === 'full')
+        check(/약 110칸/.test(last) && !/교각/.test(last), `${type} full: tunnel all the way, no bridge: ${last}`);
+      if (!mode)
+        check(!/터널/.test(last), `${type} none: no tunnel`);
+      if (mode === 'auto') {
+        const inside = [...dim.map].filter(([k, p]) => { const [x, y, z] = k.split(',').map(Number); return x > 47 && x < 63 && y > 0 && y < 9 && Math.abs(z) < 9 && /andesite|stone_brick|cut_copper/.test(p.id) && !/slab/.test(p.id); }).length;
+        check(inside < 40, `${type} auto: no bridge parts left inside the tunnel (${inside} stray)`);
+      }
+    }
+  }
+  const { dim, player } = world({ id: 'tnlock' });
+  const m = await runTool(railway, { tunnel: 'full' }, { player, points: [{ x: 0, y: 0, z: 0 }, { x: 40, y: 0, z: 0 }] });
+  check(!/터널/.test(m.slice(-1)[0]) && !railway.fieldsFor(player).some(f => f.key === 'tunnel'), 'tunnels are hidden and skipped until the settings code is given');
+}
