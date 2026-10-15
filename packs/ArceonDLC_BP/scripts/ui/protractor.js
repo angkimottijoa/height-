@@ -40,6 +40,7 @@ import { ask, blockValue, menu } from './form.js';
 const fmt = (p) => `${p.x} ${p.y} ${p.z}`;
 const c = (p) => ({ x: p.x + 0.5, y: p.y + 0.5, z: p.z + 0.5 });
 const deg = (r) => r * 180 / Math.PI;
+const GUIDE_BLOCKS = 48; // guides shown as blocks: this many blocks along each
 const SHAPE_NAME = (set) => ({ para: '사각형', tri: '삼각형', regular: `정${set.n}각형`, circle: '원' })[set.shape] ?? '도형';
 const isRuler = (set) => set?.mode === 'ruler';
 const tagOf = (set) => isRuler(set) ? '§a[줄자]§r' : '§b[각도기]§r';
@@ -52,7 +53,7 @@ function bar(player, msg) {
     }
 }
 
-export const DEFAULTS = { angle: 90, plane: 'h', sides: 'both', guideLen: 256, shape: 'para', n: 5, block: 'stone', fill: false, vanilla: false, mode: 'prot', show: 'line' };
+export const DEFAULTS = { angle: 90, plane: 'h', sides: 'both', guideLen: 256, shape: 'para', n: 5, block: 'stone', fill: false, vanilla: false, mode: 'prot', show: 'line', guideShow: 'line' };
 export function protState(player) {
     const s = session(player);
     if (!s.prot || !Array.isArray(s.prot.pts))
@@ -345,6 +346,13 @@ export async function protMenu(player) {
                     { value: 'both', label: '선 + 블록' },
                 ],
             },
+            {
+                key: 'guideShow', type: 'dropdown', label: '노란 안내선 보기', default: set.guideShow, options: [
+                    { value: 'line', label: '선으로' },
+                    { value: 'block', label: `블록으로 (그 각도로 놓일 블록, 가까운 ${GUIDE_BLOCKS}칸)` },
+                    { value: 'both', label: '선 + 블록' },
+                ],
+            },
             { key: 'angle', type: 'slider', label: '각도 (선과 선이 만나는 각, °)', default: Number(set.angle), min: 1, max: 179 },
             { key: 'angleText', type: 'text', label: '각도 직접 입력 (소수 가능, 비우면 위 슬라이더)', placeholder: '예: 37.5', default: '' },
             {
@@ -365,7 +373,7 @@ export async function protMenu(player) {
         ], { submit: '저장' });
         if (r) {
             const typed = parseFloat(String(r.angleText ?? '').replace(',', '.'));
-            s.settings.prot = { ...set, angle: typed > 0 && typed < 180 ? typed : r.angle, plane: r.plane, sides: r.sides, guideLen: r.guideLen, vanilla: !!r.vanilla, mode: r.mode, show: r.show };
+            s.settings.prot = { ...set, angle: typed > 0 && typed < 180 ? typed : r.angle, plane: r.plane, sides: r.sides, guideLen: r.guideLen, vanilla: !!r.vanilla, mode: r.mode, show: r.show, guideShow: r.guideShow };
             save(player);
             bar(player, isRuler(s.settings.prot) ? '§a[줄자]§r 설정 저장' : `§e[각도기] ${s.settings.prot.angle}° 안내선`);
         }
@@ -686,8 +694,17 @@ export function protPreview(s, P) {
             rulerTicks(P, a, b);
     }
     if (!ruler) {
-        for (const g of guides(pts, set))
-            P.seg(g.o, add(g.o, mul(g.d, g.L)), 'guide', 0.05);
+        for (const g of guides(pts, set)) {
+            if (set.guideShow !== 'block')
+                P.seg(g.o, add(g.o, mul(g.d, g.L)), 'guide', 0.05);
+            if (set.guideShow !== 'line') {
+                // the blocks a line along the guide would take (the nearest ones)
+                const cells = new Set();
+                blocksOn(g.o, add(g.o, mul(g.d, Math.min(g.L, GUIDE_BLOCKS))), cells);
+                cells.delete(`${Math.floor(g.o.x)},${Math.floor(g.o.y)},${Math.floor(g.o.z)}`);
+                P.cells([...cells], 'guide', 'guideFace');
+            }
+        }
         // the angle at the last corner, as a small arc
         if (pts.length >= 3) {
             const [A, B, C] = pts.slice(-3).map(c);

@@ -13,7 +13,7 @@ import { MolangVariableMap } from '@minecraft/server';
 
 export const COLORS = {
     line: [1, 1, 1, 1], point: [0.35, 0.95, 1, 1], guide: [1, 0.85, 0.2, 0.95], shape: [0.35, 1, 0.45, 1],
-    saved: [1, 0.4, 0.9, 1], arc: [1, 0.55, 0.15, 1], tick: [1, 1, 1, 0.9], face: [1, 1, 1, 0.22], block: [1, 1, 1, 0.28],
+    saved: [1, 0.4, 0.9, 1], arc: [1, 0.55, 0.15, 1], tick: [1, 1, 1, 0.9], face: [1, 1, 1, 0.22], block: [1, 1, 1, 0.28], guideFace: [1, 0.85, 0.2, 0.25],
 };
 const VANILLA = { line: 'minecraft:endrod', point: 'minecraft:villager_happy', guide: 'minecraft:basic_flame_particle', shape: 'minecraft:villager_happy', saved: 'minecraft:blue_flame_particle', arc: 'minecraft:basic_flame_particle', tick: 'minecraft:endrod', face: 'minecraft:endrod', block: 'minecraft:endrod' };
 

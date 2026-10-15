@@ -299,6 +299,11 @@ check(errs.length === 0, 'no error messages ' + JSON.stringify(errs));
   P.protPreview(s, fake);
   check(kinds.has('tick') && [...kinds].some(k => k.startsWith('cells')) && !kinds.has('guide') && !kinds.has('line'), 'ruler mode as blocks: ticks + blocks, no guides: ' + [...kinds].join(','));
   s.settings.prot = { ...s.settings.prot, mode: 'prot', show: 'line' };
+  // the yellow guides as blocks
+  kinds.clear();
+  const gcells = [];
+  P.protPreview({ ...s, settings: { ...s.settings, prot: { ...s.settings.prot, guideShow: 'block' } } }, { ...fake, cells: (ks, k) => { kinds.add('cells:' + k); if (k === 'guide') gcells.push(ks.length); } });
+  check(kinds.has('cells:guide') && !kinds.has('guide') && gcells.length >= 1 && gcells.every(n => n >= 30 && n <= 97), 'guides shown as blocks (no yellow line): ' + gcells.join(','));
   // the ruler: a diagonal measured exactly
   const m = P.measure([{ x: 0, y: 40, z: 0 }, { x: 10, y: 40, z: 10 }]);
   check(/14\.142칸/.test(m) && /블록/.test(m), 'the ruler gives the exact length of a diagonal: ' + m);
