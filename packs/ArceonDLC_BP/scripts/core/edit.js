@@ -8,10 +8,10 @@
  *   edit.get({x, y, z});            // buffered value, or the world
  *   await edit.commit('도로');       // place it, record undo
  */
-import { system } from '@minecraft/server';
+import { StructureSaveMode, system, world } from '@minecraft/server';
 import { AIR, isAirId, isSolidId } from './blocks.js';
-import { placeAll } from './loader.js';
-import { session } from './session.js';
+import { placeAll, withLoaded } from './loader.js';
+import { save, session } from './session.js';
 
 /** The player's "load unloaded chunks" setting (default on). */
 export const loadAll = (player) => session(player).settings.loadAll !== false;
@@ -156,7 +156,7 @@ export class EditSession {
             const h = history(player);
             h.undo.push({ label, dim: this.dim.id, blocks: out.before });
             if (h.undo.length > UNDO_DEPTH)
-                h.undo.shift();
+                drop(h.undo.shift());
             h.redo.length = 0;
         }
         if (out.skipped)
@@ -175,7 +175,89 @@ export function say(player, msg) {
 }
 
 /** Swap a recorded change set back, returning the inverse for redo/undo. */
+// ---------------------------------------------------------------- big edits
+/*
+ * Very big edits (the city map) keep their undo as structures saved in the
+ * world (engine side, not script memory): a snapshot of each area before it
+ * is written. Undo places them back (snapshotting what is there first, for
+ * redo). The record is also kept with the player (session), so it can still be
+ * undone after leaving and coming back.
+ */
+let snapSeq = 0;
+/** Save a box as a structure in the world; its id, or null. The box must be loaded. */
+export function snapshot(dim, from, to) {
+    const id = `arcundo:${Date.now().toString(36)}_${(snapSeq++).toString(36)}`;
+    try {
+        world.structureManager.createFromWorld(id, dim, from, to, { saveMode: StructureSaveMode.World, includeEntities: false, includeBlocks: true });
+        return id;
+    }
+    catch (e) {
+        return null;
+    }
+}
+/** Forget a record: its structures are deleted from the world. */
+function drop(rec) {
+    for (const s of rec?.structs ?? [])
+        try {
+            world.structureManager.delete(s.id);
+        }
+        catch (e) { }
+}
+/** Remember a structure-backed record: in the history and with the player (survives a rejoin). */
+export function pushBig(player, rec, { fresh = true } = {}) {
+    const h = history(player);
+    rec.key = rec.key ?? `${Date.now().toString(36)}${(snapSeq++).toString(36)}`;
+    h.undo.push(rec);
+    if (h.undo.length > UNDO_DEPTH)
+        drop(h.undo.shift());
+    if (fresh) {
+        // a new edit: what could be redone is gone
+        for (const r of h.redo)
+            drop(r);
+        h.redo.length = 0;
+    }
+    const s = session(player);
+    s.bigUndo = [...(s.bigUndo ?? []).filter(r => r.key !== rec.key), { key: rec.key, label: rec.label, dim: rec.dim, structs: rec.structs }].slice(-5);
+    save(player);
+}
+function forgetBig(player, key) {
+    const s = session(player);
+    if (s.bigUndo?.some(r => r.key === key)) {
+        s.bigUndo = s.bigUndo.filter(r => r.key !== key);
+        save(player);
+    }
+}
+async function replayStructs(player, rec) {
+    const dim = player.dimension, sm = world.structureManager, out = [];
+    for (const st of [...rec.structs].reverse()) {
+        await withLoaded(dim, st.from, st.to, async () => {
+            const id = snapshot(dim, st.from, st.to);
+            if (id)
+                out.push({ id, from: st.from, to: st.to });
+            try {
+                sm.place(st.id, dim, st.from, { includeEntities: false });
+            }
+            catch (e) { }
+            try {
+                sm.delete(st.id);
+            }
+            catch (e) { }
+        });
+    }
+    return { label: rec.label, dim: rec.dim, structs: out.reverse(), blocks: [], key: rec.key };
+}
+const size = (rec) => rec.structs ? `${rec.structs.length}구역` : `${rec.blocks.length}블록`;
+
 async function replay(player, rec) {
+    if (rec.structs) {
+        busy.add(player.id);
+        try {
+            return await replayStructs(player, rec);
+        }
+        finally {
+            busy.delete(player.id);
+        }
+    }
     busy.add(player.id);
     try {
         const list = [];
@@ -191,7 +273,13 @@ async function replay(player, rec) {
 
 export async function undo(player) {
     const h = history(player);
-    const rec = h.undo.pop();
+    let rec = h.undo.pop();
+    if (!rec) {
+        // after a rejoin: a big edit kept with the player
+        const big = session(player).bigUndo ?? [];
+        if (big.length)
+            rec = big[big.length - 1];
+    }
     if (!rec) {
         say(player, '§c되돌릴 작업이 없습니다.');
         return;
@@ -201,8 +289,10 @@ export async function undo(player) {
         say(player, '§c그 작업을 한 차원(dimension)으로 가서 되돌리세요.');
         return;
     }
+    if (rec.structs)
+        forgetBig(player, rec.key);
     h.redo.push(await replay(player, rec));
-    say(player, `§a되돌림: ${rec.label} (${rec.blocks.length}블록)`);
+    say(player, `§a되돌림: ${rec.label} (${size(rec)})`);
 }
 
 export async function redo(player) {
@@ -217,8 +307,12 @@ export async function redo(player) {
         say(player, '§c그 작업을 한 차원(dimension)으로 가서 다시 하세요.');
         return;
     }
-    h.undo.push(await replay(player, rec));
-    say(player, `§a다시 함: ${rec.label} (${rec.blocks.length}블록)`);
+    const back = await replay(player, rec);
+    if (back.structs)
+        pushBig(player, back, { fresh: false });
+    else
+        h.undo.push(back);
+    say(player, `§a다시 함: ${rec.label} (${size(rec)})`);
 }
 
 /** Run a generator over several ticks. Resolves with its return value. */

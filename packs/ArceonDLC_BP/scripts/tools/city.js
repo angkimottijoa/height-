@@ -17,8 +17,8 @@
  */
 import { system } from '@minecraft/server';
 import { perm } from '../core/blocks.js';
-import { history, loadAll } from '../core/edit.js';
-import { placeAll } from '../core/loader.js';
+import { loadAll, pushBig, snapshot } from '../core/edit.js';
+import { placeAll, withLoaded } from '../core/loader.js';
 import { unlocked } from '../core/session.js';
 import { CITIES } from '../data/cities.js';
 
@@ -59,10 +59,16 @@ function city(id, turn = 0) {
         throw new Error('그 도시가 없습니다');
     const raw = JSON.parse(c.data);
     const cs = Math.cos(turn * Math.PI / 180), sn = Math.sin(turn * Math.PI / 180);
+    // points: half-block units, each one relative to the one before
     const pts = (a, from) => {
         const out = [];
-        for (let i = from; i + 1 < a.length; i += 2)
-            out.push(turn ? [a[i] * cs - a[i + 1] * sn, a[i] * sn + a[i + 1] * cs] : [a[i], a[i + 1]]);
+        let qx = 0, qz = 0;
+        for (let i = from; i + 1 < a.length; i += 2) {
+            qx += a[i];
+            qz += a[i + 1];
+            const x = qx / 2, z = qz / 2;
+            out.push(turn ? [x * cs - z * sn, x * sn + z * cs] : [x, z]);
+        }
         return out;
     };
     const box = (p, pad = 0) => {
@@ -215,10 +221,10 @@ function buildMapTile(d, o, x0, z0, x1, z1, R, minY, maxY, rails = 'line') {
     };
     const M = {
         ground: P('smooth_quartz'), green: P('grass_block'), water: P('light_blue_concrete'),
-        major: P('smooth_sandstone'), bridge: P('sandstone'), minor: P('snow'), walk: P('light_gray_concrete_powder'),
+        major: P('smooth_sandstone'), bridge: P('sandstone'), minor: P('snow'), walk: P('light_gray_wool'),
         low: P('white_terracotta'), mid: P('light_blue_terracotta'), high: P('gray_concrete'), line: P('gray_concrete'), lineDark: P('black_concrete'),
-        platform: P('pink_concrete_powder'), rail: P('black_concrete'), railBridge: P('red_concrete'),
-        gravel: P('gravel'), railNS: P('rail', { rail_direction: 0 }), railEW: P('rail', { rail_direction: 1 }),
+        platform: P('pink_wool'), rail: P('black_concrete'), railBridge: P('red_concrete'),
+        gravel: P('tuff'), railNS: P('rail', { rail_direction: 0 }), railEW: P('rail', { rail_direction: 1 }),
     };
     const area = (pts, f, pad = 0) => {
         const G = polyGrid(pts, x0 - 1, z0 - 1, x1 + 1, z1 + 1);
@@ -298,7 +304,7 @@ function buildTile(d, o, x0, z0, x1, z1, R, minY, maxY, flat = true, rails = 'tr
     const tb = [x0, z0, x1, z1], g = o.y;
     const B = {
         grass: P('grass_block'), water: P('water'), asphalt: P('gray_concrete'), line: P('white_concrete'),
-        walk: P('smooth_stone'), plaza: P('polished_andesite'), deck: P('light_gray_concrete'), gravel: P('gravel'),
+        walk: P('smooth_stone'), plaza: P('polished_andesite'), deck: P('light_gray_concrete'), gravel: P('tuff'),
         railNS: P('rail', { rail_direction: 0 }), railEW: P('rail', { rail_direction: 1 }), platform: P('smooth_stone'),
         edge: P('yellow_concrete'), roof: P('smooth_stone'), footprint: P('white_concrete'), log: P('oak_log'), leaves: P('oak_leaves', { persistent_bit: true }),
     };
@@ -519,20 +525,30 @@ export default {
         // nearest the station first
         tiles.sort((a, b) => Math.hypot(a[0] + TILE / 2, a[1] + TILE / 2) - Math.hypot(b[0] + TILE / 2, b[1] + TILE / 2));
         let done = 0, skipped = 0, n = 0;
-        const before = []; // what was there: the whole city is one step of undo
+        const structs = []; // what was there, saved as structures: the whole city is one step of undo
         for (const [tx, tz] of tiles) {
             const tx1 = Math.min(X1, tx + TILE - 1), tz1 = Math.min(Z1, tz + TILE - 1), mode = v.mode ?? 'map';
             const cells = mode === 'map' ? buildMapTile(d, o, tx, tz, tx1, tz1, R, minY, maxY, v.rails ?? 'line')
                 : buildTile(d, o, tx, tz, tx1, tz1, R, minY, maxY, mode !== '3d', v.rails === 'none' ? 'none' : 'track');
             const list = [];
+            let y0 = Infinity, y1 = -Infinity;
             for (const [k, p] of cells) {
                 const [x, y, z] = k.split(',').map(Number);
                 list.push([x, y, z, p]);
+                y0 = Math.min(y0, y);
+                y1 = Math.max(y1, y);
+            }
+            cells.clear();
+            if (list.length) {
+                // the tile as it was, kept for undo (in the world, not in script memory)
+                const from = { x: tx + o.x, y: y0, z: tz + o.z }, to = { x: tx1 + o.x, y: y1, z: tz1 + o.z };
+                const id = await withLoaded(ctx.dim, from, to, async () => snapshot(ctx.dim, from, to));
+                if (id)
+                    structs.push({ id, from, to });
             }
             const r = await placeAll(ctx.dim, list, { load: loadAll(ctx.player) });
+            r.before.length = 0;
             done += r.done;
-            for (const e of r.before)
-                before.push(e);
             skipped += r.skipped;
             n++;
             try {
@@ -541,13 +557,9 @@ export default {
             catch (e) { }
             await tick();
         }
-        if (before.length) {
-            const h = history(ctx.player);
-            h.undo.push({ label: `도시 지도 (${d.name})`, dim: ctx.dim.id, blocks: before });
-            if (h.undo.length > 15)
-                h.undo.shift();
-            h.redo.length = 0;
-        }
+        if (structs.length)
+            pushBig(ctx.player, { label: `도시 지도 (${d.name})`, dim: ctx.dim.id, structs, blocks: [] });
+        parsed.clear(); // free the parsed map
         return `${d.name} ${{ map: '지도', flat: '평면', '3d': '입체' }[v.mode ?? 'map']} 반경 ${R}m, 회전 ${turn}°: ${tiles.length}구역, ${done}블록${skipped ? ` (건너뜀 ${skipped})` : ''} §8지도 © OpenStreetMap`;
     },
 };

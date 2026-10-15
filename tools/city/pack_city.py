@@ -5,7 +5,7 @@ packs/ArceonDLC_BP/scripts/data/city_<name>.js, each `export default '<json>'`
 
     python3 tools/city/pack_city.py tools/city/out/tokyo.json:tokyo:도쿄역 ...
 
-Compact form (coordinates in blocks, one decimal):
+Compact form (points: half blocks, each relative to the one before):
   { n, a, ext:[x0,z0,x1,z1],
     b: [[h, min (+1000: a roof only), x,z, ...]], buildings
     r: [[kind, w, flags, layer, x,z, ...]],   roads (flags 1 bridge, 2 tunnel, 4 area)
@@ -23,9 +23,12 @@ OUT = os.path.join(HERE, '..', '..', 'packs', 'ArceonDLC_BP', 'scripts', 'data')
 
 
 def flat(pts):
-    out = []
+    """Points in half-block units, each relative to the one before (small numbers, short text)."""
+    out, px, pz = [], 0, 0
     for x, z in pts:
-        out += [round(x, 1), round(z, 1)]
+        qx, qz = round(x * 2), round(z * 2)
+        out += [qx - px, qz - pz]
+        px, pz = qx, qz
     return out
 
 

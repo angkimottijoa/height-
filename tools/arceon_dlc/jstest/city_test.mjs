@@ -46,15 +46,24 @@ const kinds = new Map();
 for (const [k, p] of dim.map) kinds.set(p.id, (kinds.get(p.id) ?? 0) + 1);
 console.log([...kinds].sort((a, b) => b[1] - a[1]).map(([k, v]) => k.replace('minecraft:', '') + ' ' + v).join(', '));
 check(msgs.some(m => /지도 반경 150m/.test(m)) && dim.map.size === 301 * 301 && [...dim.map.keys()].every(k => +k.split(',')[1] === g), 'map style is the default: every column of the area drawn, all at ground level');
-check(kinds.get('minecraft:black_concrete') > 300 && !kinds.has('minecraft:rail') && kinds.get('minecraft:smooth_sandstone') > 1000, 'railways as dark lines, main roads pale yellow');
+check(!kinds.has('minecraft:light_gray_concrete_powder') && !kinds.has('minecraft:pink_concrete_powder') && !kinds.has('minecraft:gravel') && kinds.get('minecraft:black_concrete') > 300 && !kinds.has('minecraft:rail') && kinds.get('minecraft:smooth_sandstone') > 1000, 'railways as dark lines, main roads pale yellow, nothing that falls (wool, not powder)');
 ({ dim, player } = world({ id: 'cn', location: { x: 0.5, y: -59, z: 0.5 } }));
 session(player).settings.unlocked = true;
 await runTool(city, { city: 'shinjuku', range: 100, rails: 'none' }, { player });
-check(![...dim.map.values()].some(p => p.id === 'minecraft:pink_concrete_powder' || p.id === 'minecraft:red_concrete'), 'railways off: no tracks or platforms');
+check(![...dim.map.values()].some(p => p.id === 'minecraft:pink_wool' || p.id === 'minecraft:red_concrete'), 'railways off: no tracks or platforms');
 // one undo takes the whole city away again
-const { undo } = await import('./scripts/core/edit.js');
+const { undo, redo, history } = await import('./scripts/core/edit.js');
+const built = [...dim.map].filter(([k, p]) => p.id !== 'minecraft:air').length;
 await undo(player);
 check([...dim.map.values()].every(p => p.id === 'minecraft:air') && player.msgs.some(m => /되돌림: 도시 지도/.test(m)), 'undo: the whole city is gone in one step');
+check(mc.world.structureManager.getWorldStructureIds().filter(i => i.startsWith('arcundo:')).length > 0, 'undo/redo kept as structures in the world (not in script memory)');
+await redo(player);
+check([...dim.map].filter(([k, p]) => p.id !== 'minecraft:air').length === built, 'redo: the city is back');
+// after leaving and coming back (the history is gone), undo still works from what the player keeps
+history(player).undo.length = 0;
+await undo(player);
+check([...dim.map.values()].every(p => p.id === 'minecraft:air'), 'undo still works after a rejoin');
+check(!(session(player).bigUndo ?? []).length, 'and it is not undone twice');
 
 // turned to true north: the tracks are no longer along Z
 ({ dim, player } = world({ id: 'c2', location: { x: 0.5, y: -59, z: 0.5 } }));
