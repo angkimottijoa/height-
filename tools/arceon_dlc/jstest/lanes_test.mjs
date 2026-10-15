@@ -108,7 +108,9 @@ check(/곡선 점이 2개 이상/.test(m.slice(-1)[0]) && dim.count() === 0, 'no
 // ---- road bridges (basic options, no code needed): PSC beam bridge and concrete box bridge
 {
   const lanesT = (await import('./scripts/tools/lanes.js')).default;
-  for (const b of ['girder', 'box']) {
+  const { ROAD_BRIDGES } = await import('./scripts/lib/road_bridge.js');
+  check(ROAD_BRIDGES.length === 7, '7 road bridge designs');
+  for (const b of ROAD_BRIDGES.map(r => r.value)) {
     const { dim, player } = world({ id: 'rbr' + b });
     for (let x = -20; x <= 70; x++) for (let z = -30; z <= 30; z++) put(dim, x, -20, z, 'grass_block');
     const m = await runTool(lanesT, { bridge: b, left: 2, right: 2 }, { player, points: [{ x: 0, y: 0, z: 0 }, { x: 50, y: 0, z: 0 }] });

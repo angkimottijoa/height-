@@ -339,3 +339,16 @@ for (const f of ['mesh', 'grate']) {
   const m = await runTool(railway, { tunnel: 'full' }, { player, points: [{ x: 0, y: 0, z: 0 }, { x: 40, y: 0, z: 0 }] });
   check(!/터널/.test(m.slice(-1)[0]) && !railway.fieldsFor(player).some(f => f.key === 'tunnel'), 'tunnels are hidden and skipped until the settings code is given');
 }
+
+// ---- embankments: slope and retaining wall, down to the ground, a level shoulder for the poles
+for (const e of ['slope', 'wall']) {
+  const { dim, player } = world({ id: 'emb' + e });
+  for (let x = -10; x <= 50; x++) for (let z = -40; z <= 40; z++) put(dim, x, -7, z, 'grass_block');
+  const m = await runTool(railway, { embank: e, poleEvery: 20 }, { player, points: [{ x: 0, y: 0, z: 0 }, { x: 40, y: 0, z: 0 }] });
+  const get = (x, y, z) => dim.map.get(`${x},${y},${z}`)?.id ?? 'minecraft:air';
+  const under = [-1, -3, -6].every(y => get(20, y, 0) === 'minecraft:dirt');
+  const shoulder = [9, 10, 12, 13].every(z => get(20, 0, z) === 'minecraft:grass_block');
+  const wall = e === 'wall' ? [...dim.map].some(([k, p]) => p.id === 'minecraft:light_gray_concrete') && [...dim.map].some(([, p]) => p.id === 'minecraft:dark_oak_fence') : true;
+  const slope = [...dim.map].filter(([k, p]) => k.split(',')[0] === '20' && p.id !== 'minecraft:air').map(([k]) => Math.abs(+k.split(',')[2]));
+  check(/언덕/.test(m.slice(-1)[0]) && under && shoulder && wall && Math.max(...slope) >= 17, `embankment ${e}: filled to the ground, shoulder, ${e === 'wall' ? 'retaining wall + fence, ' : ''}reaches out ${Math.max(...slope)}`);
+}

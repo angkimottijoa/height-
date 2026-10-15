@@ -2,12 +2,13 @@
  * Railway (철도): track, catenary poles and wires along the curve points.
  * See lib/rail.js for how each part is laid.
  */
-import { AIR, perm } from '../core/blocks.js';
+import { AIR, parseBlock, parsePattern, perm } from '../core/blocks.js';
 import { ask } from '../ui/form.js';
 import { listAssets } from './assets.js';
 import { builtinPole, builtinTile, freeWires, loadPole, poleSpots, presetTile, standPoles, stringWires, sweep, TOP_MIX } from '../lib/rail.js';
 import { loadTracks, trackNames } from '../lib/track_presets.js';
 import '../lib/low_bridges.js'; // the low bridges join BRIDGES
+import '../lib/jp_bridges.js'; // and the Japanese plate girders
 import { BRIDGES, bridgeById, bridgeTile, endPiece, geometry, pierPiece, polish, STEEL } from '../lib/bridges.js';
 import { stamp } from '../lib/rail.js';
 import { loadAll } from '../core/edit.js';
@@ -129,6 +130,92 @@ function* safetyFence(road, w, v, paint) {
     return cells;
 }
 
+/**
+ * An embankment (언덕) under a track on the ground: the bed is carried on
+ * earth down to the ground on both sides, with a level grass shoulder (4
+ * blocks) beside the bed for the poles.
+ *   slope - grass slopes at 1:1 (dirt inside, a gravel toe where they meet the ground).
+ *   wall  - as along the old city lines: a green-covered slope at 1:1 from the
+ *           bed down to a retaining wall (rubble stone footing, concrete
+ *           above, up to 4 high) with a wooden fence on top.
+ * Tunnels are left out; it is not built under a bridge.
+ */
+function* embankment(ctx, S, total, w, v, paint, skip) {
+    const half = w / 2, SHOULDER = 4, SPREAD = 30;
+    const road = yield* roadFrom(S, Math.ceil(w + 2 * SPREAD), total);
+    const edit = ctx.edit, far = loadAll(ctx.player);
+    const B = (t) => parseBlock(t);
+    const dirt = B('dirt'), grass = B('grass_block'), toe = B('gravel'), moss = B('moss_block');
+    const stone = MASON_B, con = B('light_gray_concrete'), conB = B('andesite'), fence = B('dark_oak_fence');
+    const loaded = new Set();
+    const put = (x, y, z, p) => {
+        const k = `${x},${y},${z}`;
+        if (!paint.has(k))
+            paint.set(k, p);
+    };
+    let n = 0, cells = 0;
+    for (const [key, c] of road.cells) {
+        if (skip?.has(key))
+            continue;
+        const [x, z] = key.split(',').map(Number);
+        const ck = (x >> 4) + ',' + (z >> 4);
+        if (far && !loaded.has(ck)) {
+            loaded.add(ck);
+            const release = yield ensureLoaded(ctx.dim, { x: (x >> 4) * 16, y: c.y, z: (z >> 4) * 16 }, { x: (x >> 4) * 16 + 15, y: c.y, z: (z >> 4) * 16 + 15 });
+            release?.();
+        }
+        const y = c.y, g = edit.highest(x, z, y - 60, y - 1);
+        const H = y - 1 - g; // blocks to fill under the bed level
+        if (H <= 0 || H >= 59)
+            continue; // on the ground already, or no ground found
+        const d0 = Math.abs(c.uc) - half; // distance out from the bed's edge
+        if (d0 <= 0.5) {
+            put(x, y, z, grass); // (only where the bed left the top open)
+            for (let yy = y - 1; yy > g; yy--)
+                put(x, yy, z, dirt); // under the bed
+            cells++;
+            continue;
+        }
+        // a level shoulder beside the bed for the poles and a walkway, then the slope
+        if (d0 <= SHOULDER + 0.5) {
+            for (let yy = y; yy > g; yy--)
+                put(x, yy, z, yy === y ? grass : dirt);
+            cells++;
+            continue;
+        }
+        const d = d0 - SHOULDER;
+        if (v.embank === 'wall') {
+            const Hw = Math.min(H, 4);
+            const dw = 0.5 + (H - Hw); // where the slope reaches the top of the wall
+            if (d < dw) {
+                const top = Math.round(y - 1 - (d - 0.5));
+                for (let yy = top; yy > g; yy--)
+                    put(x, yy, z, yy === top ? (((x * 7 + z * 13) % 5 + 5) % 5 < 4 ? moss : grass) : dirt);
+            }
+            else if (d < dw + 2) {
+                for (let k = 1; k <= Hw; k++)
+                    put(x, g + k, z, k <= Math.min(2, Hw - 1) ? stone.at({ x, y: g + k, z }) : (k === Hw ? conB : con));
+                if (d < dw + 1)
+                    put(x, g + Hw + 1, z, fence); // fence on the inner edge of the wall
+            }
+            else
+                continue;
+        }
+        else {
+            const top = Math.round(y - 1 - (d - 0.5));
+            if (top <= g)
+                continue;
+            for (let yy = top; yy > g; yy--)
+                put(x, yy, z, yy === top ? (top - g <= 1 ? toe : grass) : dirt);
+        }
+        cells++;
+        if (++n % 400 === 0)
+            yield;
+    }
+    return cells;
+}
+const MASON_B = parsePattern('40%cobblestone,25%mossy_cobblestone,20%stone,15%andesite');
+
 export default {
     id: 'railway',
     name: '철도',
@@ -162,7 +249,7 @@ export default {
             {
                 key: 'bridge', type: 'dropdown', label: '교량 (선로를 다리 위에)', default: '', options: [
                     { value: '', label: '없음 (땅 위)' },
-                    ...BRIDGES.map(b => ({ value: b.id, label: (b.group === 'steel' ? '철교: ' : b.group === 'low' ? '저상 (낮은 길 위): ' : '콘크리트교: ') + b.name })),
+                    ...BRIDGES.map(b => ({ value: b.id, label: (b.group === 'steel' ? '철교: ' : b.group === 'jp' ? '일본식 철교: ' : b.group === 'low' ? '저상 (낮은 길 위): ' : '콘크리트교: ') + b.name })),
                 ],
                 tooltip: '곡선 점 높이가 선로 바닥 높이입니다. 교각은 경간마다 땅까지 내려갑니다.',
             },
@@ -221,6 +308,13 @@ export default {
             { key: 'wireGap', type: 'slider', label: '전선 버튼 간격 (칸)', default: 2, min: 1, max: 8 },
             { key: 'sag', type: 'slider', label: '전선 처짐 (칸)', default: 1, min: 0, max: 6 },
             { key: 'wireAt', type: 'text', label: '전신주 없이 전선만: 위치 "가로:높이" 쉼표로', placeholder: '-4:7, 4:7', default: '' },
+            {
+                key: 'embank', type: 'dropdown', label: '언덕 (선로 아래를 땅까지 쌓기, 교량일 때는 없음)', default: '', options: [
+                    { value: '', label: '없음' },
+                    { value: 'slope', label: '흙 언덕 (잔디 비탈 1:1)' },
+                    { value: 'wall', label: '옹벽 언덕 (녹색 비탈 + 돌 기초·콘크리트 옹벽 + 나무 울타리)' },
+                ],
+            },
             {
                 key: 'fence', type: 'dropdown', label: '안전망 (땅 위 선로 양옆, 교량일 때는 없음)', default: '', options: [
                     { value: '', label: '없음' },
@@ -424,6 +518,10 @@ export default {
             C ? yield* roadFrom(C, tile.w, C[C.length - 1].s) : null);
         if (tile.describe)
             parts.push(tile.describe);
+        if (v.embank && !v.bridge) {
+            const n = yield* embankment(ctx, road.samples, road.total, tile.rails ? tile.w : builtinTile({ tracks: v.tracks ?? 2 }).w, v, paint, inTunnel);
+            parts.push(n ? `언덕 (${v.embank === 'wall' ? '옹벽' : '흙 비탈'})` : '언덕 없음 (선로가 땅 위)');
+        }
         if (v.fence && !v.bridge) {
             const n = yield* safetyFence(road, tile.rails ? tile.w : builtinTile({ tracks: v.tracks ?? 2 }).w, v, paint);
             parts.push(`안전망 ${n}칸`);
