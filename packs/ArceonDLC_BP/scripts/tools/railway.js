@@ -154,7 +154,7 @@ function* embankment(ctx, S, total, w, v, paint, skip) {
         const h = hash(x, z, 1);
         return slope && h < 0.06 ? coarse : h > 0.95 ? moss : grass;
     };
-    const stone = MASON_B, con = B('light_gray_concrete'), conB = B('andesite'), fence = B('dark_oak_fence');
+    const stone = MASON_B(), con = B('light_gray_concrete'), conB = B('andesite'), fence = B('dark_oak_fence');
     const loaded = new Set();
     // grass and plants on top: the support-free plants of the Debug Stick pack
     // when it is installed (they never pop off), the vanilla ones otherwise
@@ -253,7 +253,9 @@ function* embankment(ctx, S, total, w, v, paint, skip) {
     }
     return cells;
 }
-const MASON_B = parsePattern('40%cobblestone,25%mossy_cobblestone,20%stone,15%andesite');
+// made on first use: block permutations cannot be made while the script loads (early execution)
+let masonB = null;
+const MASON_B = () => masonB ??= parsePattern('40%cobblestone,25%mossy_cobblestone,20%stone,15%andesite');
 /** A steady pseudo-random number in [0, 1) for a column. */
 function hash(x, z, k) {
     let h = (x * 374761393 + z * 668265263 + k * 2147483647) | 0;
