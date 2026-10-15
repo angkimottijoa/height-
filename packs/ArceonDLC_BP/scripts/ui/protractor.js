@@ -15,6 +15,12 @@
  * regular polygon of N sides on the first line, turning toward the second.
  * It (or the lines) can then be built in blocks, outlined or filled.
  *
+ * The menu also builds world-edit style (//line, //outline, //walls, //set on
+ * the shape, thickness, height, //hollow, a //replace mask; blocks from the
+ * block picker like every tool), hands the drawing to the other tools (the
+ * area corners, the curve points, a loft frame) and takes theirs back. A
+ * circle shape: centre and radius from the last line.
+ *
  * Two modes, switched in the menu: 각도기 (the above) and 줄자 (a tape
  * measure: no guides or shapes, but ticks every block along the lines and the
  * exact length of the last line, diagonals too, its run along each axis and
@@ -25,15 +31,16 @@
  * resource pack is off.
  */
 import { add, cross, dot, len, mul, norm, sub } from '../core/vec.js';
-import { parseBlock } from '../core/blocks.js';
+import { parseBlock, parseMask, parsePattern } from '../core/blocks.js';
 import { isBusy, runAsync, say } from '../core/edit.js';
 import { finish, makeContext } from '../core/runner.js';
 import { save, session } from '../core/session.js';
-import { ask, menu } from './form.js';
+import { ask, blockValue, menu } from './form.js';
 
 const fmt = (p) => `${p.x} ${p.y} ${p.z}`;
 const c = (p) => ({ x: p.x + 0.5, y: p.y + 0.5, z: p.z + 0.5 });
 const deg = (r) => r * 180 / Math.PI;
+const SHAPE_NAME = (set) => ({ para: '사각형', tri: '삼각형', regular: `정${set.n}각형`, circle: '원' })[set.shape] ?? '도형';
 const isRuler = (set) => set?.mode === 'ruler';
 const tagOf = (set) => isRuler(set) ? '§a[줄자]§r' : '§b[각도기]§r';
 function bar(player, msg) {
@@ -147,6 +154,8 @@ function cornerAngle(p, q, r) {
 }
 /** The shape the last two lines start (vertices as block-centre points), or null. */
 export function shape(pts, set) {
+    if (set.shape === 'circle')
+        return circle(pts, set);
     if (pts.length < 3)
         return null;
     const [P0, P1, P2] = pts.slice(-3).map(c);
@@ -172,6 +181,38 @@ export function shape(pts, set) {
     for (let i = 0; i < n - 1; i++) {
         p = add(p, mul(add(mul(e1, Math.cos(i * ext)), mul(e2, Math.sin(i * ext))), L));
         out.push(p);
+    }
+    return out;
+}
+/**
+ * A circle (as a fine polygon): centre at the next-to-last point, through the
+ * last one; level (수평) or upright through the line (세로면).
+ */
+function circle(pts, set) {
+    if (pts.length < 2)
+        return null;
+    const [O, R] = pts.slice(-2).map(c), r = len(sub(R, O));
+    if (r < 0.5)
+        return null;
+    let e1 = norm(sub(R, O)), e2;
+    if (set.plane === 'v') {
+        e2 = { x: 0, y: 1, z: 0 };
+        if (Math.abs(dot(e1, e2)) > 0.999)
+            e1 = { x: 1, y: 0, z: 0 };
+        e1 = norm(sub(e1, mul(e2, dot(e1, e2))));
+    }
+    else {
+        e1 = { x: e1.x, y: 0, z: e1.z };
+        if (len(e1) < 1e-6)
+            e1 = { x: 1, y: 0, z: 0 };
+        e1 = norm(e1);
+        e2 = { x: -e1.z, y: 0, z: e1.x };
+    }
+    const n = Math.max(16, Math.min(360, Math.ceil(2 * Math.PI * r * 1.5)));
+    const out = [];
+    for (let i = 0; i < n; i++) {
+        const a = 2 * Math.PI * i / n;
+        out.push(add(O, add(mul(e1, r * Math.cos(a)), mul(e2, r * Math.sin(a)))));
     }
     return out;
 }
@@ -270,13 +311,15 @@ export function protBreak(player, pos, sneaking) {
 export async function protMenu(player) {
     const s = protState(player), set = s.settings.prot, P = s.prot.pts;
     const V = shape(P, set);
-    const shapeName = { para: '사각형 (평행사변형 · 직각이면 직사각형)', tri: '삼각형', regular: `정${set.n}각형` }[set.shape];
+    const shapeName = SHAPE_NAME(set);
     const head = `점 ${P.length}개 · 선 ${Math.max(0, P.length - 1)}개 · 저장한 선 ${s.prot.saved.length}개\n각도 ${set.angle}° (${set.plane === 'v' ? '세로면' : '수평'}) · 도형: ${shapeName}`;
     const ruler = isRuler(set);
     const v = await menu(player, ruler ? '줄자' : '각도기', head, [
         { text: ruler ? '§2각도기로 바꾸기§r\n§8안내선·도형·각도 재기' : '§2줄자로 바꾸기§r\n§8눈금 + 정확한 길이 (사선도)', value: 'mode' },
         { text: '보기·각도 설정 (선 / 블록으로 보기)', value: 'angle' },
         { text: '도형 설정 (사각형 · 삼각형 · 정다각형)', value: 'shape' },
+        { text: P.length >= 2 ? '§2만들기 (월드에딧식)§r\n§8선 채우기 · 도형 채우기 · 벽 · 굵기 · 높이 · 블록 피커' : '§8만들기 (선을 먼저 그리세요)', value: P.length >= 2 ? 'make' : '' },
+        { text: '§9다른 도구로 보내기 · 가져오기§r\n§8영역(1·2번) · 곡선 점 · 프레임', value: 'send' },
         { text: V ? '§2도형 만들기§r\n§8마지막 두 선으로 시작하는 도형' : '§8도형 만들기 (선 2개를 먼저 그리세요)', value: V ? 'build' : '' },
         { text: P.length >= 2 ? '§2선만 만들기§r' : '§8선만 만들기 (선을 먼저 그리세요)', value: P.length >= 2 ? 'lines' : '' },
         { text: '§d저장한 선 지우기', value: 'unsave' },
@@ -334,6 +377,7 @@ export async function protMenu(player) {
                     { value: 'para', label: '사각형 (네 번째 꼭짓점을 채움: 평행사변형, 직각이면 직사각형)' },
                     { value: 'tri', label: '삼각형 (세 점을 이음)' },
                     { value: 'regular', label: '정다각형 (첫 선을 한 변으로, 둘째 선 쪽으로)' },
+                    { value: 'circle', label: '원 (마지막 선: 중심 → 반지름, 수평 또는 세로면)' },
                 ],
             },
             { key: 'n', type: 'slider', label: '정다각형 변 수 (3 = 정삼각형, 5 = 정오각형 ...)', default: Number(set.n), min: 3, max: 24 },
@@ -347,6 +391,10 @@ export async function protMenu(player) {
     }
     else if (v === 'build' || v === 'lines')
         await build(player, v);
+    else if (v === 'make')
+        await makeMenu(player);
+    else if (v === 'send')
+        await sendMenu(player);
     else if (v === 'unsave') {
         s.prot.saved = [];
         save(player);
@@ -397,7 +445,211 @@ async function build(player, what) {
     catch (e) {
         return say(player, `§c각도기: ${e?.message ?? e}`);
     }
-    await finish(player, '각도기', ctx.edit, what === 'build' ? `${{ para: '사각형', tri: '삼각형', regular: `정${set.n}각형` }[set.shape]}${set.fill ? ' (채움)' : ''}` : `선 ${P.length - 1}개`);
+    await finish(player, '각도기', ctx.edit, what === 'build' ? `${SHAPE_NAME(set)}${set.fill ? ' (채움)' : ''}` : `선 ${P.length - 1}개`);
+}
+
+// ------------------------------------------------------------------ world-edit style
+/**
+ * The blocks for `what`: 'lines' (the lines drawn, //line), 'outline' (the
+ * shape's edge; with a height, walls), 'fill' (the shape filled; with a
+ * height, a prism). `radius` thickens every block into a ball (a thick line,
+ * a thick wall), `height` stacks it up (or down), `hollow` keeps only the
+ * outer skin. Null without a shape; throws when far too big.
+ */
+export function makeCells(pts, set, what, { radius = 0, height = 1, down = false, hollow = false } = {}) {
+    let cells = new Set();
+    if (what === 'lines') {
+        if (pts.length < 2)
+            return null;
+        for (let i = 0; i + 1 < pts.length; i++)
+            blocksOn(c(pts[i]), c(pts[i + 1]), cells);
+    }
+    else {
+        const V = shape(pts, set);
+        if (!V)
+            return null;
+        cells = polygonBlocks(V, what === 'fill');
+    }
+    const LIMIT = 1500000;
+    const grow = (src, offs) => {
+        const out = new Set();
+        for (const k of src) {
+            const [x, y, z] = k.split(',').map(Number);
+            for (const [dx, dy, dz] of offs)
+                out.add(`${x + dx},${y + dy},${z + dz}`);
+            if (out.size > LIMIT)
+                throw new Error(`너무 큽니다 (${LIMIT}블록 넘음)`);
+        }
+        return out;
+    };
+    const r = Math.max(0, Math.floor(radius));
+    if (r > 0) {
+        const offs = [];
+        for (let dx = -r; dx <= r; dx++)
+            for (let dy = -r; dy <= r; dy++)
+                for (let dz = -r; dz <= r; dz++)
+                    if (dx * dx + dy * dy + dz * dz <= r * r + 0.5)
+                        offs.push([dx, dy, dz]);
+        cells = grow(cells, offs);
+    }
+    const h = Math.max(1, Math.floor(height));
+    if (h > 1) {
+        const offs = [];
+        for (let i = 0; i < h; i++)
+            offs.push([0, down ? -i : i, 0]);
+        cells = grow(cells, offs);
+    }
+    if (hollow) {
+        const out = new Set();
+        for (const k of cells) {
+            const [x, y, z] = k.split(',').map(Number);
+            if ([[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]].some(([a, b, d]) => !cells.has(`${x + a},${y + b},${z + d}`)))
+                out.add(k);
+        }
+        cells = out;
+    }
+    return cells;
+}
+
+async function makeMenu(player) {
+    const s = protState(player), set = s.settings.prot, P = s.prot.pts;
+    const hasShape = !!shape(P, set);
+    const r = await ask(player, 'prot:make', '각도기 - 만들기 (월드에딧식)', [
+        { type: 'label', label: `도형: ${hasShape ? SHAPE_NAME(set) : '§8없음 (선 2개 또는 원은 선 1개)§r'} · 선 ${Math.max(0, P.length - 1)}개\n§7되돌리기는 다른 도구와 같이 (메뉴 > 되돌리기, /arc:undo)` },
+        {
+            key: 'what', type: 'dropdown', label: '무엇을', default: hasShape ? 'outline' : 'lines', options: [
+                { value: 'lines', label: '선 채우기 (//line: 그린 선들)' },
+                { value: 'outline', label: '도형 테두리 · 벽 (//outline, 높이를 주면 //walls)' },
+                { value: 'fill', label: '도형 채우기 · 기둥 (//set 다각형, 높이를 주면 입체)' },
+            ],
+        },
+        { key: 'block', type: 'block', label: '블록', default: set.block || 'stone' },
+        { key: 'radius', type: 'slider', label: '굵기 (반지름, 0 = 1칸)', default: 0, min: 0, max: 8 },
+        { key: 'height', type: 'slider', label: '높이 (쌓을 층 수, 1 = 한 겹)', default: 1, min: 1, max: 64 },
+        { key: 'down', type: 'toggle', label: '아래로 쌓기 (끄면 위로)', default: false },
+        { key: 'hollow', type: 'toggle', label: '속 비우기 (//hollow: 겉껍질만)', default: false },
+        { key: 'mask', type: 'mask', label: '바꿀 대상 마스크 (//replace, 비우면 전부. air = 빈 곳만)', placeholder: '예: air  /  grass_block,dirt  /  !air', default: '' },
+    ], { submit: '만들기' });
+    if (!r)
+        return;
+    let pattern, mask, cells;
+    try {
+        pattern = parsePattern(blockValue(player, r, 'block'));
+        mask = String(r.mask ?? '').trim() ? parseMask(r.mask) : null;
+        cells = makeCells(P, set, r.what, r);
+    }
+    catch (e) {
+        return say(player, `§c각도기: ${e?.message ?? e}`);
+    }
+    if (!cells)
+        return say(player, '§c각도기: 도형이 없습니다 (선 2개, 원은 선 1개를 그리세요)');
+    await place(player, cells, pattern, mask, `${{ lines: '선 채우기', outline: r.height > 1 ? '벽' : '테두리', fill: r.height > 1 ? '기둥' : '채우기' }[r.what]} ${cells.size}칸`);
+}
+
+async function place(player, cells, pattern, mask, label) {
+    if (isBusy(player))
+        return say(player, '§c이전 작업이 아직 진행 중입니다.');
+    const ctx = makeContext(player, {});
+    try {
+        await runAsync((function* () {
+            let n = 0;
+            for (const k of cells) {
+                const [x, y, z] = k.split(',').map(Number), p = { x, y, z };
+                if (!mask || mask.test(p, ctx.edit))
+                    pattern.place(ctx.edit, p);
+                if (++n % 2000 === 0)
+                    yield;
+            }
+        })());
+    }
+    catch (e) {
+        return say(player, `§c각도기: ${e?.message ?? e}`);
+    }
+    await finish(player, '각도기', ctx.edit, label);
+}
+
+/** Hand the drawing to the other tools, or take theirs. */
+async function sendMenu(player) {
+    const s = protState(player), set = s.settings.prot, P = s.prot.pts;
+    const V = shape(P, set);
+    const pick = await menu(player, '각도기 - 보내기 · 가져오기', `점 ${P.length}개${V ? ' · 도형 ' + SHAPE_NAME(set) : ''}`, [
+        { text: P.length ? '§9영역(1·2번)으로 보내기§r\n§8도형(없으면 선)을 감싸는 상자 → 채우기 등 영역 도구' : '§8영역으로 보내기 (점을 먼저)', value: P.length ? 'region' : '' },
+        { text: P.length >= 2 ? '§9곡선 점으로 보내기§r\n§8선택 지팡이 곡선 점 → 도로·철도·곡선 도구' : '§8곡선 점으로 보내기 (선을 먼저)', value: P.length >= 2 ? 'points' : '' },
+        { text: P.length >= 2 ? '§9프레임으로 보내기§r\n§8프레임 피커 → 로프트' : '§8프레임으로 보내기 (선을 먼저)', value: P.length >= 2 ? 'frame' : '' },
+        { text: '§3곡선 점 가져오기§r\n§8선택 지팡이 곡선 점 → 각도기 점', value: 'fromPoints' },
+        { text: '§3영역 가져오기§r\n§81·2번 지점의 바닥 직사각형 → 각도기 (사각형)', value: 'fromRegion' },
+    ]);
+    if (!pick)
+        return;
+    const fl = (p) => ({ x: Math.floor(p.x), y: Math.floor(p.y), z: Math.floor(p.z) });
+    const verts = V ? V.map(fl) : P.map(p => ({ ...p }));
+    if (pick === 'region') {
+        const r = await ask(player, 'prot:toRegion', '영역으로 보내기', [
+            { key: 'up', type: 'slider', label: '위로 더 (칸, 벽·건물 높이)', default: 0, min: 0, max: 128 },
+            { key: 'down', type: 'slider', label: '아래로 더 (칸)', default: 0, min: 0, max: 64 },
+        ], { submit: '보내기' });
+        if (!r)
+            return;
+        const lo = { x: Infinity, y: Infinity, z: Infinity }, hi = { x: -Infinity, y: -Infinity, z: -Infinity };
+        const box = V ? [...polygonBlocks(V, false)].map(k => { const [x, y, z] = k.split(',').map(Number); return { x, y, z }; }) : verts;
+        for (const p of box)
+            for (const a of ['x', 'y', 'z']) {
+                lo[a] = Math.min(lo[a], p[a]);
+                hi[a] = Math.max(hi[a], p[a]);
+            }
+        lo.y -= r.down;
+        hi.y += r.up;
+        s.pos1 = lo;
+        s.pos2 = hi;
+        s.dim = player.dimension.id;
+        save(player);
+        return say(player, `§9[각도기] 영역으로 보냄§r: ${fmt(lo)} ~ ${fmt(hi)} (${hi.x - lo.x + 1}×${hi.y - lo.y + 1}×${hi.z - lo.z + 1}) §7메뉴의 영역 도구(채우기 등)가 바로 씁니다`);
+    }
+    if (pick === 'points' || pick === 'frame') {
+        const r = await ask(player, 'prot:toPoints', pick === 'frame' ? '프레임으로 보내기' : '곡선 점으로 보내기', [
+            {
+                key: 'src', type: 'dropdown', label: '무엇을', default: V ? 'shape' : 'pts', options: [
+                    { value: 'pts', label: '그린 점들 (선)' },
+                    ...(V ? [{ value: 'shape', label: `도형 꼭짓점 (${SHAPE_NAME(set)})` }] : []),
+                ],
+            },
+            { key: 'close', type: 'toggle', label: '닫기 (처음 점을 끝에 한 번 더: 한 바퀴 도는 길)', default: false },
+            ...(pick === 'points' ? [{ key: 'append', type: 'toggle', label: '지금 곡선 점 뒤에 이어 붙이기 (끄면 바꾸기)', default: false }] : []),
+        ], { submit: '보내기' });
+        if (!r)
+            return;
+        let list = (r.src === 'shape' && V ? verts : P.map(p => ({ ...p })));
+        if (r.src === 'shape' && set.shape === 'circle')
+            list = list.filter((_, i) => i % Math.max(1, Math.round(list.length / 16)) === 0); // a circle: 16 points are enough for a curve
+        if (r.close && list.length > 2)
+            list.push({ ...list[0] });
+        if (pick === 'frame') {
+            s.frames.push(list);
+            save(player);
+            return say(player, `§9[각도기] 프레임으로 보냄§r: 점 ${list.length}개 (프레임 ${s.frames.length}개) §7로프트 도구로 이어 붙이세요`);
+        }
+        s.points = r.append ? [...s.points, ...list] : list;
+        s.wandMode = 'points';
+        s.dim = player.dimension.id;
+        save(player);
+        return say(player, `§9[각도기] 곡선 점으로 보냄§r: 점 ${s.points.length}개 §7선택 지팡이가 곡선 점 모드로 바뀌었습니다. 도로·철도·곡선 도구가 이 점을 씁니다`);
+    }
+    if (pick === 'fromPoints') {
+        if (s.points.length < 1)
+            return say(player, '§c[각도기] 곡선 점이 없습니다');
+        s.prot.pts = s.points.map(p => ({ ...p }));
+        save(player);
+        return bar(player, `${tagOf(set)} 곡선 점 ${s.prot.pts.length}개를 가져왔습니다`);
+    }
+    if (pick === 'fromRegion') {
+        if (!s.pos1 || !s.pos2)
+            return say(player, '§c[각도기] 영역(1·2번 지점)이 없습니다');
+        const lo = { x: Math.min(s.pos1.x, s.pos2.x), z: Math.min(s.pos1.z, s.pos2.z) }, hi = { x: Math.max(s.pos1.x, s.pos2.x), z: Math.max(s.pos1.z, s.pos2.z) }, y = Math.min(s.pos1.y, s.pos2.y);
+        s.prot.pts = [{ x: lo.x, y, z: lo.z }, { x: hi.x, y, z: lo.z }, { x: hi.x, y, z: hi.z }];
+        s.settings.prot = { ...set, shape: 'para', mode: 'prot' };
+        save(player);
+        return bar(player, `${tagOf(set)} 영역 바닥 ${hi.x - lo.x + 1}×${hi.z - lo.z + 1} 직사각형을 가져왔습니다 (도형: 사각형)`);
+    }
 }
 
 // ------------------------------------------------------------------ preview

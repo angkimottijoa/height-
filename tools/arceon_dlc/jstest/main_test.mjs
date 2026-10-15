@@ -243,6 +243,44 @@ check(errs.length === 0, 'no error messages ' + JSON.stringify(errs));
   const pent = P.shape(s.prot.pts, s.settings.prot);
   const sideLens = pent.map((a, i) => Math.hypot(pent[(i + 1) % 5].x - a.x, pent[(i + 1) % 5].z - a.z));
   check(pent.length === 5 && sideLens.every(l => Math.abs(l - 10) < 1e-6) && pent.every(p => p.z >= -1e-6), 'a regular pentagon on the first line, toward the second: ' + sideLens.map(l => l.toFixed(2)).join(','));
+  // world-edit style: a wall of glass on the rectangle (outline, 3 high, by the menu)
+  s.settings.prot = { ...s.settings.prot, shape: 'para' };
+  ui.answers.push(btn('만들기 (월드에딧식)'));
+  ui.answers.push((f) => f.defaults({ '무엇을': 1, '가져올 곳': 1, '블록 ID': 'glass', '높이': 3 }));
+  await tap('arc:protractor', { x: 0, y: 40, z: 0 }, true); await settle(); await settle();
+  const gl = (x, y, z) => dim.map.get(`${x},${y},${z}`)?.id === 'minecraft:glass';
+  check(gl(0, 41, 0) && gl(10, 42, 6) && gl(5, 42, 0) && !gl(5, 41, 3) && !gl(0, 43, 0), 'make: walls of glass on the rectangle, 3 high');
+  // the cells: a thick line, a filled prism hollowed
+  const thick = P.makeCells([{ x: 0, y: 40, z: 0 }, { x: 10, y: 40, z: 0 }], s.settings.prot, 'lines', { radius: 1 });
+  check(thick.has('5,41,0') && thick.has('5,40,1') && !thick.has('5,41,1'), 'a line 1 thick: a round section');
+  const prism = P.makeCells([{ x: 0, y: 40, z: 0 }, { x: 6, y: 40, z: 0 }, { x: 6, y: 40, z: 6 }], { ...s.settings.prot, shape: 'para' }, 'fill', { height: 5, hollow: true });
+  check(prism.has('3,40,3') && prism.has('3,44,3') && !prism.has('3,42,3') && prism.has('0,42,3'), 'a filled prism, hollowed: top, bottom and sides, empty inside');
+  // a circle on the last line: centre → radius
+  const circ = P.shape([{ x: 0, y: 40, z: 0 }, { x: 8, y: 40, z: 0 }], { ...s.settings.prot, shape: 'circle', plane: 'h' });
+  check(circ && circ.every(p => Math.abs(Math.hypot(p.x - 0.5, p.z - 0.5) - 8) < 1e-6 && p.y === 40.5), 'a circle: centre and radius from the last line');
+  // send to the other tools, and take back
+  const keep = s.prot.pts.map(p => ({ ...p }));
+  ui.answers.push(btn('다른 도구로 보내기'));
+  ui.answers.push(btn('영역(1·2번)으로'));
+  ui.answers.push((f) => f.defaults({ '위로 더': 4 }));
+  await tap('arc:protractor', { x: 0, y: 40, z: 0 }, true); await settle(); await settle();
+  check(s.pos1.x === 0 && s.pos1.z === 0 && s.pos2.x === 10 && s.pos2.z === 6 && s.pos1.y === 40 && s.pos2.y === 44, 'the rectangle sent to the area corners (4 more up): ' + JSON.stringify([s.pos1, s.pos2]));
+  ui.answers.push(btn('다른 도구로 보내기'));
+  ui.answers.push(btn('곡선 점으로'));
+  ui.answers.push((f) => f.defaults({ '무엇을': 1, '닫기': true }));
+  await tap('arc:protractor', { x: 0, y: 40, z: 0 }, true); await settle(); await settle();
+  check(s.points.length === 5 && s.wandMode === 'points' && s.points[4].x === s.points[0].x, 'the rectangle corners sent as curve points, closed: ' + s.points.length);
+  s.prot.pts = [];
+  ui.answers.push(btn('다른 도구로 보내기'));
+  ui.answers.push(btn('곡선 점 가져오기'));
+  await tap('arc:protractor', { x: 0, y: 40, z: 0 }, true); await settle(); await settle();
+  check(s.prot.pts.length === 5, 'curve points taken back into the protractor');
+  ui.answers.push(btn('다른 도구로 보내기'));
+  ui.answers.push(btn('영역 가져오기'));
+  await tap('arc:protractor', { x: 0, y: 40, z: 0 }, true); await settle(); await settle();
+  const fromR = P.shape(s.prot.pts, s.settings.prot);
+  check(s.prot.pts.length === 3 && fromR.length === 4, 'the area taken back as a rectangle');
+  s.prot.pts = keep;
   // save the lines, draw a new one: measured against them
   await brk('arc:protractor', { x: 0, y: 40, z: 0 }, true);
   check(s.prot.saved.length === 2 && s.prot.pts.length === 0, 'sneak + break saves the lines');
