@@ -108,7 +108,7 @@ check(/곡선 점이 2개 이상/.test(m.slice(-1)[0]) && dim.count() === 0, 'no
 // ---- road bridges (basic options, no code needed): PSC beam bridge and concrete box bridge
 {
   const lanesT = (await import('./scripts/tools/lanes.js')).default;
-  for (const b of ['psci', 'segment']) {
+  for (const b of ['girder', 'box']) {
     const { dim, player } = world({ id: 'rbr' + b });
     for (let x = -20; x <= 70; x++) for (let z = -30; z <= 30; z++) put(dim, x, -20, z, 'grass_block');
     const m = await runTool(lanesT, { bridge: b, left: 2, right: 2 }, { player, points: [{ x: 0, y: 0, z: 0 }, { x: 50, y: 0, z: 0 }] });
@@ -118,4 +118,11 @@ check(/곡선 점이 2개 이상/.test(m.slice(-1)[0]) && dim.count() === 0, 'no
     const low = [...dim.map].filter(([k, p]) => +k.split(',')[1] === -19 && !p.id.endsWith('air')).length;
     check(piers >= 2 && asphalt > 300 && low > 10, `road on a ${b} bridge: ${last} (asphalt ${asphalt}, footings ${low})`);
   }
+}
+{
+  const lanesT = (await import('./scripts/tools/lanes.js')).default;
+  const { dim, player } = world({ id: 'under' });
+  await runTool(lanesT, { under: 'cobblestone', thick: 3 }, { player, points: [{ x: 0, y: 0, z: 0 }, { x: 30, y: 0, z: 0 }] });
+  const below = [...dim.map].filter(([k]) => k.split(',')[1] === '-1').map(([, p]) => p.id);
+  check(below.length > 100 && below.every(i => i === 'minecraft:cobblestone'), 'the block under the road is the chosen fill block: ' + [...new Set(below)].join(','));
 }

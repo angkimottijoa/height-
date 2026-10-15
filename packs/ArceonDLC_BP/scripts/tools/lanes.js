@@ -52,6 +52,7 @@ const SEP = [
 
 const FIELDS = [
     { key: 'asphalt', type: 'block', label: '도로 바닥', default: 'gray_concrete', palette: false },
+    { key: 'under', type: 'block', label: '도로 아래 채울 블록 (두께·땅까지 채우기)', default: 'gray_concrete', palette: false },
     { key: 'center', type: 'block', label: '중앙선·중앙분리대', default: 'yellow_concrete', palette: false },
     { key: 'lane', type: 'block', label: '차선·유턴선 (흰색)', default: 'white_concrete', palette: false },
     { key: 'edge', type: 'block', label: '가장자리선', default: 'yellow_concrete', palette: false },
@@ -153,7 +154,7 @@ export default {
     *run(ctx, v) {
         if (v.preset)
             return yield* custom(ctx, v);
-        const pats = { asphalt: ctx.pattern('asphalt'), center: ctx.pattern('center'), lane: ctx.pattern('lane'), edge: ctx.pattern('edge') };
+        const pats = { asphalt: ctx.pattern('asphalt'), center: ctx.pattern('center'), lane: ctx.pattern('lane'), edge: ctx.pattern('edge'), under: ctx.pattern('under') };
         const one = v.centerType === 'one';
         const L = one ? 1 : Math.floor(v.left ?? 3), R = one ? 0 : Math.floor(v.right ?? 3), w = Math.max(1, Math.floor(v.laneWidth));
         if (L + R < 1)
@@ -286,7 +287,7 @@ export default {
             });
         }
         const bridged = v.bridge ? yield* roadBridge(ctx, v, road, W) : '';
-        yield* place(ctx, v.bridge ? { ...v, down: false } : v, paint, (cell) => pats[cell.kind], () => pats.asphalt);
+        yield* place(ctx, v.bridge ? { ...v, down: false } : v, paint, (cell) => pats[cell.kind], () => pats.under ?? pats.asphalt);
         const tail = bridged ? `, ${bridged}` : '';
         const sides = adv ? '' : `, 차로 폭 ${w}`;
         if (one)
@@ -420,10 +421,12 @@ function* custom(ctx, v) {
     }
     // a preset several layers deep is laid at least that thick
     const bridged = v.bridge ? yield* roadBridge(ctx, v, road, W) : '';
+    // below the preset's own layers: the chosen fill block, if one was given
+    const under = v['under#text'] !== undefined || v['under#src'] !== undefined ? ctx.pattern('under') : null;
     yield* place(ctx, { ...v, thick: Math.max(Math.floor(v.thick) || 1, t.h), down: v.bridge ? false : v.down }, paint, (cell) => single(cell.perm), (cell, depth) => {
         if (depth < t.h)
             return single(t.at(depth, cell.col, cell.j));
-        return single(t.at(t.h - 1, cell.col, cell.j) ?? t.base);
+        return under ?? single(t.at(t.h - 1, cell.col, cell.j) ?? t.base);
     });
     return `커스텀 "${v.preset}" 폭 ${W}칸${bridged ? `, ${bridged}` : ''}, 길이 약 ${Math.round(total)}칸`;
 }

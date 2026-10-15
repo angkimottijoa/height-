@@ -10,6 +10,7 @@ COL = [
     ('diorite', (200, 200, 200)), ('tuff', (108, 110, 98)), ('mossy', (100, 120, 90)), ('mud_brick', (140, 100, 72)), ('gravel', (128, 122, 120)),
     ('mossy', (98, 118, 88)), ('cracked', (112, 112, 112)), ('calcite', (222, 222, 216)), ('cobblestone', (120, 120, 120)), ('anvil', (68, 68, 72)), ('iron', (170, 172, 175)), ('chain', (55, 60, 72)), ('button', (40, 40, 44)),
     ('hopper', (70, 70, 75)), ('heavy_core', (90, 95, 100)), ('pale_oak', (225, 215, 210)), ('grindstone', (150, 150, 150)), ('skull', (50, 50, 50)),
+    ('yellow_concrete', (235, 185, 35)), ('black_concrete', (24, 24, 28)), ('gray_concrete', (60, 62, 66)), ('light_block', None), ('grate', (90, 150, 120)),
     ('grass', (95, 150, 70)), ('stone', (125, 125, 125)), ('barrier', None),
 ]
 def color(i):
@@ -18,7 +19,7 @@ def color(i):
     return (200, 80, 200)
 
 def boxes(i, st):
-    if 'barrier' in i: return []
+    if 'barrier' in i or 'light_block' in i: return []
     half = st.get('minecraft:vertical_half')
     if i.endswith('_slab'):
         return [(0, .5, 0, 1, 1, 1)] if half == 'top' else [(0, 0, 0, 1, .5, 1)]

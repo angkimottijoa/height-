@@ -7,6 +7,7 @@ import { ask } from '../ui/form.js';
 import { listAssets } from './assets.js';
 import { builtinPole, builtinTile, freeWires, loadPole, poleSpots, presetTile, standPoles, stringWires, sweep, TOP_MIX } from '../lib/rail.js';
 import { loadTracks, trackNames } from '../lib/track_presets.js';
+import '../lib/low_bridges.js'; // the low bridges join BRIDGES
 import { BRIDGES, bridgeById, bridgeTile, endPiece, geometry, pierPiece, polish, STEEL } from '../lib/bridges.js';
 import { stamp } from '../lib/rail.js';
 import { loadAll } from '../core/edit.js';
@@ -161,7 +162,7 @@ export default {
             {
                 key: 'bridge', type: 'dropdown', label: '교량 (선로를 다리 위에)', default: '', options: [
                     { value: '', label: '없음 (땅 위)' },
-                    ...BRIDGES.map(b => ({ value: b.id, label: (b.group === 'steel' ? '철교: ' : '콘크리트교: ') + b.name })),
+                    ...BRIDGES.map(b => ({ value: b.id, label: (b.group === 'steel' ? '철교: ' : b.group === 'low' ? '저상 (낮은 길 위): ' : '콘크리트교: ') + b.name })),
                 ],
                 tooltip: '곡선 점 높이가 선로 바닥 높이입니다. 교각은 경간마다 땅까지 내려갑니다.',
             },

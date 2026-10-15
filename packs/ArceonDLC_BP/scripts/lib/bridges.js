@@ -31,6 +31,7 @@ const rod = (id, f) => ST(id, { facing_direction: f });
 // weirdo_direction: east 0, west 1, south 2, north 3. facing_direction: down 0, up 1, north 2, south 3, west 4, east 5
 const OUT_W = (sd) => sd < 0 ? 1 : 0, IN_W = (sd) => sd < 0 ? 0 : 1, OUT_F = (sd) => sd < 0 ? 4 : 5;
 const CHAIN = 'iron_chain';
+export { ST, top, bolt, stair, OUT_W, IN_W, OUT_F, CHAIN, mix };
 
 // ------------------------------------------------------------ stone mixes
 /**
