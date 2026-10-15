@@ -4,7 +4,8 @@
  * with the station where the player stands. Only the size of the area to
  * build can be chosen; the scale is always 1:1.
  *
- * Built: buildings at their real height (outline walls with windows, a flat
+ * By default the map itself is laid flat on the ground; the 3D option builds:
+ * buildings at their real height (outline walls with windows, a flat
  * roof; glass curtain walls on tall ones), roads (asphalt, a dashed centre
  * line, pavements, elevated roads on piers), railways (ballast and rails,
  * viaducts on piers) and platforms, water and green areas with trees.
@@ -106,7 +107,7 @@ function city(id, turn = 0) {
             for (let i = 0; i + 1 < r.pts.length; i++) {
                 const dd = segDist(mx, mz, r.pts[i], r.pts[i + 1]);
                 if (!best || dd < best.d)
-                    best = { d: dd, up: railUp(r) };
+                    best = { d: dd, up: railUp3(r) };
             }
         }
         pl.up = best ? best.up : (pl.layer > 0 ? pl.layer * RAIL_UP : 0);
@@ -133,8 +134,8 @@ function segDist(px, pz, [ax, az], [bx, bz]) {
     return Math.hypot(px - ax - dx * t, pz - az - dz * t);
 }
 const overlap = (a, b) => a[0] <= b[2] && b[0] <= a[2] && a[1] <= b[3] && b[1] <= a[3];
-const railUp = (r) => (r.fl & 1 || r.layer > 0) ? Math.max(1, r.layer) * RAIL_UP : 0;
-const roadUp = (r) => (r.fl & 1 || r.layer > 0) ? Math.max(1, r.layer) * ROAD_UP : 0;
+const railUp3 = (r) => (r.fl & 1 || r.layer > 0) ? Math.max(1, r.layer) * RAIL_UP : 0;
+const roadUp3 = (r) => (r.fl & 1 || r.layer > 0) ? Math.max(1, r.layer) * ROAD_UP : 0;
 const hash = (n) => {
     n = Math.imul(n ^ (n >>> 15), 2246822519);
     n = Math.imul(n ^ (n >>> 13), 3266489917);
@@ -196,7 +197,13 @@ function* every(pts, step) {
 }
 
 // ---------------------------------------------------------------- one tile
-function buildTile(d, o, x0, z0, x1, z1, R, minY, maxY) {
+/**
+ * One tile. `flat`: the map itself, laid flat on the ground (building
+ * footprints, roads, tracks, platforms, water, green, all at ground level);
+ * otherwise in 3D (buildings at their height, viaducts, elevated roads).
+ */
+function buildTile(d, o, x0, z0, x1, z1, R, minY, maxY, flat = true) {
+    const roadUp = flat ? () => 0 : roadUp3, railUp = flat ? () => 0 : railUp3;
     const out = new Map();
     const inRange = (x, z) => Math.abs(x) <= R && Math.abs(z) <= R;
     const put = (x, y, z, p) => {
@@ -209,7 +216,7 @@ function buildTile(d, o, x0, z0, x1, z1, R, minY, maxY) {
         grass: P('grass_block'), water: P('water'), asphalt: P('gray_concrete'), line: P('white_concrete'),
         walk: P('smooth_stone'), plaza: P('polished_andesite'), deck: P('light_gray_concrete'), gravel: P('gravel'),
         railNS: P('rail', { rail_direction: 0 }), railEW: P('rail', { rail_direction: 1 }), platform: P('smooth_stone'),
-        edge: P('yellow_concrete'), roof: P('smooth_stone'), log: P('oak_log'), leaves: P('oak_leaves', { persistent_bit: true }),
+        edge: P('yellow_concrete'), roof: P('smooth_stone'), footprint: P('white_concrete'), log: P('oak_log'), leaves: P('oak_leaves', { persistent_bit: true }),
     };
     // green, with a tree now and then
     for (const a of d.green) {
@@ -220,7 +227,7 @@ function buildTile(d, o, x0, z0, x1, z1, R, minY, maxY) {
             for (let x = x0; x <= x1; x++)
                 if (G.at(x, z)) {
                     put(x, g, z, B.grass);
-                    if (hash(x * 73856093 ^ z * 19349663) % 41 === 0) {
+                    if (!flat && hash(x * 73856093 ^ z * 19349663) % 41 === 0) {
                         for (let y = 1; y <= 3; y++)
                             put(x, g + y, z, B.log);
                         for (let dx = -1; dx <= 1; dx++)
@@ -250,6 +257,17 @@ function buildTile(d, o, x0, z0, x1, z1, R, minY, maxY) {
         else
             band(w.pts, 5, x0, z0, x1, z1, (x, z) => wet(x, z));
     }
+    // flat: building footprints under the roads and tracks (a light outline, white inside)
+    if (flat)
+        for (const b of d.buildings) {
+            if (!overlap(b.box, tb))
+                continue;
+            const G = polyGrid(b.pts, x0 - 1, z0 - 1, x1 + 1, z1 + 1);
+            for (let z = z0; z <= z1; z++)
+                for (let x = x0; x <= x1; x++)
+                    if (G.at(x, z))
+                        put(x, g, z, !G.at(x + 1, z) || !G.at(x - 1, z) || !G.at(x, z + 1) || !G.at(x, z - 1) ? B.deck : B.footprint);
+        }
     // roads: walkways first, then the carriageways over them
     const roads = d.roads.filter(r => overlap(r.box, tb)).sort((a, b) => (WALK.has(b.kind) ? 1 : 0) - (WALK.has(a.kind) ? 1 : 0) || roadUp(a) - roadUp(b));
     for (const r of roads) {
@@ -303,7 +321,7 @@ function buildTile(d, o, x0, z0, x1, z1, R, minY, maxY) {
     for (const p of d.platforms) {
         if (!overlap(p.box, tb))
             continue;
-        const y = g + p.up + 1;
+        const y = flat ? g : g + p.up + 1;
         const fill = (x, z, edge) => {
             put(x, y, z, edge ? B.edge : B.platform);
             if (p.up)
@@ -320,7 +338,7 @@ function buildTile(d, o, x0, z0, x1, z1, R, minY, maxY) {
             band(p.pts, 3, x0, z0, x1, z1, (x, z, dist) => fill(x, z, dist > 2.2));
     }
     // buildings: walls with windows (glass curtain walls on tall ones), a flat roof
-    for (const b of d.buildings) {
+    for (const b of flat ? [] : d.buildings) {
         if (!overlap(b.box, tb))
             continue;
         const G = polyGrid(b.pts, x0 - 1, z0 - 1, x1 + 1, z1 + 1);
@@ -378,6 +396,12 @@ export default {
                 ],
             },
             { key: 'angle', type: 'slider', label: '더 돌리기 (°, 위에서 볼 때 시계 방향)', default: 0, min: -180, max: 180, step: 1 },
+            {
+                key: 'mode', type: 'dropdown', label: '방식', default: 'flat', options: [
+                    { value: 'flat', label: '지도 그대로 (땅 위에 평면으로: 건물 자리·도로·선로·승강장·물·녹지)' },
+                    { value: '3d', label: '입체 (건물을 실제 높이로, 고가 선로·고가 도로)' },
+                ],
+            },
             { key: 'range', type: 'slider', label: '불러올 범위 (역에서 사방으로, 칸 = m) — 축척은 항상 1:1', default: 200, min: 50, max: 1500, step: 50 },
         ];
     },
@@ -404,7 +428,7 @@ export default {
         tiles.sort((a, b) => Math.hypot(a[0] + TILE / 2, a[1] + TILE / 2) - Math.hypot(b[0] + TILE / 2, b[1] + TILE / 2));
         let done = 0, skipped = 0, n = 0;
         for (const [tx, tz] of tiles) {
-            const cells = buildTile(d, o, tx, tz, Math.min(X1, tx + TILE - 1), Math.min(Z1, tz + TILE - 1), R, minY, maxY);
+            const cells = buildTile(d, o, tx, tz, Math.min(X1, tx + TILE - 1), Math.min(Z1, tz + TILE - 1), R, minY, maxY, v.mode !== '3d');
             const list = [];
             for (const [k, p] of cells) {
                 const [x, y, z] = k.split(',').map(Number);
@@ -420,6 +444,6 @@ export default {
             catch (e) { }
             await tick();
         }
-        return `${d.name} 반경 ${R}m, 회전 ${turn}°: ${tiles.length}구역, ${done}블록${skipped ? ` (건너뜀 ${skipped})` : ''} §8지도 © OpenStreetMap`;
+        return `${d.name} ${v.mode === '3d' ? '입체' : '지도'} 반경 ${R}m, 회전 ${turn}°: ${tiles.length}구역, ${done}블록${skipped ? ` (건너뜀 ${skipped})` : ''} §8지도 © OpenStreetMap`;
     },
 };

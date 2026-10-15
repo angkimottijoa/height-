@@ -15,7 +15,7 @@ check(dim.map.size === 0 && msgs.some(m => /사용할 수 없습니다/.test(m))
 ({ dim, player } = world({ id: 'c1', location: { x: 0.5, y: -59, z: 0.5 } }));
 session(player).settings.unlocked = true;
 let t = Date.now();
-msgs = await runTool(city, { city: 'tokyo', range: 160 }, { player });
+msgs = await runTool(city, { city: 'tokyo', range: 160, mode: '3d' }, { player });
 console.log(msgs.filter(m => !m.startsWith('[bar]')).slice(-2).join(' | '), (Date.now() - t) + 'ms');
 const ids = new Map();
 for (const p of dim.map.values()) ids.set(p.id, (ids.get(p.id) ?? 0) + 1);
@@ -29,10 +29,20 @@ const out = [...dim.map.keys()].some(k => { const [x, , z] = k.split(',').map(Nu
 check(!out, 'nothing outside the range (160 each way)');
 check(msgs.some(m => /OpenStreetMap/.test(m)), 'the map credit is shown');
 
+// the map itself (default): everything flat on the ground, rails on top
+({ dim, player } = world({ id: 'cf', location: { x: 0.5, y: -59, z: 0.5 } }));
+session(player).settings.unlocked = true;
+msgs = await runTool(city, { city: 'shinjuku', range: 150 }, { player });
+const ys = new Map();
+for (const [k, p] of dim.map) { const y = +k.split(',')[1]; ys.set(y, (ys.get(y) ?? 0) + 1); }
+const foot = count(dim, (k, p) => p.id === 'minecraft:white_concrete' && +k.split(',')[1] === g);
+check([...ys.keys()].every(y => y === g || y === g + 1) && foot > 1000 && count(dim, (k, p) => p.id === 'minecraft:rail') > 50, 'map mode: flat on the ground (building footprints ' + foot + ', roads, tracks): heights ' + [...ys.keys()].map(y => y - g).join(','));
+check(msgs.some(m => /지도 반경 150m/.test(m)), 'map mode is the default');
+
 // turned to true north: the tracks are no longer along Z
 ({ dim, player } = world({ id: 'c2', location: { x: 0.5, y: -59, z: 0.5 } }));
 session(player).settings.unlocked = true;
-await runTool(city, { city: 'tokyo', range: 40, base: 'north', angle: 0 }, { player });
+await runTool(city, { city: 'tokyo', range: 40, base: 'north', angle: 0, mode: '3d' }, { player });
 const rails = [...dim.map].filter(([k, p]) => p.id === 'minecraft:rail').map(([k]) => k.split(',').map(Number));
 const xs = new Set(rails.map(r => r[0]));
 check(rails.length > 20 && xs.size > 12, 'true north: the tracks run slanted (over ' + xs.size + ' columns)');
@@ -42,6 +52,6 @@ for (const id of ['shinjuku', 'shibuya', 'umeda']) {
   ({ dim, player } = world({ id: 'c-' + id, location: { x: 0.5, y: -59, z: 0.5 } }));
   session(player).settings.unlocked = true;
   t = Date.now();
-  msgs = await runTool(city, { city: id, range: 60, angle: 30 }, { player });
+  msgs = await runTool(city, { city: id, range: 60, angle: 30, mode: '3d' }, { player });
   check(dim.map.size > 2000 && msgs.some(m => /회전 30°/.test(m)), `${id}: built ${dim.map.size} blocks, turned 30° (${Date.now() - t}ms)`);
 }
