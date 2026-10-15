@@ -128,3 +128,11 @@ check(/곡선 점이 2개 이상/.test(m.slice(-1)[0]) && dim.count() === 0, 'no
   const below = [...dim.map].filter(([k]) => k.split(',')[1] === '-1').map(([, p]) => p.id);
   check(below.length > 100 && below.every(i => i === 'minecraft:cobblestone'), 'the block under the road is the chosen fill block: ' + [...new Set(below)].join(','));
 }
+{
+  // road bridges need no code (only the railway's hidden features do)
+  const lanesT = (await import('./scripts/tools/lanes.js')).default;
+  const { dim, player } = world({ id: 'rbnocode' });
+  for (let x = -10; x <= 40; x++) for (let z = -20; z <= 20; z++) put(dim, x, -16, z, 'grass_block');
+  const m = await runTool(lanesT, { bridge: 'girder', left: 1, right: 1, pierClear: 4 }, { player, points: [{ x: 0, y: 0, z: 0 }, { x: 30, y: 0, z: 0 }] });
+  check(lanesT.fields.some(f => f.key === 'bridge') && /PSC 거더교/.test(m.slice(-1)[0]) && /교각 둘레 4칸 비움/.test(m.slice(-1)[0]), 'a road bridge without the code, with room around its piers: ' + m.slice(-1)[0]);
+}

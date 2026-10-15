@@ -9,7 +9,7 @@ import { builtinPole, builtinTile, freeWires, loadPole, poleSpots, presetTile, s
 import { loadTracks, trackNames } from '../lib/track_presets.js';
 import '../lib/low_bridges.js'; // the low bridges join BRIDGES
 import '../lib/jp_bridges.js'; // and the Japanese plate girders
-import { BRIDGES, bridgeById, bridgeTile, endPiece, geometry, pierPiece, polish, STEEL } from '../lib/bridges.js';
+import { BRIDGES, bridgeById, bridgeTile, clearAround, endPiece, geometry, pierPiece, polish, STEEL } from '../lib/bridges.js';
 import { stamp } from '../lib/rail.js';
 import { loadAll } from '../core/edit.js';
 import { session, unlocked } from '../core/session.js';
@@ -19,7 +19,7 @@ import { buildTunnel, rangeAt, tunnelById, tunnelPole, tunnelRanges, tunnelSize,
 import { layout, roadFrom } from './lanes.js';
 
 const BUILTIN_POLE = '@기본', POST_ONLY = '@기둥';
-const BRIDGE_KEYS = ['bridge', 'steel', 'span', 'colGap', 'trussPoles', 'tunnel', 'tunnelType'];
+const BRIDGE_KEYS = ['bridge', 'steel', 'span', 'colGap', 'trussPoles', 'tunnel', 'tunnelType', 'pierClear', 'underClear'];
 
 const DETAIL = [
     { key: 'gauge', type: 'slider', label: '레일(모루) 사이 칸 수', default: 2, min: 1, max: 8 },
@@ -314,6 +314,8 @@ export default {
                 key: 'tunnelType', type: 'dropdown', label: '터널 디자인', default: 'natm',
                 options: TUNNELS.map(t => ({ value: t.id, label: t.name })),
             },
+            { key: 'pierClear', type: 'slider', label: '교각 둘레 블록 부수기 (칸, 0 = 안 함: 땅·나무가 교각에 붙어 있으면)', default: 0, min: 0, max: 12 },
+            { key: 'underClear', type: 'toggle', label: '교량 밑을 모두 비우기 (가장 낮은 교각 받침 높이까지)', default: false },
             { key: 'trussPoles', type: 'toggle', label: '트러스교: 전신주를 트러스 수직재 자리에 세우기 (끄면 보통 간격대로)', default: true },
             { key: 'detail', type: 'toggle', label: '기본 선로 고급 설정 (레일 사이 칸 수·블록 비율, 다음 화면)', default: false },
             {
@@ -519,7 +521,7 @@ export default {
             yield* sweep(ctx, { ...v, clearAir: false, down: false }, bt, bp, deck);
             const edit = ctx.edit;
             let piers = 0;
-            const turned = new Map();
+            const turned = new Map(), stood = [];
             const far = loadAll(ctx.player);
             for (const p of pierAt) {
                 const y = Math.floor(p.y);
@@ -533,6 +535,7 @@ export default {
                 if (inTunnel?.has(Math.floor(p.x) + ',' + Math.floor(p.z)))
                     continue; // in a tunnel
                 stamp(p, pierPiece(d, g, gdy, bt, piers + 1, p === pierAt[0] || p === pierAt[pierAt.length - 1]), v.poleAngle, bp, turned);
+                stood.push({ p, y, gdy });
                 if (++piers % 2 === 0)
                     yield;
             }
@@ -552,6 +555,15 @@ export default {
             for (const [k, perm] of bp)
                 if (perm)
                     paint.set(k, perm);
+            // room around the piers (and under the deck): break what is in the way
+            let broken = 0;
+            for (const k of clearAround(d, g, stood, Math.floor(v.pierClear) || 0, !!v.underClear, deck))
+                if (!paint.has(k) && !inTunnel?.has(k.split(',')[0] + ',' + k.split(',')[2])) {
+                    paint.set(k, null);
+                    broken++;
+                }
+            if (broken)
+                parts.push(v.underClear ? '교량 밑 비움' : `교각 둘레 ${Math.floor(v.pierClear)}칸 비움`);
             parts.push(`${d.name} (교각 ${piers}개, 경간 ${d.straight ? Math.round(total / Math.max(1, spots.length - 1)) : span}칸)`);
         }
         if (tunnel) {

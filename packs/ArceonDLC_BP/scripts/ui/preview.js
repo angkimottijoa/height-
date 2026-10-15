@@ -121,7 +121,7 @@ export function preview(player, item) {
         return;
     }
     if (item === PROTRACTOR) {
-        protPreview(s, (kind, p) => custom(player, kind, p));
+        protPreview(s, (kind, p) => s.settings.prot?.vanilla ? spawn(player, VANILLA[kind], p) : custom(player, kind, p));
         return;
     }
     if (item === CLIPBOARD) {

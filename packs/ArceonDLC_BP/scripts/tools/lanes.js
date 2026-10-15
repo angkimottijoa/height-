@@ -107,6 +107,8 @@ const COMMON = [
         tooltip: '곡선 점 높이가 도로 바닥 높이입니다. 교각은 경간마다 땅까지 내려갑니다.',
     },
     { key: 'span', type: 'slider', label: '교량 경간 (교각 사이 칸 수, 0 = 기본)', default: 0, min: 0, max: 60 },
+    { key: 'pierClear', type: 'slider', label: '교각 둘레 블록 부수기 (칸, 0 = 안 함)', default: 0, min: 0, max: 12 },
+    { key: 'underClear', type: 'toggle', label: '교량 밑을 모두 비우기 (가장 낮은 교각 받침 높이까지)', default: false },
     { key: 'thick', type: 'slider', label: '도로 두께 (칸)', default: 1, min: 1, max: 10 },
     { key: 'down', type: 'toggle', label: '아래로 땅까지 채우기', default: false },
     { key: 'clear', type: 'slider', label: '도로 위 비우기 (칸)', default: 0, min: 0, max: 20 },

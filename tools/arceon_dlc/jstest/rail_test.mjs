@@ -354,3 +354,14 @@ for (const e of ['slope', 'wall']) {
   const slope = [...dim.map].filter(([k, p]) => k.split(',')[0] === '20' && p.id !== 'minecraft:air').map(([k]) => Math.abs(+k.split(',')[2]));
   check(/언덕/.test(m.slice(-1)[0]) && under && shoulder && wall && Math.max(...slope) >= 17, `embankment ${e}: filled to the ground, shoulder, ${e === 'wall' ? 'retaining wall + fence, ' : ''}reaches out ${Math.max(...slope)}`);
 }
+
+// ---- room around the piers: blocks within the radius (and under the deck) are broken
+{
+  const { dim, player } = world({ id: 'pclear' });
+  session(player).settings.unlocked = true;
+  for (let x = -10; x <= 60; x++) for (let z = -30; z <= 30; z++) { put(dim, x, -20, z, 'grass_block'); if (z > 12 && z < 20) for (let y = -19; y <= -12; y++) put(dim, x, y, z, 'stone'); }
+  const m = await runTool(railway, { bridge: 'psci', pole: '', pierClear: 6 }, { player, points: [{ x: 0, y: 0, z: 0 }, { x: 44, y: 0, z: 0 }] });
+  const stoneLeft = [...dim.map].filter(([k, p]) => p.id === 'minecraft:stone' && Math.abs(+k.split(',')[0] - 22) <= 2 && +k.split(',')[2] > 16 && +k.split(',')[2] < 20).length;
+  const farLeft = [...dim.map].filter(([k, p]) => p.id === 'minecraft:stone' && +k.split(',')[0] === 11 && +k.split(',')[2] > 16).length;
+  check(/교각 둘레 6칸 비움/.test(m.slice(-1)[0]) && stoneLeft === 0 && farLeft > 0, `the hill beside a pier is broken away, the rest stays: ${m.slice(-1)[0]} (${stoneLeft} left near, ${farLeft} far)`);
+}

@@ -1158,6 +1158,36 @@ export function endPiece(d, g, tile) {
 }
 
 /**
+ * Room around the piers: the world blocks to break so nothing grows into
+ * the bridge. `piers`: [{p (sample with tx, tz), y, gdy (ground below the deck)}].
+ * R > 0: everything within R blocks of each pier, from just above its
+ * footing up to the deck. `under`: everything under the deck, down to the
+ * lowest footing (deck = the deck road's cells). Returns "x,y,z" keys.
+ */
+export function clearAround(d, g, piers, R, under, deck) {
+    const out = new Set();
+    if (R > 0)
+        for (const { p, y, gdy } of piers) {
+            const nx = -p.tz, nz = p.tx;
+            for (let u = g.uL - 1 - R; u <= g.uR + 1 + R; u += 0.5)
+                for (let a = -3 - R; a <= 3 + R; a += 0.5) {
+                    const x = Math.floor(p.x + nx * u + p.tx * a), z = Math.floor(p.z + nz * u + p.tz * a);
+                    for (let yy = y + gdy + 1; yy < y + d.dyMin; yy++)
+                        out.add(`${x},${yy},${z}`);
+                }
+        }
+    if (under && deck && piers.length) {
+        const low = Math.min(...piers.map(q => q.y + q.gdy)) + 1;
+        for (const [k, c] of deck.cells) {
+            const [x, z] = k.split(',').map(Number);
+            for (let yy = Math.max(low, c.y + d.dyMin - 64); yy < c.y + d.dyMin; yy++)
+                out.add(`${x},${yy},${z}`);
+        }
+    }
+    return out;
+}
+
+/**
  * The pier at one spot, as a pole-like piece (cells "dx,dy,dz" facing north).
  * `seed` shifts the stone mixes so no two piers are laid alike.
  */

@@ -37,7 +37,7 @@ function bar(player, msg) {
     }
 }
 
-export const DEFAULTS = { angle: 90, plane: 'h', sides: 'both', guide: 0, shape: 'para', n: 5, block: 'stone', fill: false };
+export const DEFAULTS = { angle: 90, plane: 'h', sides: 'both', guide: 0, shape: 'para', n: 5, block: 'stone', fill: false, vanilla: false };
 export function protState(player) {
     const s = session(player);
     if (!s.prot || !Array.isArray(s.prot.pts))
@@ -288,10 +288,11 @@ export async function protMenu(player) {
                 ],
             },
             { key: 'guide', type: 'slider', label: '안내선 길이 (0 = 마지막 선과 같게)', default: Number(set.guide), min: 0, max: 64 },
+            { key: 'vanilla', type: 'toggle', label: '기본(바닐라) 파티클로 보기 (리소스 팩이 꺼져 있어 안 보일 때)', default: !!set.vanilla },
         ], { submit: '저장' });
         if (r) {
             const typed = parseFloat(String(r.angleText ?? '').replace(',', '.'));
-            s.settings.prot = { ...set, angle: typed > 0 && typed < 180 ? typed : r.angle, plane: r.plane, sides: r.sides, guide: r.guide };
+            s.settings.prot = { ...set, angle: typed > 0 && typed < 180 ? typed : r.angle, plane: r.plane, sides: r.sides, guide: r.guide, vanilla: !!r.vanilla };
             save(player);
             bar(player, `§e[각도기] ${s.settings.prot.angle}° 안내선`);
         }

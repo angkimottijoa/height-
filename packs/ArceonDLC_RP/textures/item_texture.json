@@ -1,0 +1,9 @@
+{
+  "resource_pack_name": "arceon",
+  "texture_name": "atlas.items",
+  "texture_data": {
+    "arc_protractor": {
+      "textures": "textures/items/arc_protractor"
+    }
+  }
+}

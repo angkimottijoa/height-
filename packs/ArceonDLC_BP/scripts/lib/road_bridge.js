@@ -22,11 +22,12 @@
  * Piers go down to the ground every span, the deck ends are closed, light
  * blocks light it.
  */
-import { bridgeById, bridgeTile, endPiece, FOOT, geometry, IN_W, mix, OUT_W, pierPiece, polish, stair, top, bolt } from './bridges.js';
+import { bridgeById, bridgeTile, clearAround, endPiece, FOOT, geometry, IN_W, mix, OUT_W, pierPiece, polish, stair, top, bolt } from './bridges.js';
 import { stamp, sweep } from './rail.js';
 import { roadFrom } from '../tools/lanes.js';
 import { ensureLoaded } from '../core/loader.js';
 import { loadAll } from '../core/edit.js';
+import { AIR } from '../core/blocks.js';
 
 /** Road concrete: grey, weathered. */
 const CON = mix([
@@ -463,7 +464,7 @@ export function* roadBridge(ctx, v, road, W) {
     }
     const at = (s) => S.reduce((b, q) => Math.abs(q.s - s) < Math.abs(b.s - s) ? q : b);
     const pierAt = spots.map(at);
-    const edit = ctx.edit, far = loadAll(ctx.player), turned = new Map();
+    const edit = ctx.edit, far = loadAll(ctx.player), turned = new Map(), stood = [];
     let piers = 0;
     for (const p of pierAt) {
         const y = Math.floor(p.y);
@@ -475,6 +476,7 @@ export function* roadBridge(ctx, v, road, W) {
             continue; // the deck is (nearly) on the ground here
         const end = p === pierAt[0] || p === pierAt[pierAt.length - 1];
         stamp(p, pierPiece(d, g, gdy, bt, piers + 1, end), '', bp, turned);
+        stood.push({ p, y, gdy });
         if (++piers % 2 === 0)
             yield;
     }
@@ -482,7 +484,17 @@ export function* roadBridge(ctx, v, road, W) {
     for (const p of [pierAt[0], pierAt[pierAt.length - 1]])
         stamp(p, cap, '', bp, turned);
     yield* polish(bp);
-    let n = 0;
+    // room around the piers (and under the deck): break what is in the way
+    const air = AIR();
+    let n = 0, broken = 0;
+    for (const k of clearAround(d, g, stood, Math.floor(v.pierClear) || 0, !!v.underClear, deck))
+        if (!bp.get(k)) {
+            const [x, y, z] = k.split(',').map(Number);
+            edit.set({ x, y, z }, air);
+            broken++;
+            if (++n % 3000 === 0)
+                yield;
+        }
     for (const [k, perm] of bp) {
         if (!perm)
             continue;
@@ -491,5 +503,5 @@ export function* roadBridge(ctx, v, road, W) {
         if (++n % 3000 === 0)
             yield;
     }
-    return `${d.name.split(' (')[0]} (교각 ${piers}개, 경간 ${span}칸)`;
+    return `${d.name.split(' (')[0]} (교각 ${piers}개, 경간 ${span}칸${broken ? (v.underClear ? ', 교량 밑 비움' : `, 교각 둘레 ${Math.floor(v.pierClear)}칸 비움`) : ''})`;
 }

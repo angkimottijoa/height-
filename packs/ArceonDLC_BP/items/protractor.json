@@ -8,7 +8,7 @@
       }
     },
     "components": {
-      "minecraft:icon": "compass",
+      "minecraft:icon": "arc_protractor",
       "minecraft:display_name": {
         "value": "§e각도기"
       },
