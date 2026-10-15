@@ -3,7 +3,7 @@
 `8Crafter's World Height Limit Modifier` 팩의 수정 빌드와, **"높이 확장 + 지형 유지"가
 실제로 가능한지 판별하는 진단 팩**입니다.
 
-> **[에디터 DLC](docs/EDITOR_DLC.md)** — `dist/EditorDLC_V3.9.mcaddon`. 디버그 스틱 + 아르세온 DLC + 구조물(주얼 창이 다이아그리드, 코쿤 타워)을 한 팩으로.
+> **[에디터 DLC](docs/EDITOR_DLC.md)** — `dist/EditorDLC_V4.0.mcaddon`. 디버그 스틱 + 아르세온 DLC + 구조물(주얼 창이 다이아그리드, 코쿤 타워)을 한 팩으로.
 >
 > 별개의 애드온: **[디버그 스틱 + 독립형 블록](docs/DEBUG_STICK.md)** — `dist/DebugStick.mcaddon`.
 > 바닐라 블록을 받침·이웃과 상관없이 모양을 고정하는 블록 333종 + 멀리서도 안 사라지는 철문.

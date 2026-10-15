@@ -37,7 +37,7 @@ const ys = new Map();
 for (const [k, p] of dim.map) { const y = +k.split(',')[1]; ys.set(y, (ys.get(y) ?? 0) + 1); }
 const foot = count(dim, (k, p) => p.id === 'minecraft:white_concrete' && +k.split(',')[1] === g);
 check([...ys.keys()].every(y => y === g || y === g + 1) && foot > 1000 && count(dim, (k, p) => p.id === 'minecraft:rail') > 50, 'map mode: flat on the ground (building footprints ' + foot + ', roads, tracks): heights ' + [...ys.keys()].map(y => y - g).join(','));
-check(msgs.some(m => /평면 반경 150m/.test(m)), 'flat ground mode');
+check(msgs.some(m => /평면 1:1 반경 150칸/.test(m)), 'flat ground mode');
 // the default: drawn like the map (a light ground everywhere, roads in colours, footprints by height, rails as lines)
 ({ dim, player } = world({ id: 'cm', location: { x: 0.5, y: -59, z: 0.5 } }));
 session(player).settings.unlocked = true;
@@ -45,12 +45,28 @@ msgs = await runTool(city, { city: 'shinjuku', range: 150 }, { player });
 const kinds = new Map();
 for (const [k, p] of dim.map) kinds.set(p.id, (kinds.get(p.id) ?? 0) + 1);
 console.log([...kinds].sort((a, b) => b[1] - a[1]).map(([k, v]) => k.replace('minecraft:', '') + ' ' + v).join(', '));
-check(msgs.some(m => /지도 반경 150m/.test(m)) && dim.map.size === 301 * 301 && [...dim.map.keys()].every(k => +k.split(',')[1] === g), 'map style is the default: every column of the area drawn, all at ground level');
+check(msgs.some(m => /지도 1:1 반경 150칸/.test(m)) && dim.map.size === 301 * 301 && [...dim.map.keys()].every(k => +k.split(',')[1] === g), 'map style is the default: every column of the area drawn, all at ground level');
 check(!kinds.has('minecraft:light_gray_concrete_powder') && !kinds.has('minecraft:pink_concrete_powder') && !kinds.has('minecraft:gravel') && kinds.get('minecraft:black_concrete') > 300 && !kinds.has('minecraft:rail') && kinds.get('minecraft:smooth_sandstone') > 1000, 'railways as dark lines, main roads pale yellow, nothing that falls (wool, not powder)');
 ({ dim, player } = world({ id: 'cn', location: { x: 0.5, y: -59, z: 0.5 } }));
 session(player).settings.unlocked = true;
 await runTool(city, { city: 'shinjuku', range: 100, rails: 'none' }, { player });
 check(![...dim.map.values()].some(p => p.id === 'minecraft:pink_wool' || p.id === 'minecraft:red_concrete'), 'railways off: no tracks or platforms');
+// scale: twice as big (1 m = 2 blocks): the same area takes twice the range, 4 times the blocks per thing
+{
+  const kindsIn = async (scale, R) => {
+    const { dim: dd, player: pp } = world({ id: 'cs' + scale, location: { x: 0.5, y: -59, z: 0.5 } });
+    session(pp).settings.unlocked = true;
+    const m = await runTool(city, { city: 'shibuya', range: R, scale: String(scale) }, { player: pp });
+    const n = new Map();
+    for (const p of dd.map.values()) n.set(p.id, (n.get(p.id) ?? 0) + 1);
+    return { n, m };
+  };
+  const a1 = await kindsIn(1, 60), a2 = await kindsIn(2, 120);
+  const tot = (x) => [...x.n.values()].reduce((t, v) => t + v, 0);
+  const bld = (x) => ['minecraft:white_terracotta', 'minecraft:light_blue_terracotta', 'minecraft:gray_concrete'].reduce((t, k) => t + (x.n.get(k) ?? 0), 0);
+  console.log('total', tot(a1), tot(a2), 'buildings', bld(a1), bld(a2));
+  check(tot(a2) / tot(a1) > 3.5 && tot(a2) / tot(a1) < 4.5 && bld(a2) / bld(a1) > 3 && bld(a2) / bld(a1) < 5 && a2.m.some(x => /2배 반경 120칸/.test(x)), 'scale x2: the same area in twice the range, about 4x the blocks: ' + (tot(a2) / tot(a1)).toFixed(2) + ' (buildings ' + (bld(a2) / bld(a1)).toFixed(2) + ')');
+}
 // one undo takes the whole city away again
 const { undo, redo, history } = await import('./scripts/core/edit.js');
 const built = [...dim.map].filter(([k, p]) => p.id !== 'minecraft:air').length;

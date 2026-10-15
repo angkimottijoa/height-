@@ -49,8 +49,8 @@ const parsed = new Map();
  * above; the data comes with the tracks along Z, `raw.a` = how far that was
  * turned from true north).
  */
-function city(id, turn = 0) {
-    const key = id + '@' + turn;
+function city(id, turn = 0, scale = 1) {
+    const key = id + '@' + turn + 'x' + scale;
     let d = parsed.get(key);
     if (d)
         return d;
@@ -67,7 +67,7 @@ function city(id, turn = 0) {
             qx += a[i];
             qz += a[i + 1];
             const x = qx / 2, z = qz / 2;
-            out.push(turn ? [x * cs - z * sn, x * sn + z * cs] : [x, z]);
+            out.push(turn ? [(x * cs - z * sn) * scale, (x * sn + z * cs) * scale] : [x * scale, z * scale]);
         }
         return out;
     };
@@ -83,8 +83,8 @@ function city(id, turn = 0) {
     };
     d = {
         name: raw.n, align: raw.a,
-        buildings: raw.b.map((a, i) => { const p = pts(a, 2); return { i, h: a[0], min: a[1] % 1000, roof: a[1] >= 1000, pts: p, box: box(p, 1) }; }),
-        roads: raw.r.map(a => { const p = pts(a, 4); return { kind: a[0], w: a[1], fl: a[2], layer: a[3], pts: p, box: box(p, a[1] / 2 + 2) }; }),
+        buildings: raw.b.map((a, i) => { const p = pts(a, 2); return { i, h: Math.round(a[0] * scale), min: Math.round((a[1] % 1000) * scale), roof: a[1] >= 1000, pts: p, box: box(p, 1) }; }),
+        roads: raw.r.map(a => { const p = pts(a, 4); return { kind: a[0], w: a[1] * scale, fl: a[2], layer: a[3], pts: p, box: box(p, a[1] * scale / 2 + 2) }; }),
         rails: raw.t.map(a => { const p = pts(a, 2); return { fl: a[0], layer: a[1], pts: p, box: box(p, 4) }; }),
         platforms: raw.p.map(a => { const p = pts(a, 2); return { fl: a[0], layer: a[1], pts: p, box: box(p, 4) }; }),
         water: raw.w.map(a => { const p = pts(a, 1); return { area: !!a[0], pts: p, box: box(p, 6) }; }),
@@ -500,7 +500,14 @@ export default {
                     { value: 'none', label: '없음' },
                 ],
             },
-            { key: 'range', type: 'slider', label: '불러올 범위 (역에서 사방으로, 칸 = m) — 축척은 항상 1:1', default: 200, min: 50, max: 1500, step: 50 },
+            {
+                key: 'scale', type: 'dropdown', label: '축척 (마크 크기)', default: '1', options: [
+                    { value: '1', label: '1:1 (1칸 = 1m)' },
+                    { value: '1.5', label: '1.5배 (1m = 1.5칸)' },
+                    { value: '2', label: '2배 (1m = 2칸)' },
+                ],
+            },
+            { key: 'range', type: 'slider', label: '불러올 범위 (역에서 사방으로, 칸)', default: 200, min: 50, max: 3000, step: 50 },
         ];
     },
     async run(ctx, v) {
@@ -512,7 +519,8 @@ export default {
         // the data is lined up on the station's tracks (turned c.align° from true north)
         const align = Number(c.align) || 0;
         const turn = Math.round(((v.base === 'north' ? -align : 0) + (Number(v.angle) || 0)) * 10) / 10;
-        const d = city(v.city, turn);
+        const scale = [1, 1.5, 2].includes(Number(v.scale)) ? Number(v.scale) : 1;
+        const d = city(v.city, turn, scale);
         const R = Math.max(10, Math.floor(Number(v.range) || 200));
         const o = { x: Math.floor(ctx.location.x), y: Math.floor(ctx.location.y) - 1, z: Math.floor(ctx.location.z) };
         const minY = ctx.dim.heightRange?.min ?? -64, maxY = (ctx.dim.heightRange?.max ?? 320) - 1;
@@ -560,6 +568,6 @@ export default {
         if (structs.length)
             pushBig(ctx.player, { label: `도시 지도 (${d.name})`, dim: ctx.dim.id, structs, blocks: [] });
         parsed.clear(); // free the parsed map
-        return `${d.name} ${{ map: '지도', flat: '평면', '3d': '입체' }[v.mode ?? 'map']} 반경 ${R}m, 회전 ${turn}°: ${tiles.length}구역, ${done}블록${skipped ? ` (건너뜀 ${skipped})` : ''} §8지도 © OpenStreetMap`;
+        return `${d.name} ${{ map: '지도', flat: '평면', '3d': '입체' }[v.mode ?? 'map']} ${scale === 1 ? '1:1' : scale + '배'} 반경 ${R}칸, 회전 ${turn}°: ${tiles.length}구역, ${done}블록${skipped ? ` (건너뜀 ${skipped})` : ''} §8지도 © OpenStreetMap`;
     },
 };
