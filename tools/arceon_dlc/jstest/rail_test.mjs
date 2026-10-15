@@ -347,7 +347,9 @@ for (const e of ['slope', 'wall']) {
   const m = await runTool(railway, { embank: e, poleEvery: 20 }, { player, points: [{ x: 0, y: 0, z: 0 }, { x: 40, y: 0, z: 0 }] });
   const get = (x, y, z) => dim.map.get(`${x},${y},${z}`)?.id ?? 'minecraft:air';
   const under = [-1, -3, -6].every(y => get(20, y, 0) === 'minecraft:dirt');
-  const shoulder = [9, 10, 12, 13].every(z => get(20, 0, z) === 'minecraft:grass_block');
+  const shoulder = [9, 10, 12, 13].every(z => /grass_block|moss_block/.test(get(20, 0, z)));
+  const plants = [...dim.map.values()].filter(p => /short_grass|fern|bush|berry/.test(p.id)).length;
+  check(plants > 50, `embankment ${e}: grass and plants on it (${plants})`);
   const wall = e === 'wall' ? [...dim.map].some(([k, p]) => p.id === 'minecraft:light_gray_concrete') && [...dim.map].some(([, p]) => p.id === 'minecraft:dark_oak_fence') : true;
   const slope = [...dim.map].filter(([k, p]) => k.split(',')[0] === '20' && p.id !== 'minecraft:air').map(([k]) => Math.abs(+k.split(',')[2]));
   check(/언덕/.test(m.slice(-1)[0]) && under && shoulder && wall && Math.max(...slope) >= 17, `embankment ${e}: filled to the ground, shoulder, ${e === 'wall' ? 'retaining wall + fence, ' : ''}reaches out ${Math.max(...slope)}`);

@@ -134,10 +134,13 @@ function* safetyFence(road, w, v, paint) {
  * An embankment (언덕) under a track on the ground: the bed is carried on
  * earth down to the ground on both sides, with a level grass shoulder (4
  * blocks) beside the bed for the poles.
- *   slope - grass slopes at 1:1 (dirt inside, a gravel toe where they meet the ground).
- *   wall  - as along the old city lines: a green-covered slope at 1:1 from the
- *           bed down to a retaining wall (rubble stone footing, concrete
- *           above, up to 4 high) with a wooden fence on top.
+ *   slope - grass slopes at 1:1 (dirt inside), thicker growth at the foot.
+ *   wall  - as along the old city lines: a grass slope at 1:1 from the bed
+ *           down to a retaining wall (rubble stone footing, concrete above,
+ *           up to 4 high) with a wooden fence on top.
+ * The cover is natural: grass with a little bare earth and moss, and on it
+ * short grass, ferns, bushes, sweet berry bushes without berries, dry grass
+ * and the odd wildflower, scattered (sparser on the shoulder).
  * Tunnels are left out; it is not built under a bridge.
  */
 function* embankment(ctx, S, total, w, v, paint, skip) {
@@ -145,9 +148,41 @@ function* embankment(ctx, S, total, w, v, paint, skip) {
     const road = yield* roadFrom(S, Math.ceil(w + 2 * SPREAD), total);
     const edit = ctx.edit, far = loadAll(ctx.player);
     const B = (t) => parseBlock(t);
-    const dirt = B('dirt'), grass = B('grass_block'), toe = B('gravel'), moss = B('moss_block');
+    const dirt = B('dirt'), grass = B('grass_block'), coarse = B('coarse_dirt'), moss = B('moss_block');
+    // the ground cover: mostly grass, a little bare earth and moss
+    const soil = (x, z, slope) => {
+        const h = hash(x, z, 1);
+        return slope && h < 0.06 ? coarse : h > 0.95 ? moss : grass;
+    };
     const stone = MASON_B, con = B('light_gray_concrete'), conB = B('andesite'), fence = B('dark_oak_fence');
     const loaded = new Set();
+    // grass and plants on top: the support-free plants of the Debug Stick pack
+    // when it is installed (they never pop off), the vanilla ones otherwise
+    const P = (vyt, st, vanilla, vst) => {
+        try {
+            return perm('vyt:' + vyt, st);
+        }
+        catch (e) {
+            return perm('minecraft:' + vanilla, vst);
+        }
+    };
+    const PLANTS = [
+        [0.30, P('ds_short_grass', undefined, 'short_grass')],
+        [0.06, P('ds_fern', undefined, 'fern')],
+        [0.04, P('ds_bush', undefined, 'bush')],
+        [0.03, P('ds_sweet_berry_bush', { 'vyt:growth': 1 }, 'sweet_berry_bush', { growth: 1 })], // no berries
+        [0.01, P('ds_sweet_berry_bush', { 'vyt:growth': 0 }, 'sweet_berry_bush', { growth: 0 })],
+        [0.015, P('ds_short_dry_grass', undefined, 'short_grass')],
+        [0.01, P('ds_wildflowers', { 'vyt:growth': 1 }, 'short_grass')],
+    ];
+    const plant = (x, y, z, density) => {
+        let h = hash(x, z, 2) / density, acc = 0;
+        for (const [p, b] of PLANTS) {
+            acc += p;
+            if (h < acc)
+                return put(x, y, z, b);
+        }
+    };
     const put = (x, y, z, p) => {
         const k = `${x},${y},${z}`;
         if (!paint.has(k))
@@ -179,7 +214,9 @@ function* embankment(ctx, S, total, w, v, paint, skip) {
         // a level shoulder beside the bed for the poles and a walkway, then the slope
         if (d0 <= SHOULDER + 0.5) {
             for (let yy = y; yy > g; yy--)
-                put(x, yy, z, yy === y ? grass : dirt);
+                put(x, yy, z, yy === y ? soil(x, z, false) : dirt);
+            if (d0 > 1.5)
+                plant(x, y + 1, z, 0.35); // sparse, and none right beside the ballast
             cells++;
             continue;
         }
@@ -190,7 +227,8 @@ function* embankment(ctx, S, total, w, v, paint, skip) {
             if (d < dw) {
                 const top = Math.round(y - 1 - (d - 0.5));
                 for (let yy = top; yy > g; yy--)
-                    put(x, yy, z, yy === top ? (((x * 7 + z * 13) % 5 + 5) % 5 < 4 ? moss : grass) : dirt);
+                    put(x, yy, z, yy === top ? soil(x, z, true) : dirt);
+                plant(x, top + 1, z, 1);
             }
             else if (d < dw + 2) {
                 for (let k = 1; k <= Hw; k++)
@@ -206,7 +244,8 @@ function* embankment(ctx, S, total, w, v, paint, skip) {
             if (top <= g)
                 continue;
             for (let yy = top; yy > g; yy--)
-                put(x, yy, z, yy === top ? (top - g <= 1 ? toe : grass) : dirt);
+                put(x, yy, z, yy === top ? soil(x, z, true) : dirt);
+            plant(x, top + 1, z, top - g <= 1 ? 1.4 : 1); // thicker at the foot
         }
         cells++;
         if (++n % 400 === 0)
@@ -215,6 +254,12 @@ function* embankment(ctx, S, total, w, v, paint, skip) {
     return cells;
 }
 const MASON_B = parsePattern('40%cobblestone,25%mossy_cobblestone,20%stone,15%andesite');
+/** A steady pseudo-random number in [0, 1) for a column. */
+function hash(x, z, k) {
+    let h = (x * 374761393 + z * 668265263 + k * 2147483647) | 0;
+    h = Math.imul(h ^ (h >>> 13), 1274126177);
+    return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+}
 
 export default {
     id: 'railway',
@@ -311,8 +356,8 @@ export default {
             {
                 key: 'embank', type: 'dropdown', label: '언덕 (선로 아래를 땅까지 쌓기, 교량일 때는 없음)', default: '', options: [
                     { value: '', label: '없음' },
-                    { value: 'slope', label: '흙 언덕 (잔디 비탈 1:1)' },
-                    { value: 'wall', label: '옹벽 언덕 (녹색 비탈 + 돌 기초·콘크리트 옹벽 + 나무 울타리)' },
+                    { value: 'slope', label: '흙 언덕 (풀·덤불이 자란 잔디 비탈 1:1)' },
+                    { value: 'wall', label: '옹벽 언덕 (풀 비탈 + 돌 기초·콘크리트 옹벽 + 나무 울타리)' },
                 ],
             },
             {
