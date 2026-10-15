@@ -51,6 +51,10 @@ check(kinds.get('minecraft:black_concrete') > 300 && !kinds.has('minecraft:rail'
 session(player).settings.unlocked = true;
 await runTool(city, { city: 'shinjuku', range: 100, rails: 'none' }, { player });
 check(![...dim.map.values()].some(p => p.id === 'minecraft:pink_concrete_powder' || p.id === 'minecraft:red_concrete'), 'railways off: no tracks or platforms');
+// one undo takes the whole city away again
+const { undo } = await import('./scripts/core/edit.js');
+await undo(player);
+check([...dim.map.values()].every(p => p.id === 'minecraft:air') && player.msgs.some(m => /되돌림: 도시 지도/.test(m)), 'undo: the whole city is gone in one step');
 
 // turned to true north: the tracks are no longer along Z
 ({ dim, player } = world({ id: 'c2', location: { x: 0.5, y: -59, z: 0.5 } }));
@@ -67,4 +71,23 @@ for (const id of ['shinjuku', 'shibuya', 'umeda']) {
   t = Date.now();
   msgs = await runTool(city, { city: id, range: 60, angle: 30, mode: '3d' }, { player });
   check(dim.map.size > 2000 && msgs.some(m => /회전 30°/.test(m)), `${id}: built ${dim.map.size} blocks, turned 30° (${Date.now() - t}ms)`);
+}
+
+// the menus: no button without the code; the settings code brings it into the main, wand and terrain menus
+{
+  const ui = await import('@minecraft/server-ui');
+  const M = await import('./scripts/ui/menu.js');
+  const { player: p } = world({ id: 'cmenu' });
+  const labels = () => new Promise(res => ui.answers.push((f) => { res(f.items.filter(i => i[0] === 'button').map(b => b[1])); return { canceled: true }; }));
+  let l = labels(); await M.openMenu(p); const before = await l;
+  check(!before.some(t => /도시 지도/.test(t)), 'no city button before the code');
+  // settings: type the code
+  ui.answers.push((f) => ({ canceled: false, selection: f.items.filter(i => i[0] === 'button').findIndex(b => b[1] === '설정') }));
+  ui.answers.push((f) => f.defaults({ '코드': '4917' }));
+  await M.openMenu(p);
+  mc.system.flush();
+  for (const fn of ['openMenu', 'wandMenu', 'terrainMenu']) {
+    l = labels(); await M[fn](p);
+    check((await l).some(t => /도시 지도 불러오기/.test(t)), `after the code: the city button in ${fn}`);
+  }
 }

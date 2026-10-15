@@ -10,14 +10,14 @@
  * roof; glass curtain walls on tall ones), roads (asphalt, a dashed centre
  * line, pavements, elevated roads on piers), railways (ballast and rails,
  * viaducts on piers) and platforms, water and green areas with trees.
- * The area is built tile by tile (loading far chunks as it goes); it is too
- * big to undo.
+ * The area is built tile by tile (loading far chunks as it goes); the whole
+ * build is one step of undo.
  *
  * A hidden tool (settings code), like the yard tool.
  */
 import { system } from '@minecraft/server';
 import { perm } from '../core/blocks.js';
-import { loadAll } from '../core/edit.js';
+import { history, loadAll } from '../core/edit.js';
 import { placeAll } from '../core/loader.js';
 import { unlocked } from '../core/session.js';
 import { CITIES } from '../data/cities.js';
@@ -465,7 +465,7 @@ const tick = () => new Promise(r => system.runTimeout(r, 1));
 export default {
     id: 'city',
     name: '도시 지도 불러오기',
-    desc: '실제 역 주변 지도(오픈스트리트맵)를 1:1(1블록 = 1m)로 짓습니다. 내가 선 자리가 역입니다. 건물(실제 높이), 도로, 선로·고가, 승강장, 물, 녹지. 너무 커서 되돌리기는 안 됩니다.',
+    desc: '실제 역 주변 지도(오픈스트리트맵)를 1:1(1블록 = 1m)로 깝니다. 내가 선 자리가 역, 발밑 높이가 지면입니다. 기본은 지도 그림 그대로(평면), 입체는 방식에서. 되돌리기 한 번이면 통째로 되돌아갑니다.',
     icon: 'textures/items/map_filled',
     needs: 'none',
     noEdit: true,
@@ -519,6 +519,7 @@ export default {
         // nearest the station first
         tiles.sort((a, b) => Math.hypot(a[0] + TILE / 2, a[1] + TILE / 2) - Math.hypot(b[0] + TILE / 2, b[1] + TILE / 2));
         let done = 0, skipped = 0, n = 0;
+        const before = []; // what was there: the whole city is one step of undo
         for (const [tx, tz] of tiles) {
             const tx1 = Math.min(X1, tx + TILE - 1), tz1 = Math.min(Z1, tz + TILE - 1), mode = v.mode ?? 'map';
             const cells = mode === 'map' ? buildMapTile(d, o, tx, tz, tx1, tz1, R, minY, maxY, v.rails ?? 'line')
@@ -530,6 +531,8 @@ export default {
             }
             const r = await placeAll(ctx.dim, list, { load: loadAll(ctx.player) });
             done += r.done;
+            for (const e of r.before)
+                before.push(e);
             skipped += r.skipped;
             n++;
             try {
@@ -537,6 +540,13 @@ export default {
             }
             catch (e) { }
             await tick();
+        }
+        if (before.length) {
+            const h = history(ctx.player);
+            h.undo.push({ label: `도시 지도 (${d.name})`, dim: ctx.dim.id, blocks: before });
+            if (h.undo.length > 15)
+                h.undo.shift();
+            h.redo.length = 0;
         }
         return `${d.name} ${{ map: '지도', flat: '평면', '3d': '입체' }[v.mode ?? 'map']} 반경 ${R}m, 회전 ${turn}°: ${tiles.length}구역, ${done}블록${skipped ? ` (건너뜀 ${skipped})` : ''} §8지도 © OpenStreetMap`;
     },

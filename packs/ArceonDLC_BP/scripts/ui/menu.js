@@ -77,6 +77,7 @@ export async function wandMenu(player) {
         { text: on ? '곡선 점 모드 끄기 → 영역 모드' : '곡선 점 모드 켜기', icon: 'textures/items/blaze_rod', value: 'mode' },
         ...GROUPS.filter(g => g.id !== 'terrain' && g.id !== 'frame').map(g => ({ text: `${g.name}\n§8${g.desc}`, icon: g.icon, value: 'group:' + g.id })),
         { text: '글자 쓰기', icon: 'textures/items/book_writable', value: 'tool:text' },
+        ...(unlocked(player) ? [{ text: '도시 지도 불러오기', icon: 'textures/items/map_filled', value: 'tool:city' }] : []),
         { text: '선택 영역 · 곡선 점 관리', icon: 'textures/items/blaze_rod', value: 'select' },
         { text: '브러시', icon: 'textures/items/brush', value: 'brush' },
         { text: '되돌리기', icon: 'textures/items/clock_item', value: 'undo' },
@@ -359,12 +360,15 @@ export async function terrainMenu(player) {
     const list = TOOLS.filter(t => t.group === 'terrain');
     const v = await menu(player, '지형 도구', needsText(player, { needs: 'cuboid' }), [
         ...list.map(t => ({ text: t.name, icon: t.icon, value: t.id })),
+        ...(unlocked(player) ? [{ text: '도시 지도 불러오기', icon: 'textures/items/map_filled', value: 'tool:city' }] : []),
         { text: '되돌리기', icon: 'textures/items/clock_item', value: 'undo' },
     ]);
     if (!v)
         return;
     if (v === 'undo')
         return undo(player);
+    if (v === 'tool:city')
+        return toolForm(player, TOOLS.find(t => t.id === 'city'));
     return toolForm(player, list.find(t => t.id === v));
 }
 
